@@ -1,6 +1,7 @@
 'use strict';
 
-var IS_BROWSER = isBrowser();
+var IS_BROWSER = isBrowser(),
+    EXPORTS = false;
 
 function isBrowser() {
     var GLOBAL = global,
@@ -23,8 +24,11 @@ function isStrict() {
     return IS_BROWSER ? global.document.compatMode === 'CSS1Compat' : false;
 }
 
+if (IS_BROWSER) {
+    EXPORTS = {
+        browser: IS_BROWSER,
+        strict: isStrict()
+    };
+}
 
-module.exports = {
-    browser: IS_BROWSER,
-    strict: isStrict()
-};
+module.exports = EXPORTS;

@@ -12,8 +12,11 @@ function clicked() {
     alert('click!');
 }
 
-function noEnd(event) {
-    console.log('no end!!! ' + event.type);
+function noEnd(event, element) {
+    //console.log('fire!!!' + event.type);
+    main.dispatch(element, 'no-end', {
+        name: 'no-end'
+    });
 }
 
 
@@ -28,5 +31,7 @@ main.on(document, 'contextmenu', function (event) {
     main.purge(document.body);
 });
 
-
+main.on(document, 'no-end', function (event) {
+    console.log('no-end ', event);
+});
 

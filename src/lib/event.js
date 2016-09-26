@@ -1,29 +1,46 @@
 'use strict';
 
 var INFO = require("./detect.js"),
-    STOP = require("./stopper.js"),
     EVENTS = null,
-    EVENT_INFO = INFO.event,
-    w3c = EVENT_INFO.w3c,
-    ie = EVENT_INFO.ie,
-    LISTEN = w3c ?
-                w3cListen :
-                ie ?
-                    ieListen :
-                    unsupported,
-    UNLISTEN = w3c ?
-                w3cUnlisten :
-                ie ?
-                    ieUnlisten :
-                    unsupported,
-                    
+    EVENT_INFO = null,
     EXPORTS = {
         chain: void(0),
         on: listen,
         un: unlisten,
+        fire: dispatch,
         purge: purge
     };
+    
+var LISTEN, UNLISTEN, DISPATCH;
 
+function initialize() {
+    var info, w3c, ie;
+    
+    if (INFO) {
+        EVENT_INFO = info = INFO.event;
+        w3c = info.w3c;
+        ie = info.ie;
+        
+        LISTEN = w3c ?
+                    w3cListen :
+                    ie ?
+                        ieListen :
+                        unsupported;
+        UNLISTEN = w3c ?
+                    w3cUnlisten :
+                    ie ?
+                        ieUnlisten :
+                        unsupported;
+        DISPATCH = w3c ?
+                    w3cDispatch :
+                    ie ?
+                        ieDispatch :
+                        unsupported;
+    
+        listen(global, "unload", onUnload);
+        listen(global, "beforeunload", onUnload);
+    }
+}
 
 function listen(dom, type, handler, context) {
     var newEvent = [dom, type,
@@ -70,6 +87,7 @@ function unlisten(dom, type, handler, context) {
     }
     
     EVENTS = last;
+    last = event = tail = before = null;
     
     return EXPORTS.chain;
 }
@@ -82,11 +100,11 @@ function purge(dom) {
     var before;
 
     for (; event; ) {
+        before = event.before;
+        
         if (everything || dom === event[0]) {
             // unset
             UNLISTEN(event[0], event[1], event[4]);
-            
-            before = event.before;
             
             if (tail) {
                 tail.before = before;
@@ -100,22 +118,27 @@ function purge(dom) {
             continue;
         }
         tail = event;
-        event = event.before;
+        event = before;
     }
     
     EVENTS = last;
+    last = event = tail = before = null;
     return EXPORTS.chain;
     
 }
 
 function dispatch(dom, type, defaults) {
-    
+    if (Object.prototype.toString.call(defaults) !== '[object Object]') {
+        defaults = {};
+    }
+    DISPATCH(dom, type, defaults);
+    return EXPORTS.chain;
 }
 
 
 
 function w3cListen(dom, type, handler, context) {
-    handler = patchEventHandler(handler, context);
+    handler = patchEventHandler(handler, context, false);
     dom.addEventListener(type, handler, false);
     return handler;
 }
@@ -124,8 +147,26 @@ function w3cUnlisten(dom, type, handler) {
     dom.removeEventListener(type, handler, false);
 }
 
+function w3cDispatch(dom, type, defaults) {
+    var hasOwn = Object.prototype.hasOwnProperty,
+        event = dom.ownerDocument.createEvent("Event");
+    var name;
+    
+    event.initEvent(type,
+            defaults.bubbles !== false,
+            defaults.cancelable !== false);
+    
+    for (name in defaults) {
+        if (hasOwn.call(defaults, name)) {
+            event[name] = defaults[name];
+        }
+    }
+    
+    dom.dispatchEvent(event);
+}
+
 function ieListen(dom, type, handler, context) {
-    handler = patchEventHandler(handler, context);
+    handler = patchEventHandler(handler, context, true);
     dom.attachEvent('on' + type, handler);
     return handler;
 }
@@ -134,24 +175,43 @@ function ieUnlisten(dom, type, handler) {
     dom.detachEvent('on' + type, handler);
 }
 
+function ieDispatch(dom, type, defaults) {
+    var hasOwn = Object.prototype.hasOwnProperty,
+        event = dom.ownerDocument.createEventObject();
+    var name;
+    
+    for (name in defaults) {
+        if (hasOwn.call(defaults, name)) {
+            event[name] = defaults[name];
+        }
+    }
+    
+   dom.fireEvent('on' + type, event); 
+}
+
+
 function unsupported() {
     throw new Error("Event Model is not supported by the current Browser.");
 }
 
 
-function patchEventHandler(handler, context) {
-    var ie = EVENT_INFO.ie;
+function patchEventHandler(handler, context, isIE) {
     function patchedEventHandler(event) {
-        if (ie) {
+        var is = isIE;
+        if (is === true) {
             event = global.event;
         }
-        handler.call(context, event, ie ? event.srcElement : event.target);
+        handler.call(context, event, is ? event.srcElement : event.target);
         event = null;
     }
     return patchedEventHandler;
 }
 
 
+function onUnload() {
+    purge();
+}
 
+initialize();
 
-module.exports = INFO.enabled ? EXPORTS : STOP.overrideMethods(EXPORTS);
+module.exports = EXPORTS;

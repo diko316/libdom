@@ -1,16 +1,24 @@
 'use strict';
 
 var currentPackage = require("../package.json"),
+    stopper = require("./lib/stopper.js"),
     detect = require("./lib/detect.js"),
     event = require("./lib/event.js"),
-    EXPORTS = module.exports = {
+    EXPORTS = {
             version: currentPackage.version,
-            browser: detect.browser.browser,
             info: detect,
             on: event.on,
             un: event.un,
-            purge: event.purge
+            purge: event.purge,
+            dispatch: event.fire
         };
+var event;
 
+if (detect) {
+    event.chain = EXPORTS;
+}
+else {
+    stopper.overrideMethods(EXPORTS);
+}
 
-event.chain = EXPORTS;
+module.exports = EXPORTS;

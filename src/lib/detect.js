@@ -1,9 +1,13 @@
 'use strict';
 
-var browser = require("./detect/browser.js");
+var browser = require("./detect/browser.js"),
+    EXPORTS = false;
+    
+if (browser) {
+    EXPORTS = {
+        browser: browser,
+        event: require("./detect/event.js")
+    };
+}
 
-module.exports = {
-    enabled: browser.browser,
-    browser: browser,
-    event: require("./detect/event.js")
-};
+module.exports = EXPORTS;
