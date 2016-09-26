@@ -1,0 +1,27 @@
+{
+  "name": "libdom",
+  "version": "0.0.1",
+  "description": "Browser library that normalizes DOM operations",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/diko316/libdom.git"
+  },
+  "keywords": [
+    "DOM",
+    "HTML",
+    "HTML5",
+    "XHTML",
+    "Browser",
+    "Cross-browser"
+  ],
+  "author": "Diko Tech Slave",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/diko316/libdom/issues"
+  },
+  "homepage": "https://github.com/diko316/libdom#readme"
+}
