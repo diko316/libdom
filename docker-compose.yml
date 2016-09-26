@@ -1,0 +1,31 @@
+version: '2'
+
+services:
+
+  libdom:
+    build: .
+    image: libdom:latest
+    container_name: "libdom-test"
+    hostname: libdom
+    command: bin/run-devserver.sh
+
+    volumes:
+     - .:/opt/app-source:ro
+
+    ports:
+      - "3000:3000"
+      
+  libdom_builder:
+    build: .
+    image: libdom:latest
+    container_name: "libdom-builder"
+    command: bin/autosync-builds.sh
+    
+    environment:
+     - BUILD_MODE=production
+  
+    volumes:
+      - ./dist:/opt/app/dist
+      - .:/opt/app-source:ro
+
+
