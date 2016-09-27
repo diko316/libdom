@@ -8,6 +8,7 @@ TARGET_UID=$(stat -c '%u' ${TARGET})
 
 cd "${ROOT}"
 npm run build
+npm run build-optimized
 cd "${CURRENT_DIR}"
 
 if cp -R ${ROOT}/test/assets/* ${ROOT}/dist/; then

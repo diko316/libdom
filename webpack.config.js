@@ -2,39 +2,63 @@
 
 var PATH = require('path'),
     webpack = require("webpack"),
+    DEFINITION = require("./package.json"),
+    libName = DEFINITION.name,
     buildDirectory = PATH.resolve(__dirname),
     ExtractTextPlugin = require('extract-text-webpack-plugin'),
     sourcePath = PATH.join(buildDirectory, 'src'),
     hasOwn = Object.prototype.hasOwnProperty,
-    entry = {
-            'bundle': [
-                PATH.join(sourcePath, 'index.js')
-            ],
-            'test': [
-                PATH.join(sourcePath, 'test.js')
-            ]
-        },
+    entry = {},
     
     plugins = [
+            new webpack.DefinePlugin({
+                LIB_VERSION: JSON.stringify(DEFINITION.version)
+            }),
             new webpack.NoErrorsPlugin(),
             new ExtractTextPlugin('styles.css')
         ];
-var name, entries;
+
+var name;
+
+entry[libName] = [PATH.join(sourcePath, 'index.js')];
+
 
 
 switch (process.env.BUILD_MODE) {
 case "production":
-    plugins.push(new webpack.optimize.UglifyJsPlugin({
+    console.log("** build production");
+    plugins.splice(0, 0,
+            new webpack.optimize.UglifyJsPlugin({
+                compress: false,
+                beautify: true,
+                mangle: false,
+                comments: false,
+                sourceMap: false
+            }));
+    break;
+
+case "compressed":
+    console.log("** build compressed-production");
+    
+    // replace entry name
+    entry[libName + '.min'] = entry.libdom;
+    delete entry.libdom;
+    
+    // replace with minified plugin
+    plugins[1] = new ExtractTextPlugin('styles.min.css');
+    plugins.splice(0, 0,
+                new webpack.optimize.UglifyJsPlugin({
                     //warnings: false
                 }));
     break;
 
 default:
+    console.log("** build test");
+    entry.test = [PATH.join(sourcePath, 'test.js')];
     for (name in entry) {
         if (hasOwn.call(entry, name)) {
-            entries = entry[name];
-            entries[entries.length] =
-                'webpack-hot-middleware/client?reload=true';
+            entry[name].splice(0, 0,
+                'webpack-hot-middleware/client?reload=true&overlay=false');
         }
     }
     plugins.splice(0, 0,
@@ -51,7 +75,10 @@ module.exports = {
     output: {
         path: PATH.join(buildDirectory, 'test', 'assets'),
         publicPath: '/assets/',
-        filename: '[name].js'
+        filename: '[name].js',
+        library: libName,
+        libraryTarget: 'umd',
+        umdNamedDefine: true
     },
 
     devTool: 'eval',
@@ -122,5 +149,3 @@ module.exports = {
 };
 
 
-//console.log('used config');
-//console.log(module.exports);

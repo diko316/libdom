@@ -1,10 +1,12 @@
 'use strict';
 
 
-var main = require("./index.js");
+var main = module.exports = require("./index.js");
 
-global.libdom = main;
+global.testlibdom = main;
 console.log('testing: ', main);
+
+
 
 
 function clicked() {

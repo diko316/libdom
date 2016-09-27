@@ -1,19 +1,22 @@
 'use strict';
 
-var currentPackage = require("../package.json"),
-    detect = require("./lib/detect.js"),
+var detect = require("./lib/detect.js"),
     dom = require("./lib/dom.js"),
     css = require("./lib/css.js"),
     event = require("./lib/event.js"),
     dimension = require("./lib/dimension.js"),
     EXPORTS = {
-            version: currentPackage.version,
+            version: LIB_VERSION,
             info: detect,
             
             // dom structure
             is: dom.is,
             isView: dom.isView,
             contains: dom.contains,
+            
+            eachNodePreorder: dom.eachPreorder,
+            eachNodePostorder: dom.eachPostorder,
+            eachNodeLevelorder: dom.eachLevel,
             
             // classes
             addClass: css.add,
