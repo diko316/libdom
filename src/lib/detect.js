@@ -8,6 +8,7 @@ if (browser) {
         browser: browser,
         event: require("./detect/event.js"),
         dom: require("./detect/dom.js"),
+        css: require("./detect/css.js"),
         dimension: require("./detect/dimension.js")
     };
 }

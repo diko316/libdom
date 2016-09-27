@@ -26,7 +26,7 @@ main.on(document.body, 'mouseup', noEnd);
 main.on(document.body, 'click', noEnd);
 
 
-main.on(document, 'contextmenu', function (event) {
+main.on(document.body, 'contextmenu', function (event) {
     console.log('purge! ', event.type);
     main.purge(document.body);
 });

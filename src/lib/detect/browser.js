@@ -20,14 +20,11 @@ function isBrowser() {
     return found;
 }
 
-function isStrict() {
-    return IS_BROWSER ? global.document.compatMode === 'CSS1Compat' : false;
-}
 
 if (IS_BROWSER) {
     EXPORTS = {
         browser: IS_BROWSER,
-        strict: isStrict()
+        strict: IS_BROWSER && global.document.compatMode === 'CSS1Compat'
     };
 }
 

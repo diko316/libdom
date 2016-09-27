@@ -1,93 +1,131 @@
 'use strict';
 
 var STRING = require("./string.js"),
+    DETECTED = require("./detect.js"),
+    DOM = require("./dom.js"),
     DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/,
     EM_OR_PERCENT_RE = /%|em/,
     WIDTH_RE = /width/i,
     NUMBER_RE = /\d/,
     EXPORTS = {
+        initialize: initialize,
         add: addClass,
         remove: removeClass,
-        style: getCurrentStyle
+        style: computedStyleNotSupported
     };
-
-function addClass(dom) {
-    var className = dom.className;
     
-    dom.className = STRING.addWord(className,
+function initialize() {
+    var info = DETECTED.css,
+        context = EXPORTS,
+        computed = info.computedStyle;
+    
+    context.style = computed === 'getComputedStyle' ?
+                            w3cGetCurrentStyle :
+                            computed === 'currentStyle' ?
+                                ieGetCurrentStyle :
+                                computedStyleNotSupported;
+}
+
+function addClass(element) {
+    var className;
+    
+    if (!DOM.is(element, 1)) {
+        throw new Error("Invalid DOM [element] parameter.");
+    }
+    
+    className = element.className;
+    
+    element.className = STRING.addWord(className,
                                     Array.prototype.slice.call(arguments, 1));
     
     return EXPORTS.chain;
 }
 
-function removeClass(dom) {
-    var className = dom.className;
+function removeClass(element) {
+    var className;
     
-    dom.className = STRING.removeWord(className,
+    if (!DOM.is(element, 1)) {
+        throw new Error("Invalid DOM [element] parameter.");
+    }
+    
+    className = element.className;
+    
+    element.className = STRING.removeWord(className,
                                     Array.prototype.slice.call(arguments, 1));
     
     return EXPORTS.chain;
 }
 
+function computedStyleNotSupported() {
+    throw new Error("Computed style is not supported in this browser.");
+}
 
-function getCurrentStyle(element) {
-    var doc = element.ownerDocument,
-        win = doc.defaultView || doc.parentWindow,
-        dimensionRe = DIMENSION_RE,
-        args = arguments,
-        c = -1,
-        l = args.length,
-        camel = STRING.camelize,
-        pixelSize = getPixelSize,
-        isW3c = true;
-    var style, property, access, values, value, fontSize;
+function w3cGetCurrentStyle(element) {
+    var camel = STRING.camelize;
+    var win, style, list, c, l, name, values;
     
-    if ('getComputedStyle' in win) {
-        style = win.getComputedStyle(element);
+    if (!DOM.is(element, 1)) {
+        throw new Error("Invalid DOM [element] parameter.");
     }
-    else if ('currentStyle' in element) {
-        style = element.currentStyle;
-        isW3c = false;
-    }
-    else {
-        throw new Error("Unable to retrieve style of [element].");
-    }
+    
+    win = element.ownerDocument.defaultView;
+    style = win.getComputedStyle(element);
     
     values = {};
-    fontSize = false;
-    
-    for (; l--;) {
-        property = args[++c];
-        if (property && typeof property === 'string') {
-            access = camel(property);
-            if (!isW3c) {
-                if (dimensionRe.test(access) && style[access] !== 'auto') {
-                    if (fontSize === false) {
-                        fontSize = pixelSize(element, style, 'fontSize', null);
-                    }
-                    value = pixelSize(element, style, access, fontSize) + 'px';
-                }
-                else if (access === 'float') {
-                    value = style.styleFloat;
-                }
-                else {
-                    value = style[access];
-                }
-            }
-            else {
-                value = style[access];
-            }
-            values[property] = value;
+    list = Array.prototype.slice.call(arguments, 1);
+    for (c = -1, l = list.length; l--;) {
+        name = list[++c];
+        if (name && typeof name === 'string') {
+            values[name] = style[camel(name)];
         }
     }
     
     style = null;
-    doc = null;
     win = null;
     return values;
-
 }
 
+function ieGetCurrentStyle(element) {
+    var dimensionRe = DIMENSION_RE,
+        camel = STRING.camelize,
+        pixelSize = getPixelSize;
+        
+    var style, list, c, l, name, value, access, fontSize, values;
+    
+    if (!DOM.is(element, 1)) {
+        throw new Error("Invalid DOM [element] parameter.");
+    }
+    
+    style = element.currentStyle;
+    fontSize = false;
+    values = {};
+    list = Array.prototype.slice.call(arguments, 1);
+    
+    for (c = -1, l = list.length; l--;) {
+        name = list[++c];
+        if (name && typeof name === 'string') {
+            access = camel(name);
+            
+            if (dimensionRe.test(access) && style[access] !== 'auto') {
+                if (fontSize === false) {
+                    fontSize = pixelSize(element, style, 'fontSize', null);
+                }
+                value = pixelSize(element, style, access, fontSize) + 'px';
+            }
+            else if (access === 'float') {
+                value = style.styleFloat;
+            }
+            else {
+                value = style[access];
+            }
+            
+            values[name] = value;
+        }
+    }
+    
+    style = value = null;
+    return values;
+}
 
 function getPixelSize(element, style, property, fontSize) {
     var sizeWithSuffix = style[property],

@@ -1,4 +1,3 @@
 'use strict';
 
-console.log("under construction");
-
+module.exports = require("../src/index.js");

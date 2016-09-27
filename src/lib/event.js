@@ -11,13 +11,14 @@ var INFO = require("./detect.js"),
         purge: purge
     };
     
-var LISTEN, UNLISTEN, DISPATCH;
+var LISTEN, UNLISTEN, DISPATCH, IS;
 
 function initialize() {
     var info, w3c, ie;
     
     if (INFO) {
         EVENT_INFO = info = INFO.event;
+        
         w3c = info.w3c;
         ie = info.ie;
         
@@ -36,6 +37,12 @@ function initialize() {
                     ie ?
                         ieDispatch :
                         unsupported;
+        
+        IS = w3c ?
+                w3cIsObservable :
+                ie ?
+                    ieIsObservable :
+                    unsupported;
     
         listen(global, "unload", onUnload);
         listen(global, "beforeunload", onUnload);
@@ -43,7 +50,13 @@ function initialize() {
 }
 
 function listen(dom, type, handler, context) {
-    var newEvent = [dom, type,
+    var newEvent;
+    
+    if (!IS(dom)) {
+        throw new Error("Invalid Observable [dom] parameter.");
+    }
+    
+    newEvent = [dom, type,
                         handler,
                         context,
                         LISTEN(dom, type, handler, context)];
@@ -60,6 +73,10 @@ function unlisten(dom, type, handler, context) {
         event = last,
         tail = null;
     var before;
+    
+    if (!IS(dom)) {
+        throw new Error("Invalid Observable [dom] parameter.");
+    }
     
     for (; event; event = event.before) {
         if (dom === event[0] &&
@@ -113,6 +130,7 @@ function purge(dom) {
                 last = before;
             }
             delete event.before;
+            event[0] = null;
             event.splice(0, 5);
             event = before;
             continue;
@@ -128,6 +146,11 @@ function purge(dom) {
 }
 
 function dispatch(dom, type, defaults) {
+    
+    if (!IS(dom)) {
+        throw new Error("Invalid Observable [dom] parameter.");
+    }
+    
     if (Object.prototype.toString.call(defaults) !== '[object Object]') {
         defaults = {};
     }
@@ -165,6 +188,16 @@ function w3cDispatch(dom, type, defaults) {
     dom.dispatchEvent(event);
 }
 
+function w3cIsObservable(subject) {
+    var F = Function,
+        type = typeof subject;
+        
+    return !!subject && (type === 'object' || type === 'function') &&
+            subject.addEventListener instanceof F &&
+            subject.removeEventListener instanceof F &&
+            subject.dispatchEvent instanceof F;
+}
+
 function ieListen(dom, type, handler, context) {
     handler = patchEventHandler(handler, context, true);
     dom.attachEvent('on' + type, handler);
@@ -187,6 +220,16 @@ function ieDispatch(dom, type, defaults) {
     }
     
    dom.fireEvent('on' + type, event); 
+}
+
+function ieIsObservable(subject) {
+    var F = Function,
+        type = typeof subject;
+        
+    return !!subject && (type === 'object' || type === 'function') &&
+            subject.attachEvent instanceof F &&
+            subject.detachEvent instanceof F &&
+            subject.fireEvent instanceof F;
 }
 
 

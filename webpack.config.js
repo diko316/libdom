@@ -25,7 +25,7 @@ var name, entries;
 switch (process.env.BUILD_MODE) {
 case "production":
     plugins.push(new webpack.optimize.UglifyJsPlugin({
-                    warnings: false
+                    //warnings: false
                 }));
     break;
 

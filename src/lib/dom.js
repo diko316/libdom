@@ -3,7 +3,9 @@
 var DETECTED = require("./detect.js"),
     EXPORTS = {
         initialize: initialize,
-        contains: notSupportedContains
+        contains: notSupportedContains,
+        is: isDom,
+        isView: isDefaultView
     };
 
 function initialize() {
@@ -22,7 +24,9 @@ function initialize() {
     }
 }
 
-
+/**
+ * node contains...
+ */
 function notSupportedContains() {
     throw new Error("DOM position comparison is not supported");
 }
@@ -35,5 +39,37 @@ function w3cContains(ancestor, descendant) {
 function ieContains(ancestor, descendant) {
     return ancestor.contains(descendant);
 }
+
+
+/**
+ * is node
+ */
+function isDom(node, nodeType) {
+    var is = isFinite;
+    var type;
+    
+    if (node && typeof node === 'object') {
+        type = node.nodeType;
+        if (typeof type === 'number' && is(type)) {
+            if (typeof nodeType === 'number' && is(nodeType)) {
+                return type === nodeType;
+            }
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+function isDefaultView(defaultView) {
+    var type = typeof defaultView;
+    
+    return !!defaultView &&
+            (type === 'object' || type === 'function') &&
+            defaultView === defaultView.window &&
+            !!defaultView.document;
+}
+
+
 
 module.exports = EXPORTS;
