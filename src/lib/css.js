@@ -12,7 +12,8 @@ var STRING = require("./string.js"),
         add: addClass,
         remove: removeClass,
         style: computedStyleNotSupported
-    };
+    },
+    SLICE = Array.prototype.slice;
     
 function initialize() {
     var info = DETECTED.css,
@@ -35,8 +36,7 @@ function addClass(element) {
     
     className = element.className;
     
-    element.className = STRING.addWord(className,
-                                    Array.prototype.slice.call(arguments, 1));
+    element.className = STRING.addWord(className, SLICE.call(arguments, 1));
     
     return EXPORTS.chain;
 }
@@ -50,8 +50,7 @@ function removeClass(element) {
     
     className = element.className;
     
-    element.className = STRING.removeWord(className,
-                                    Array.prototype.slice.call(arguments, 1));
+    element.className = STRING.removeWord(className, SLICE.call(arguments, 1));
     
     return EXPORTS.chain;
 }
@@ -62,17 +61,16 @@ function computedStyleNotSupported() {
 
 function w3cGetCurrentStyle(element) {
     var camel = STRING.camelize;
-    var win, style, list, c, l, name, values;
+    var style, list, c, l, name, values;
     
     if (!DOM.is(element, 1)) {
         throw new Error("Invalid DOM [element] parameter.");
     }
     
-    win = element.ownerDocument.defaultView;
-    style = win.getComputedStyle(element);
+    style = global.getComputedStyle(element);
     
     values = {};
-    list = Array.prototype.slice.call(arguments, 1);
+    list = SLICE.call(arguments, 1);
     for (c = -1, l = list.length; l--;) {
         name = list[++c];
         if (name && typeof name === 'string') {
@@ -81,7 +79,7 @@ function w3cGetCurrentStyle(element) {
     }
     
     style = null;
-    win = null;
+    
     return values;
 }
 
@@ -99,7 +97,7 @@ function ieGetCurrentStyle(element) {
     style = element.currentStyle;
     fontSize = false;
     values = {};
-    list = Array.prototype.slice.call(arguments, 1);
+    list = SLICE.call(arguments, 1);
     
     for (c = -1, l = list.length; l--;) {
         name = list[++c];
@@ -130,30 +128,32 @@ function ieGetCurrentStyle(element) {
 function getPixelSize(element, style, property, fontSize) {
     var sizeWithSuffix = style[property],
         size = parseFloat(sizeWithSuffix),
-        suffix = sizeWithSuffix.split(NUMBER_RE)[0],
-        isEm = suffix === 'em';
+        suffix = sizeWithSuffix.split(NUMBER_RE)[0];
+    var parent;
 
     switch (suffix) {
     case 'in': return size * 96;
     case 'pt': return size * 96 / 72;
     case 'em': 
     case '%':
-        fontSize = fontSize !== null ?
-                fontSize :
-                EM_OR_PERCENT_RE.test(suffix) && element.parentElement ?
-                    getPixelSize(element.parentElement,
-                        element.parentElement.currentStyle,
-                        'fontSize',
-                        null) :
-                    16;
-        if (isEm) {
-            return size * fontSize;
+        if (!fontSize) {
+            parent = element.parentElement;
+            fontSize = EM_OR_PERCENT_RE.test(suffix) && parent ?
+                            getPixelSize(parent,
+                                        parent.currentStyle,
+                                        'fontSize',
+                                        null) :
+                            16;
+            parent = null;
         }
-        return size / 100 * (property == 'fontSize' ?
+        return suffix === 'em' ?
+                    size * fontSize :
+                    size / 100 * (property == 'fontSize' ?
                                     fontSize :
                                     WIDTH_RE.test(property) ?
                                         element.clientWidth :
                                         element.clientHeight);
+
     default: return size;
     }
 }

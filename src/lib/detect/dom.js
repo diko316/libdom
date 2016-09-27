@@ -1,12 +1,16 @@
 'use strict';
 
-var root = global.document.documentElement;
+var ROOT = global.document.documentElement;
 
+/**
+ * TODO:
+ *  querySelectorAll detect
+ */
 
 module.exports = {
-    comparison: ('compareDocumentPosition' in root &&
+    comparison: ('compareDocumentPosition' in ROOT &&
                     'compareDocumentPosition') ||
-                    ('contains' in root && 'contains') || null
+                    ('contains' in ROOT && 'contains') || null
 };
 
-root = null;
+ROOT = null;

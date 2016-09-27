@@ -69,8 +69,6 @@ if (detect) {
     event.initialize();
     dimension.initialize();
     
-    global.testDimension = EXPORTS;
-    
 }
 else {
     

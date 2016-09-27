@@ -1,19 +1,16 @@
 'use strict';
 
-var win = global,
-    doc = win.document,
-    root = doc.documentElement;
+var WINDOW = global;
 
 
 
 module.exports = {
-        pagescroll: 'pageXOffset' in win && 'pageYOffset' in win ?
+        pagescroll: 'pageXOffset' in WINDOW && 'pageYOffset' in WINDOW ?
                         'pageOffset' : null,
                         
-        rectmethod: 'getBoundingClientRect' in root ?
+        rectmethod: 'getBoundingClientRect' in WINDOW.document.documentElement ?
                         'getBoundingClientRect' : null
     };
 
-root = null;
-doc = null;
-win = null;
+WINDOW = null;
+

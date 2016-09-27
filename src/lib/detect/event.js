@@ -1,22 +1,20 @@
 'use strict';
 
 var F = Function,
-    VIEW = global,
-    DOC = VIEW.document;
+    WINDOW = global,
+    DOCUMENT = WINDOW.document;
 
 
 
 module.exports = {
-    w3c: VIEW.addEventListener instanceof F,
-    ie: VIEW.attachEvent instanceof F,
-    customEvent: 'CustomEvent' in VIEW,
-    creator: ('createEvent' in DOC ?
+    w3c: WINDOW.addEventListener instanceof F,
+    ie: WINDOW.attachEvent instanceof F,
+    customEvent: 'CustomEvent' in WINDOW,
+    creator: ('createEvent' in DOCUMENT ?
                             'createEvent' :
-                            'createEventObject' in DOC ?
+                            'createEventObject' in DOCUMENT ?
                                 'createEventObject' : false)
 };
 
-
-
-DOC = null;
-VIEW = null;
+DOCUMENT = null;
+WINDOW = null;

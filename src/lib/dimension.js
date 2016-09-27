@@ -229,10 +229,10 @@ function rectOffset(element, boundingRect) {
 
 function manualOffset(element) {
     var root = global.document.documentElement,
-        offset = [element.offsetLeft, element.offsetTop];
-    var parent;
+        offset = [element.offsetLeft, element.offsetTop],
+        parent = element.offsetParent;
 
-    for (parent = element.offsetParent; parent; parent = parent.offsetParent) {
+    for (; parent; parent = parent.offsetParent) {
         if (parent.nodeType === 1) {
             offset[0] += (parent.offsetLeft || 0) + (parent.clientLeft || 0);
             offset[1] += (parent.offsetTop || 0) + (parent.clientTop || 0);
@@ -245,9 +245,8 @@ function manualOffset(element) {
             offset[1] += parent.scrollTop || 0;
         }
     }
-    
-    parent = null;
-    root = null;
+
+    root = parent = null;
     return offset;
 }
 
@@ -265,10 +264,9 @@ function w3cPageScrollOffset() {
         offset = [
             (win.pageXOffset || 0) - (root.clientLeft || body.clientLeft || 0),
             (win.pageYOffset || 0) - (root.clientTop || body.clientTop || 0)];
-    body = null;
-    root = null;
-    doc = null;
-    win = null;
+        
+    win = doc = root = body = null;
+    
     return offset;
 }
 
@@ -282,7 +280,7 @@ function iePageScrollOffset() {
     
     if (boundingRect) {
         // rect is only in physical pixel size in IE before version 8 
-        rect = body.getBoundingClientRect ();
+        rect = body.getBoundingClientRect();
 
         // the zoom level is always an integer percent value
         factor = M.round(
@@ -295,9 +293,7 @@ function iePageScrollOffset() {
         M.round(root.scrollTop / factor) -
             (root.clientTop || body.clientTop || 0)];
     
-    body = null;
-    root = null;
-    doc = null;
+    doc = root = body = null;
     
     return offset;
 }

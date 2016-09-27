@@ -3,7 +3,7 @@
 
 var main = require("./index.js");
 
-
+global.libdom = main;
 console.log('testing: ', main);
 
 

@@ -40,6 +40,25 @@ function ieContains(ancestor, descendant) {
     return ancestor.contains(descendant);
 }
 
+/**
+ * DOM manipulaton
+ * TODO:
+ *  insert before
+ *  insert after
+ *  appendChild
+ */
+
+
+/**
+ * DOM select
+ * TODO:
+ *  CSS2 select = querySelectorAll
+ *  pre order traverse
+ *  in order traverse
+ *  post order traverse
+ *  level order traverse
+ */
+
 
 /**
  * is node

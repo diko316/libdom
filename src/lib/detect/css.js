@@ -1,16 +1,16 @@
 'use strict';
 
 
-var win = global,
-    doc = win.document;
+var WINDOW = global,
+    DOCUMENT = WINDOW.document;
 
 
 module.exports = {
-    computedStyle: win.getComputedStyle instanceof Function ?
+    computedStyle: WINDOW.getComputedStyle instanceof Function ?
                         'getComputedStyle' :
-                        'currentStyle' in doc.documentElement ?
+                        'currentStyle' in DOCUMENT.documentElement ?
                             'currentStyle' : false
 };
 
-doc = null;
-win = null;
+DOCUMENT = null;
+WINDOW = null;
