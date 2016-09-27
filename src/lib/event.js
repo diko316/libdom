@@ -4,7 +4,7 @@ var INFO = require("./detect.js"),
     EVENTS = null,
     EVENT_INFO = null,
     EXPORTS = {
-        chain: void(0),
+        initialize: initialize,
         on: listen,
         un: unlisten,
         fire: dispatch,
@@ -212,6 +212,5 @@ function onUnload() {
     purge();
 }
 
-initialize();
-
+EXPORTS.chain = void(0);
 module.exports = EXPORTS;

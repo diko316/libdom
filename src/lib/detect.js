@@ -6,7 +6,9 @@ var browser = require("./detect/browser.js"),
 if (browser) {
     EXPORTS = {
         browser: browser,
-        event: require("./detect/event.js")
+        event: require("./detect/event.js"),
+        dom: require("./detect/dom.js"),
+        dimension: require("./detect/dimension.js")
     };
 }
 

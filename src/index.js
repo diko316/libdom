@@ -16,6 +16,7 @@ var event;
 
 if (detect) {
     event.chain = EXPORTS;
+    event.initialize();
 }
 else {
     stopper.overrideMethods(EXPORTS);
