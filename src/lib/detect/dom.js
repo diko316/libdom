@@ -8,9 +8,8 @@ var ROOT = global.document.documentElement;
  */
 
 module.exports = {
-    comparison: ('compareDocumentPosition' in ROOT &&
-                    'compareDocumentPosition') ||
-                    ('contains' in ROOT && 'contains') || null
+    compare: !!ROOT.compareDocumentPosition,
+    contains: !!ROOT.contains
 };
 
 ROOT = null;

@@ -31,7 +31,8 @@ var detect = require("./lib/detect.js"),
             // dimension
             offset: dimension.offset,
             size: dimension.size,
-            box: dimension.box
+            box: dimension.box,
+            scroll: dimension.scroll
             
         };
 
@@ -62,10 +63,6 @@ function notBrowserMethodOverride(context) {
 }
 
 
-global[LIB_NAME] = EXPORTS;
-console.log(LIB_NAME);
-
-
 if (detect) {
     
     css.chain =
@@ -86,3 +83,5 @@ else {
 
 
 module.exports = EXPORTS;
+//global[LIB_NAME] = EXPORTS;
+//console.log(LIB_NAME);

@@ -1,19 +1,11 @@
 'use strict';
 
-var WINDOW = global,
-    DOCUMENT = WINDOW.document;
-
-
+var WINDOW = global;
 
 module.exports = {
     w3c: !!WINDOW.addEventListener,
     ie: !!WINDOW.attachEvent,
-    customEvent: !!WINDOW.CustomEvent,
-    creator: (DOCUMENT.createEvent  ?
-                            'createEvent' :
-                            DOCUMENT.createEventObject ?
-                                'createEventObject' : false)
+    customEvent: !!WINDOW.CustomEvent
 };
 
-DOCUMENT = null;
 WINDOW = null;

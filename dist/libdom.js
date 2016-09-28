@@ -21,60 +21,55 @@
     }([ function(module, exports, __webpack_require__) {
         module.exports = __webpack_require__(1);
     }, function(module, exports, __webpack_require__) {
-        (function(global) {
-            "use strict";
-            var detect = __webpack_require__(2), dom = __webpack_require__(8), css = __webpack_require__(9), event = __webpack_require__(11), dimension = __webpack_require__(12), EXPORTS = {
-                version: "0.0.4",
-                info: detect,
-                is: dom.is,
-                isView: dom.isView,
-                contains: dom.contains,
-                eachNodePreorder: dom.eachPreorder,
-                eachNodePostorder: dom.eachPostorder,
-                eachNodeLevelorder: dom.eachLevel,
-                addClass: css.add,
-                removeClass: css.remove,
-                on: event.on,
-                un: event.un,
-                purge: event.purge,
-                dispatch: event.fire,
-                offset: dimension.offset,
-                size: dimension.size,
-                box: dimension.box
-            };
-            function notBrowser() {
-                throw new Error("Unable to proceed, not running in a browser.");
-            }
-            function notBrowserMethodOverride(context) {
-                var O = Object.prototype, F = Function, handler = notBrowser, hasOwn = O.hasOwnProperty;
-                var name;
-                if (O.toString.call(context) === "[object Object]") {
-                    if (!(handler instanceof F)) {
-                        handler = notBrowser;
-                    }
-                    for (name in context) {
-                        if (hasOwn.call(context, name) && context[name] instanceof F) {
-                            context[name] = handler;
-                        }
+        "use strict";
+        var detect = __webpack_require__(2), dom = __webpack_require__(8), css = __webpack_require__(9), event = __webpack_require__(11), dimension = __webpack_require__(12), EXPORTS = {
+            version: "0.0.4",
+            info: detect,
+            is: dom.is,
+            isView: dom.isView,
+            contains: dom.contains,
+            eachNodePreorder: dom.eachPreorder,
+            eachNodePostorder: dom.eachPostorder,
+            eachNodeLevelorder: dom.eachLevel,
+            addClass: css.add,
+            removeClass: css.remove,
+            on: event.on,
+            un: event.un,
+            purge: event.purge,
+            dispatch: event.fire,
+            offset: dimension.offset,
+            size: dimension.size,
+            box: dimension.box,
+            scroll: dimension.scroll
+        };
+        function notBrowser() {
+            throw new Error("Unable to proceed, not running in a browser.");
+        }
+        function notBrowserMethodOverride(context) {
+            var O = Object.prototype, F = Function, handler = notBrowser, hasOwn = O.hasOwnProperty;
+            var name;
+            if (O.toString.call(context) === "[object Object]") {
+                if (!(handler instanceof F)) {
+                    handler = notBrowser;
+                }
+                for (name in context) {
+                    if (hasOwn.call(context, name) && context[name] instanceof F) {
+                        context[name] = handler;
                     }
                 }
-                return context;
             }
-            global["libdom"] = EXPORTS;
-            console.log("libdom");
-            if (detect) {
-                css.chain = event.chain = dimension.chain = EXPORTS;
-                dom.initialize();
-                css.initialize();
-                event.initialize();
-                dimension.initialize();
-            } else {
-                notBrowserMethodOverride(EXPORTS);
-            }
-            module.exports = EXPORTS;
-        }).call(exports, function() {
-            return this;
-        }());
+            return context;
+        }
+        if (detect) {
+            css.chain = event.chain = dimension.chain = EXPORTS;
+            dom.initialize();
+            css.initialize();
+            event.initialize();
+            dimension.initialize();
+        } else {
+            notBrowserMethodOverride(EXPORTS);
+        }
+        module.exports = EXPORTS;
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var browser = __webpack_require__(3), EXPORTS = false;
@@ -110,14 +105,12 @@
     }, function(module, exports) {
         (function(global) {
             "use strict";
-            var WINDOW = global, DOCUMENT = WINDOW.document;
+            var WINDOW = global;
             module.exports = {
                 w3c: !!WINDOW.addEventListener,
                 ie: !!WINDOW.attachEvent,
-                customEvent: !!WINDOW.CustomEvent,
-                creator: DOCUMENT.createEvent ? "createEvent" : DOCUMENT.createEventObject ? "createEventObject" : false
+                customEvent: !!WINDOW.CustomEvent
             };
-            DOCUMENT = null;
             WINDOW = null;
         }).call(exports, function() {
             return this;
@@ -127,7 +120,8 @@
             "use strict";
             var ROOT = global.document.documentElement;
             module.exports = {
-                comparison: "compareDocumentPosition" in ROOT && "compareDocumentPosition" || "contains" in ROOT && "contains" || null
+                compare: !!ROOT.compareDocumentPosition,
+                contains: !!ROOT.contains
             };
             ROOT = null;
         }).call(exports, function() {
@@ -136,11 +130,11 @@
     }, function(module, exports) {
         (function(global) {
             "use strict";
-            var WINDOW = global, DOCUMENT = WINDOW.document;
+            var WINDOW = global;
             module.exports = {
-                computedStyle: WINDOW.getComputedStyle instanceof Function ? "getComputedStyle" : "currentStyle" in DOCUMENT.documentElement ? "currentStyle" : false
+                w3cStyle: !!WINDOW.getComputedStyle,
+                ieStyle: !!WINDOW.document.documentElement.currentStyle
             };
-            DOCUMENT = null;
             WINDOW = null;
         }).call(exports, function() {
             return this;
@@ -150,8 +144,8 @@
             "use strict";
             var WINDOW = global;
             module.exports = {
-                pagescroll: "pageXOffset" in WINDOW && "pageYOffset" in WINDOW ? "pageOffset" : null,
-                rectmethod: "getBoundingClientRect" in WINDOW.document.documentElement ? "getBoundingClientRect" : null
+                pagescroll: typeof WINDOW.pageXOffset !== "undefined",
+                rectmethod: !!WINDOW.document.documentElement.getBoundingClientRect
             };
             WINDOW = null;
         }).call(exports, function() {
@@ -159,7 +153,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var DETECTED = __webpack_require__(2), EXPORTS = {
+        var DETECTED = __webpack_require__(2), ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", ERROR_INVALID_CALLBACK = "Invalid tree traverse [callback] parameter.", EXPORTS = {
             initialize: initialize,
             contains: notSupportedContains,
             is: isDom,
@@ -170,43 +164,32 @@
         };
         function initialize() {
             var info = DETECTED.dom, context = EXPORTS;
-            switch (info.comparison) {
-              case "compareDocumentPosition":
-                context.contains = w3cContains;
-                break;
-
-              case "contains":
-                context.contains = ieContains;
-                break;
-
-              default:
-                context.contains = notSupportedContains;
-            }
+            context.contains = info.compare ? w3cContains : info.contains ? ieContains : notSupportedContains;
         }
         function notSupportedContains() {
             throw new Error("DOM position comparison is not supported");
         }
         function w3cContains(ancestor, descendant) {
-            return 0 < ancestor.compareDocumentPosition(descendant) & ancestor.ownerDocument.DOCUMENT_POSITION_CONTAINED_BY;
+            return 0 < ancestor.compareDocumentPosition(descendant) & 16;
         }
         function ieContains(ancestor, descendant) {
             return ancestor.contains(descendant);
         }
         function preOrderTraverse(element, callback) {
             if (!isDom(element, 1)) {
-                throw new Error("Invalid DOM [element] parameter.");
+                throw new Error(ERROR_INVALID_DOM);
             }
             if (!(callback instanceof Function)) {
-                throw new Error("Invalid pre-order traverse [callback] parameter.");
+                throw new Error(ERROR_INVALID_CALLBACK);
             }
             return orderTraverse(element, callback, true);
         }
         function postOrderTraverse(element, callback) {
             if (!isDom(element, 1)) {
-                throw new Error("Invalid DOM [element] parameter.");
+                throw new Error(ERROR_INVALID_DOM);
             }
             if (!(callback instanceof Function)) {
-                throw new Error("Invalid post-order traverse [callback] parameter.");
+                throw new Error(ERROR_INVALID_CALLBACK);
             }
             return orderTraverse(element, callback, false);
         }
@@ -241,10 +224,10 @@
         function levelTraverse(element, callback) {
             var queue, last, node, current;
             if (!isDom(element, 1)) {
-                throw new Error("Invalid DOM [element] parameter.");
+                throw new Error(ERROR_INVALID_DOM);
             }
             if (!(callback instanceof Function)) {
-                throw new Error("Invalid pre/post-order traverse [callback] parameter.");
+                throw new Error(ERROR_INVALID_CALLBACK);
             }
             queue = last = {
                 node: element,
@@ -286,26 +269,26 @@
         }
         function isDefaultView(defaultView) {
             var type = typeof defaultView;
-            return !!defaultView && (type === "object" || type === "function") && defaultView === defaultView.window && !!defaultView.document;
+            return !!defaultView && (type === "object" || type === "function") && defaultView.self === defaultView.window && !!defaultView.document;
         }
         module.exports = EXPORTS.chain = EXPORTS;
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var STRING = __webpack_require__(10), DETECTED = __webpack_require__(2), DOM = __webpack_require__(8), DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, EXPORTS = {
+            var STRING = __webpack_require__(10), DETECTED = __webpack_require__(2), DOM = __webpack_require__(8), DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", EXPORTS = {
                 initialize: initialize,
                 add: addClass,
                 remove: removeClass,
                 style: computedStyleNotSupported
             }, SLICE = Array.prototype.slice;
             function initialize() {
-                var info = DETECTED.css, context = EXPORTS, computed = info.computedStyle;
-                context.style = computed === "getComputedStyle" ? w3cGetCurrentStyle : computed === "currentStyle" ? ieGetCurrentStyle : computedStyleNotSupported;
+                var info = DETECTED.css, context = EXPORTS;
+                context.style = info.w3cStyle ? w3cGetCurrentStyle : info.ieStyle ? ieGetCurrentStyle : computedStyleNotSupported;
             }
             function addClass(element) {
                 var className;
                 if (!DOM.is(element, 1)) {
-                    throw new Error("Invalid DOM [element] parameter.");
+                    throw new Error(ERROR_INVALID_DOM);
                 }
                 className = element.className;
                 element.className = STRING.addWord(className, SLICE.call(arguments, 1));
@@ -314,7 +297,7 @@
             function removeClass(element) {
                 var className;
                 if (!DOM.is(element, 1)) {
-                    throw new Error("Invalid DOM [element] parameter.");
+                    throw new Error(ERROR_INVALID_DOM);
                 }
                 className = element.className;
                 element.className = STRING.removeWord(className, SLICE.call(arguments, 1));
@@ -327,7 +310,7 @@
                 var camel = STRING.camelize;
                 var style, list, c, l, name, values;
                 if (!DOM.is(element, 1)) {
-                    throw new Error("Invalid DOM [element] parameter.");
+                    throw new Error(ERROR_INVALID_DOM);
                 }
                 style = global.getComputedStyle(element);
                 values = {};
@@ -345,7 +328,7 @@
                 var dimensionRe = DIMENSION_RE, camel = STRING.camelize, pixelSize = getPixelSize;
                 var style, list, c, l, name, value, access, fontSize, values;
                 if (!DOM.is(element, 1)) {
-                    throw new Error("Invalid DOM [element] parameter.");
+                    throw new Error(ERROR_INVALID_DOM);
                 }
                 style = element.currentStyle;
                 fontSize = false;
@@ -445,7 +428,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var INFO = __webpack_require__(2), EVENTS = null, IE_CUSTOM_EVENTS = {}, HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty, ERROR_OBSERVABLE_NO_SUPPORT = "Invalid [observable] parameter.", EXPORTS = module.exports = {
+            var INFO = __webpack_require__(2), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty, ERROR_OBSERVABLE_NO_SUPPORT = "Invalid [observable] parameter.", ERROR_INVALID_TYPE = "Invalid Event [type] parameter.", ERROR_INVALID_HANDLER = "Invalid Event [handler] parameter.", IE_CUSTOM_TYPE_EVENT = "dataavailable", EXPORTS = module.exports = {
                 initialize: initialize,
                 on: listen,
                 un: unlisten,
@@ -454,7 +437,7 @@
             };
             var RESOLVE, LISTEN, UNLISTEN, DISPATCH;
             function initialize() {
-                var info = INFO.event;
+                var info = INFO.event, isCapable = true, beforeUnload = onBeforeUnload, main = global;
                 switch (true) {
                   case info.w3c:
                     LISTEN = w3cListen;
@@ -469,11 +452,24 @@
                     DISPATCH = ieDispatch;
                     RESOLVE = ieObservable;
                     break;
+
+                  default:
+                    isCapable = false;
+                }
+                if (isCapable) {
+                    listen(main, "beforeunload", beforeUnload);
+                    listen(main, "unload", beforeUnload);
                 }
             }
             function listen(observable, type, handler, context) {
                 var last = EVENTS;
                 var current;
+                if (!type || typeof type !== "string") {
+                    throw new Error(ERROR_INVALID_TYPE);
+                }
+                if (!(handler instanceof Function)) {
+                    throw new Error(ERROR_INVALID_HANDLER);
+                }
                 observable = RESOLVE(observable);
                 if (!observable) {
                     throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
@@ -493,6 +489,12 @@
             }
             function unlisten(observable, type, handler, context) {
                 var found, len;
+                if (!type || typeof type !== "string") {
+                    throw new Error(ERROR_INVALID_TYPE);
+                }
+                if (!(handler instanceof Function)) {
+                    throw new Error(ERROR_INVALID_HANDLER);
+                }
                 observable = RESOLVE(observable);
                 if (!observable) {
                     throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
@@ -507,6 +509,9 @@
                 return EXPORTS.chain;
             }
             function dispatch(observable, type, defaults) {
+                if (!type || typeof type !== "string") {
+                    throw new Error(ERROR_INVALID_TYPE);
+                }
                 observable = RESOLVE(observable);
                 if (!observable) {
                     throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
@@ -543,7 +548,7 @@
                         delete event.unlisten;
                         delete event.head;
                         delete event.tail;
-                        event = null;
+                        event = head = tail = null;
                     }
                 }
                 return destroy;
@@ -603,11 +608,11 @@
             function ieListen(observable, type, handler, context) {
                 var isCustomEvent = ieTestCustomEvent(observable, type);
                 var listener = isCustomEvent ? ieCreateCustomHandler(type, handler, context) : ieCreateHandler(handler, context);
-                observable.attachEvent(isCustomEvent ? "ondataavailable" : "on" + type, listener);
+                observable.attachEvent("on" + (isCustomEvent ? IE_CUSTOM_TYPE_EVENT : type), listener);
                 return [ observable, type, handler, context, listener ];
             }
             function ieUnlisten(observable, type, listener) {
-                observable.detachEvent(listener.customType ? "ondataavailable" : "on" + type, listener);
+                observable.detachEvent("on" + (listener.customType ? IE_CUSTOM_TYPE_EVENT : type), listener);
             }
             function ieDispatch(observable, type, properties) {
                 var hasOwn = HAS_OWN_PROPERTY, event = global.document.createEventObject();
@@ -619,7 +624,7 @@
                 }
                 if (ieTestCustomEvent(observable, type)) {
                     event.customType = type;
-                    type = "dataavailable";
+                    type = IE_CUSTOM_TYPE_EVENT;
                 }
                 observable.fireEvent("on" + type, event);
             }
@@ -673,6 +678,13 @@
                 }
                 return false;
             }
+            function onBeforeUnload() {
+                if (!PAGE_UNLOADED) {
+                    PAGE_UNLOADED = true;
+                    purge();
+                }
+            }
+            RESOLVE = LISTEN = UNLISTEN = DISPATCH;
             EXPORTS.chain = EXPORTS;
         }).call(exports, function() {
             return this;
@@ -680,15 +692,17 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), DOM = __webpack_require__(8), CSS = __webpack_require__(9), boundingRect = false, getScrollFromChrome = null, getOffset = null, getSize = null, getBox = null, EXPORTS = {
+            var DETECTED = __webpack_require__(2), DOM = __webpack_require__(8), CSS = __webpack_require__(9), ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.", ELEMENT_VIEW = 1, PAGE_VIEW = 2, boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, setPageScroll = null, EXPORTS = {
                 initialize: initialize,
                 offset: offset,
                 size: size,
-                box: box
+                box: box,
+                scroll: scroll,
+                screen: screen
             };
             function offset(element, x, y) {
-                if (!DOM.is(element, 1)) {
-                    throw new Error("Invalid DOM [element] parameter.");
+                if (isViewable(element) !== ELEMENT_VIEW) {
+                    throw new Error(ERROR_INVALID_ELEMENT);
                 }
                 if (arguments.length > 1) {
                     return box(element, x, y);
@@ -696,8 +710,8 @@
                 return getOffset(element);
             }
             function size(element, width, height) {
-                if (!DOM.is(element, 1)) {
-                    throw new Error("Invalid DOM [element] parameter.");
+                if (isViewable(element) !== ELEMENT_VIEW) {
+                    throw new Error(ERROR_INVALID_ELEMENT);
                 }
                 if (arguments.length > 1) {
                     return box(element, null, null, width, height);
@@ -705,10 +719,10 @@
                 return getSize(element);
             }
             function box(element, x, y, width, height) {
-                var is = isFinite, M = Math, css = CSS;
+                var is = isFinite, M = Math, css = CSS, PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", NUMBER = "number";
                 var hasLeft, hasTop, hasWidth, hasHeight, parent, diff, diff1, diff2, style, style1, style2, styleAttribute;
-                if (!DOM.is(element, 1)) {
-                    throw new Error("Invalid DOM [element] parameter.");
+                if (isViewable(element) !== ELEMENT_VIEW) {
+                    throw new Error(ERROR_INVALID_ELEMENT);
                 }
                 if (arguments.length > 1) {
                     if (x instanceof Array) {
@@ -718,21 +732,21 @@
                         x = x[0];
                     }
                     hasLeft = hasTop = hasWidth = hasHeight = false;
-                    if (typeof x === "number" && is(x)) {
+                    if (typeof x === NUMBER && is(x)) {
                         hasLeft = true;
                     }
-                    if (typeof y === "number" && is(y)) {
+                    if (typeof y === NUMBER && is(y)) {
                         hasTop = true;
                     }
-                    if (typeof width === "number" && is(width)) {
+                    if (typeof width === NUMBER && is(width)) {
                         hasWidth = true;
                     }
-                    if (typeof height === "number" && is(height)) {
+                    if (typeof height === NUMBER && is(height)) {
                         hasHeight = true;
                     }
                     if (hasLeft || hasTop || hasWidth || hasHeight) {
                         styleAttribute = element.style;
-                        style = css.style(element, "position", "paddingTop", "paddingLeft", "paddingRight", "paddingBottom");
+                        style = css.style(element, "position", PADDING_TOP, PADDING_LEFT, "paddingRight", "paddingBottom");
                         if (hasLeft || hasTop) {
                             diff = getOffset(element);
                             diff1 = diff2 = 0;
@@ -748,7 +762,7 @@
                               case "relative":
                                 parent = element.offsetParent;
                                 if (parent) {
-                                    parent = css.style(parent, "paddingTop", "paddingLeft");
+                                    parent = css.style(parent, PADDING_TOP, PADDING_LEFT);
                                     style1 -= parseInt(parent.paddingLeft, 10) || 0;
                                     style2 -= parseInt(parent.paddingTop, 10) || 0;
                                 }
@@ -778,6 +792,41 @@
                 }
                 return getBox(element);
             }
+            function scroll(dom, x, y) {
+                var setter = arguments.length > 1;
+                var current;
+                if (setter) {
+                    if (typeof x !== "number" || !isFinite(x)) {
+                        x = false;
+                    }
+                    if (typeof y !== "number" || !isFinite(y)) {
+                        y = false;
+                    }
+                }
+                switch (isViewable(dom)) {
+                  case PAGE_VIEW:
+                    current = getPageScroll();
+                    if (setter) {
+                        setPageScroll(x === false ? current[0] : x, y === false ? current[1] : y);
+                    } else {
+                        return current;
+                    }
+                    break;
+
+                  case ELEMENT_VIEW:
+                    if (setter) {
+                        dom.scrollLeft = x === false ? dom.scrollLeft : x;
+                        dom.scrollTop = y === false ? dom.scrollTop : y;
+                    } else {
+                        return [ dom.scrollLeft, dom.scrollTop ];
+                    }
+                    break;
+
+                  default:
+                    throw new Error("Invalid [dom] Object parameter.");
+                }
+            }
+            function screen() {}
             function rectBox(element) {
                 var rect = element.getBoundingClientRect(), box = rectOffset(element, rect), size = rectSize(element, rect);
                 box[2] = size[0];
@@ -805,7 +854,7 @@
                 return [ M.max(0, element.offsetWidth || 0), M.max(0, element.offsetHeight || 0) ];
             }
             function rectOffset(element, boundingRect) {
-                var scrolled = getScrollFromChrome(), rect = boundingRect || element.getBoundingClientRect(), offset = [ rect.left + scrolled[0], rect.top + scrolled[1] ];
+                var scrolled = getPageScroll(), rect = boundingRect || element.getBoundingClientRect(), offset = [ rect.left + scrolled[0], rect.top + scrolled[1] ];
                 rect = null;
                 return offset;
             }
@@ -826,26 +875,44 @@
                 root = parent = null;
                 return offset;
             }
+            function w3cSetPageScroll(x, y) {
+                global.scrollTo(x, y);
+            }
             function w3cPageScrollOffset() {
                 var win = global, doc = win.document, root = doc.documentElement, body = doc.body, offset = [ (win.pageXOffset || 0) - (root.clientLeft || body.clientLeft || 0), (win.pageYOffset || 0) - (root.clientTop || body.clientTop || 0) ];
                 win = doc = root = body = null;
                 return offset;
             }
+            function ieSetPageScroll(x, y) {
+                var factor = getZoomFactor();
+                global.scrollTo(x * factor, y * factor);
+            }
             function iePageScrollOffset() {
-                var M = Math, doc = global.document, root = doc.documentElement, body = doc.body, factor = 1;
-                var rect, offset;
-                if (boundingRect) {
-                    rect = body.getBoundingClientRect();
-                    factor = M.round((rect.right - rect.left / body.offsetWidth) * 100) / 100;
-                }
+                var M = Math, doc = global.document, root = doc.documentElement, body = doc.body, factor = getZoomFactor();
+                var offset;
                 offset = [ M.round(root.scrollLeft / factor) - (root.clientLeft || body.clientLeft || 0), M.round(root.scrollTop / factor) - (root.clientTop || body.clientTop || 0) ];
                 doc = root = body = null;
                 return offset;
             }
+            function getZoomFactor() {
+                var factor = 1, body = global.document.body;
+                var rect;
+                if (boundingRect) {
+                    rect = body.getBoundingClientRect();
+                    factor = Math.round((rect.right - rect.left / body.offsetWidth) * 100) / 100;
+                }
+                body = null;
+                return factor;
+            }
+            function isViewable(dom) {
+                var help = DOM;
+                return help.isView(dom) ? PAGE_VIEW : help.is(dom) && (dom.nodeType !== 9 || !help.contains(dom.ownerDocument.body, dom)) ? ELEMENT_VIEW : false;
+            }
             function initialize() {
                 var info = DETECTED.dimension;
-                getScrollFromChrome = info.pagescroll === "pageOffset" ? w3cPageScrollOffset : iePageScrollOffset;
-                boundingRect = info.rectmethod === "getBoundingClientRect";
+                getPageScroll = info.pagescroll ? w3cPageScrollOffset : iePageScrollOffset;
+                setPageScroll = info.pagescroll ? w3cSetPageScroll : ieSetPageScroll;
+                boundingRect = info.rectmethod && "getBoundingClientRect";
                 getOffset = boundingRect ? rectOffset : manualOffset;
                 getSize = boundingRect ? rectSize : manualSize;
                 getBox = boundingRect ? rectBox : manualBox;

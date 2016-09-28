@@ -51,24 +51,24 @@ case "compressed":
     plugins[1] = new ExtractTextPlugin('styles.min.css');
     plugins.splice(0, 0,
                 new webpack.optimize.UglifyJsPlugin({
-                    //warnings: false
+                    
                 }));
     break;
 
 default:
     console.log("** build test");
     entry.test = [PATH.join(sourcePath, 'test.js')];
-    //for (name in entry) {
-    //    if (hasOwn.call(entry, name)) {
-    //        entry[name].splice(0, 0,
-    //            'webpack-hot-middleware/client?reload=true&overlay=false');
-    //    }
-    //}
+    for (name in entry) {
+        if (hasOwn.call(entry, name)) {
+            entry[name].splice(0, 0,
+                'webpack-hot-middleware/client?reload=true&overlay=false');
+        }
+    }
     plugins.splice(0, 0,
         new es3ifyPlugin(),
-        new webpack.optimize.OccurenceOrderPlugin());
-        //new webpack.optimize.OccurenceOrderPlugin(),
-        //new webpack.HotModuleReplacementPlugin());
+        //new webpack.optimize.OccurenceOrderPlugin());
+        new webpack.optimize.OccurenceOrderPlugin(),
+        new webpack.HotModuleReplacementPlugin());
 }
 
 

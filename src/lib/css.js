@@ -7,6 +7,7 @@ var STRING = require("./string.js"),
     EM_OR_PERCENT_RE = /%|em/,
     WIDTH_RE = /width/i,
     NUMBER_RE = /\d/,
+    ERROR_INVALID_DOM = "Invalid DOM [element] parameter.",
     EXPORTS = {
         initialize: initialize,
         add: addClass,
@@ -17,12 +18,11 @@ var STRING = require("./string.js"),
     
 function initialize() {
     var info = DETECTED.css,
-        context = EXPORTS,
-        computed = info.computedStyle;
+        context = EXPORTS;
     
-    context.style = computed === 'getComputedStyle' ?
+    context.style = info.w3cStyle ?
                             w3cGetCurrentStyle :
-                            computed === 'currentStyle' ?
+                            info.ieStyle ?
                                 ieGetCurrentStyle :
                                 computedStyleNotSupported;
 }
@@ -31,7 +31,7 @@ function addClass(element) {
     var className;
     
     if (!DOM.is(element, 1)) {
-        throw new Error("Invalid DOM [element] parameter.");
+        throw new Error(ERROR_INVALID_DOM);
     }
     
     className = element.className;
@@ -45,7 +45,7 @@ function removeClass(element) {
     var className;
     
     if (!DOM.is(element, 1)) {
-        throw new Error("Invalid DOM [element] parameter.");
+        throw new Error(ERROR_INVALID_DOM);
     }
     
     className = element.className;
@@ -64,7 +64,7 @@ function w3cGetCurrentStyle(element) {
     var style, list, c, l, name, values;
     
     if (!DOM.is(element, 1)) {
-        throw new Error("Invalid DOM [element] parameter.");
+        throw new Error(ERROR_INVALID_DOM);
     }
     
     style = global.getComputedStyle(element);
@@ -91,7 +91,7 @@ function ieGetCurrentStyle(element) {
     var style, list, c, l, name, value, access, fontSize, values;
     
     if (!DOM.is(element, 1)) {
-        throw new Error("Invalid DOM [element] parameter.");
+        throw new Error(ERROR_INVALID_DOM);
     }
     
     style = element.currentStyle;

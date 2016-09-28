@@ -1,6 +1,8 @@
 'use strict';
 
 var DETECTED = require("./detect.js"),
+    ERROR_INVALID_DOM = "Invalid DOM [element] parameter.",
+    ERROR_INVALID_CALLBACK = "Invalid tree traverse [callback] parameter.",
     EXPORTS = {
         initialize: initialize,
         contains: notSupportedContains,
@@ -15,16 +17,11 @@ function initialize() {
     var info = DETECTED.dom,
         context = EXPORTS;
     
-    switch (info.comparison) {
-    case 'compareDocumentPosition':
-        context.contains = w3cContains;
-        break;
-    case 'contains':
-        context.contains = ieContains;
-        break;
-    default:
-        context.contains = notSupportedContains;
-    }
+    context.contains = info.compare ?
+                            w3cContains :
+                            info.contains ?
+                                ieContains :
+                                notSupportedContains;
 }
 
 /**
@@ -35,8 +32,7 @@ function notSupportedContains() {
 }
 
 function w3cContains(ancestor, descendant) {
-    return 0 < ancestor.compareDocumentPosition(descendant) &
-                ancestor.ownerDocument.DOCUMENT_POSITION_CONTAINED_BY;
+    return 0 < ancestor.compareDocumentPosition(descendant) & 16;
 }
 
 function ieContains(ancestor, descendant) {
@@ -61,12 +57,11 @@ function ieContains(ancestor, descendant) {
 
 function preOrderTraverse(element, callback) {
     if (!isDom(element, 1)) {
-        throw new Error("Invalid DOM [element] parameter.");
+        throw new Error(ERROR_INVALID_DOM);
     }
     
     if (!(callback instanceof Function)) {
-        throw new Error(
-                    "Invalid pre-order traverse [callback] parameter.");
+        throw new Error(ERROR_INVALID_CALLBACK);
     }
 
     return orderTraverse(element, callback, true);
@@ -74,12 +69,11 @@ function preOrderTraverse(element, callback) {
 
 function postOrderTraverse(element, callback) {
     if (!isDom(element, 1)) {
-        throw new Error("Invalid DOM [element] parameter.");
+        throw new Error(ERROR_INVALID_DOM);
     }
     
     if (!(callback instanceof Function)) {
-        throw new Error(
-                    "Invalid post-order traverse [callback] parameter.");
+        throw new Error(ERROR_INVALID_CALLBACK);
     }
 
     return orderTraverse(element, callback, false);
@@ -140,12 +134,11 @@ function levelTraverse(element, callback) {
 	var queue, last, node, current;
     
     if (!isDom(element, 1)) {
-        throw new Error("Invalid DOM [element] parameter.");
+        throw new Error(ERROR_INVALID_DOM);
     }
     
     if (!(callback instanceof Function)) {
-        throw new Error(
-                    "Invalid pre/post-order traverse [callback] parameter.");
+        throw new Error(ERROR_INVALID_CALLBACK);
     }
     
     queue = last = {
@@ -206,7 +199,7 @@ function isDefaultView(defaultView) {
     
     return !!defaultView &&
             (type === 'object' || type === 'function') &&
-            defaultView === defaultView.window &&
+            defaultView.self === defaultView.window &&
             !!defaultView.document;
 }
 

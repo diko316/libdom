@@ -2,9 +2,13 @@
 
 var INFO = require("./detect.js"),
     EVENTS = null,
+    PAGE_UNLOADED = false,
     IE_CUSTOM_EVENTS = {},
     HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty,
     ERROR_OBSERVABLE_NO_SUPPORT = "Invalid [observable] parameter.",
+    ERROR_INVALID_TYPE = "Invalid Event [type] parameter.",
+    ERROR_INVALID_HANDLER = "Invalid Event [handler] parameter.",
+    IE_CUSTOM_TYPE_EVENT = 'dataavailable',
     EXPORTS = module.exports = {
                 initialize: initialize,
                 on: listen,
@@ -15,7 +19,10 @@ var INFO = require("./detect.js"),
 var RESOLVE, LISTEN, UNLISTEN, DISPATCH;
 
 function initialize() {
-    var info = INFO.event;
+    var info = INFO.event,
+        isCapable = true,
+        beforeUnload = onBeforeUnload,
+        main = global;
     
     switch (true) {
     case info.w3c:
@@ -24,12 +31,21 @@ function initialize() {
         DISPATCH = w3cDispatch;
         RESOLVE = w3cObservable;
         break;
+    
     case info.ie:
         LISTEN = ieListen;
         UNLISTEN = ieUnlisten;
         DISPATCH = ieDispatch;
         RESOLVE = ieObservable;
         break;
+    
+    default:
+        isCapable = false;
+    }
+    
+    if (isCapable) {
+        listen(main, 'beforeunload', beforeUnload);
+        listen(main, 'unload', beforeUnload);
     }
 
 }
@@ -38,6 +54,14 @@ function initialize() {
 function listen(observable, type, handler, context) {
     var last = EVENTS;
     var current;
+    
+    if (!type || typeof type !== 'string') {
+        throw new Error(ERROR_INVALID_TYPE);
+    }
+    
+    if (!(handler instanceof Function)) {
+        throw new Error(ERROR_INVALID_HANDLER);
+    }
     
     observable = RESOLVE(observable);
     
@@ -66,6 +90,14 @@ function listen(observable, type, handler, context) {
 function unlisten(observable, type, handler, context) {
     var found, len;
     
+    if (!type || typeof type !== 'string') {
+        throw new Error(ERROR_INVALID_TYPE);
+    }
+    
+    if (!(handler instanceof Function)) {
+        throw new Error(ERROR_INVALID_HANDLER);
+    }
+    
     observable = RESOLVE(observable);
     
     if (!observable) {
@@ -86,6 +118,11 @@ function unlisten(observable, type, handler, context) {
 
 
 function dispatch(observable, type, defaults) {
+    
+    if (!type || typeof type !== 'string') {
+        throw new Error(ERROR_INVALID_TYPE);
+    }
+    
     observable = RESOLVE(observable);
     
     if (!observable) {
@@ -99,7 +136,7 @@ function dispatch(observable, type, defaults) {
 function purge() {
     var found = filter.apply(null, arguments),
         len = found.length;
-    
+        
     for (; len--;) {
         found[len].unlisten();
     }
@@ -137,7 +174,7 @@ function createUnlistener(event) {
             delete event.unlisten;
             delete event.head;
             delete event.tail;
-            event = null;
+            event = head = tail = null;
         }
     }
     return destroy;
@@ -237,11 +274,9 @@ function ieListen(observable, type, handler, context) {
                         ieCreateCustomHandler(type, handler, context) :
                         ieCreateHandler(handler, context);
     
-    observable.attachEvent(
-            isCustomEvent ?
-                'ondataavailable' :
-                'on' + type,
-            listener);
+    observable.attachEvent('on' +
+                            (isCustomEvent ? IE_CUSTOM_TYPE_EVENT : type),
+                            listener);
     
     return [observable, type, handler, context, listener];
 }
@@ -249,9 +284,7 @@ function ieListen(observable, type, handler, context) {
 function ieUnlisten(observable, type, listener) {
     
     observable.detachEvent(
-            listener.customType ?
-                'ondataavailable' :
-                'on' + type,
+            'on' + (listener.customType ? IE_CUSTOM_TYPE_EVENT : type),
             listener);
 }
 
@@ -268,7 +301,7 @@ function ieDispatch(observable, type, properties) {
     
     if (ieTestCustomEvent(observable, type)) {
         event.customType = type;
-        type = 'dataavailable';
+        type = IE_CUSTOM_TYPE_EVENT;
     }
     
     observable.fireEvent('on' + type, event);
@@ -348,6 +381,18 @@ function ieTestCustomEvent(observable, type) {
 }
 
 
+/**
+ * purge after page has unloaded
+ */
+function onBeforeUnload() {
+    if (!PAGE_UNLOADED) {
+        PAGE_UNLOADED = true;
+        
+        purge();
+    }
+}
 
+
+RESOLVE = LISTEN = UNLISTEN = DISPATCH;
 
 EXPORTS.chain = EXPORTS;

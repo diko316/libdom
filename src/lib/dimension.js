@@ -3,16 +3,22 @@
 var DETECTED = require("./detect.js"),
     DOM = require("./dom.js"),
     CSS = require("./css.js"),
+    ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.",
+    ELEMENT_VIEW = 1,
+    PAGE_VIEW = 2,
     boundingRect = false,
-    getScrollFromChrome = null,
+    getPageScroll = null,
     getOffset = null,
     getSize = null,
     getBox = null,
+    setPageScroll = null,
     EXPORTS = {
         initialize: initialize,
         offset: offset,
         size: size,
-        box: box
+        box: box,
+        scroll: scroll,
+        screen: screen
     };
     
 /**
@@ -20,8 +26,8 @@ var DETECTED = require("./detect.js"),
  */
 function offset(element, x, y) {
     
-    if (!DOM.is(element, 1)) {
-        throw new Error("Invalid DOM [element] parameter.");
+    if (isViewable(element) !== ELEMENT_VIEW) {
+        throw new Error(ERROR_INVALID_ELEMENT);
     }
     
     // setter
@@ -34,8 +40,8 @@ function offset(element, x, y) {
 }
 
 function size(element, width, height) {
-    if (!DOM.is(element, 1)) {
-        throw new Error("Invalid DOM [element] parameter.");
+    if (isViewable(element) !== ELEMENT_VIEW) {
+        throw new Error(ERROR_INVALID_ELEMENT);
     }
     
     // setter
@@ -50,12 +56,15 @@ function size(element, width, height) {
 function box(element, x, y, width, height) {
     var is = isFinite,
         M = Math,
-        css = CSS;
+        css = CSS,
+        PADDING_TOP = 'paddingTop',
+        PADDING_LEFT = 'paddingLeft',
+        NUMBER = 'number';
     var hasLeft, hasTop, hasWidth, hasHeight, parent,
         diff, diff1, diff2, style, style1, style2, styleAttribute;
     
-    if (!DOM.is(element, 1)) {
-        throw new Error("Invalid DOM [element] parameter.");
+    if (isViewable(element) !== ELEMENT_VIEW) {
+        throw new Error(ERROR_INVALID_ELEMENT);
     }
     
     // setter
@@ -69,19 +78,19 @@ function box(element, x, y, width, height) {
         }
         
         hasLeft = hasTop = hasWidth = hasHeight = false;
-        if (typeof x === 'number' && is(x)) {
+        if (typeof x === NUMBER && is(x)) {
             hasLeft = true;
         }
         
-        if (typeof y === 'number' && is(y)) {
+        if (typeof y === NUMBER && is(y)) {
             hasTop = true;
         }
         
-        if (typeof width === 'number' && is(width)) {
+        if (typeof width === NUMBER && is(width)) {
             hasWidth = true;
         }
         
-        if (typeof height === 'number' && is(height)) {
+        if (typeof height === NUMBER && is(height)) {
             hasHeight = true;
         }
         
@@ -89,8 +98,8 @@ function box(element, x, y, width, height) {
             styleAttribute = element.style;
             style = css.style(element,
                         'position',
-                        'paddingTop',
-                        'paddingLeft',
+                        PADDING_TOP,
+                        PADDING_LEFT,
                         'paddingRight',
                         'paddingBottom');
             // offset
@@ -115,8 +124,8 @@ function box(element, x, y, width, height) {
                     parent = element.offsetParent;
                     if (parent) {
                         parent = css.style(parent,
-                                            'paddingTop',
-                                            'paddingLeft');
+                                            PADDING_TOP,
+                                            PADDING_LEFT);
                         
                         style1 -= parseInt(parent.paddingLeft, 10) || 0;
                         style2 -= parseInt(parent.paddingTop, 10) || 0;
@@ -163,6 +172,57 @@ function box(element, x, y, width, height) {
     
     // getter
     return getBox(element);
+}
+
+
+function scroll(dom, x, y) {
+    var setter = arguments.length > 1;
+    var current;
+    
+    // validate x and y
+    if (setter) {
+        if (typeof x !== 'number' || !isFinite(x)) {
+            x = false;
+        }
+        if (typeof y !== 'number' || !isFinite(y)) {
+            y = false;
+        }
+    }
+    
+    switch (isViewable(dom)) {
+    case PAGE_VIEW:
+        current = getPageScroll();
+        if (setter) {
+            setPageScroll(x === false ?
+                                current[0] : x,
+                            y === false ?
+                                current[1] : y);
+        }
+        else {
+            return current;
+        }
+        break;
+    
+    case ELEMENT_VIEW:
+        if (setter) {
+            dom.scrollLeft = x === false ? dom.scrollLeft : x;
+            dom.scrollTop = y === false ? dom.scrollTop : y;
+        }
+        else {
+            return [dom.scrollLeft, dom.scrollTop];
+        }
+        break;
+    
+    default:
+        throw new Error("Invalid [dom] Object parameter.");
+    }
+}
+
+/**
+ * Screen offset and size
+ */
+function screen() {
+    
 }
 
 /**
@@ -220,7 +280,7 @@ function manualSize(element) {
  * Element Offset
  */
 function rectOffset(element, boundingRect) {
-    var scrolled = getScrollFromChrome(),
+    var scrolled = getPageScroll(),
         rect = boundingRect || element.getBoundingClientRect(),
         offset = [rect.left + scrolled[0], rect.top + scrolled[1]];
     rect = null;
@@ -251,11 +311,13 @@ function manualOffset(element) {
 }
 
 
-
-
 /**
  * Page Scroll
  */
+function w3cSetPageScroll(x, y) {
+    global.scrollTo(x, y);
+}
+
 function w3cPageScrollOffset() {
     var win = global,
         doc = win.document,
@@ -270,22 +332,18 @@ function w3cPageScrollOffset() {
     return offset;
 }
 
+function ieSetPageScroll(x, y) {
+    var factor = getZoomFactor();
+    global.scrollTo(x * factor, y * factor);
+}
+
 function iePageScrollOffset() {
     var M = Math,
         doc = global.document,
         root = doc.documentElement,
         body = doc.body,
-        factor = 1;
-    var rect, offset;
-    
-    if (boundingRect) {
-        // rect is only in physical pixel size in IE before version 8 
-        rect = body.getBoundingClientRect();
-
-        // the zoom level is always an integer percent value
-        factor = M.round(
-                    (rect.right - rect.left / body.offsetWidth) * 100) / 100;
-    }
+        factor = getZoomFactor();
+    var offset;
     
     offset = [
         M.round(root.scrollLeft / factor) -
@@ -298,20 +356,59 @@ function iePageScrollOffset() {
     return offset;
 }
 
+function getZoomFactor() {
+    var factor = 1,
+        body = global.document.body;
+    var rect;
+    
+    if (boundingRect) {
+        // rect is only in physical pixel size in IE before version 8 
+        rect = body.getBoundingClientRect();
+
+        // the zoom level is always an integer percent value
+        factor = Math.round(
+                    (rect.right - rect.left / body.offsetWidth) * 100) / 100;
+    }
+    
+    body = null;
+    
+    return factor;
+}
 
 
+/**
+ * checking
+ */
+function isViewable(dom) {
+    var help = DOM;
+    
+    return help.isView(dom) ?
+            PAGE_VIEW :
+            help.is(dom) && (dom.nodeType !== 9 ||
+                !help.contains(dom.ownerDocument.body, dom)) ?
+                    ELEMENT_VIEW :
+                    false;
+}
+
+/**
+ * initialize
+ */
 function initialize() {
     var info = DETECTED.dimension;
     
-    getScrollFromChrome = info.pagescroll === 'pageOffset' ?
-                            w3cPageScrollOffset : iePageScrollOffset;
+    getPageScroll = info.pagescroll ?
+                                w3cPageScrollOffset :
+                                iePageScrollOffset;
+                                
+    setPageScroll = info.pagescroll ?
+                                w3cSetPageScroll :
+                                ieSetPageScroll;
 
-    boundingRect = info.rectmethod === 'getBoundingClientRect';
+    boundingRect = info.rectmethod && 'getBoundingClientRect';
     getOffset = boundingRect ? rectOffset : manualOffset;
     getSize = boundingRect ? rectSize : manualSize;
     getBox = boundingRect ? rectBox : manualBox;
-    
-    //window.testDimension = EXPORTS;
+
 }
 
 
