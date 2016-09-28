@@ -23,7 +23,7 @@
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var detect = __webpack_require__(2), dom = __webpack_require__(8), css = __webpack_require__(9), event = __webpack_require__(11), dimension = __webpack_require__(12), EXPORTS = {
-            version: "0.0.3",
+            version: "0.0.4",
             info: detect,
             is: dom.is,
             isView: dom.isView,
