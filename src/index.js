@@ -61,6 +61,11 @@ function notBrowserMethodOverride(context) {
     return context;
 }
 
+
+global[LIB_NAME] = EXPORTS;
+console.log(LIB_NAME);
+
+
 if (detect) {
     
     css.chain =
@@ -77,5 +82,7 @@ else {
     
     notBrowserMethodOverride(EXPORTS);
 }
+
+
 
 module.exports = EXPORTS;

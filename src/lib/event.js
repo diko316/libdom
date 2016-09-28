@@ -1,282 +1,353 @@
 'use strict';
 
 var INFO = require("./detect.js"),
-    DOM = require("./dom.js"),
-    EVENT_INFO = null,
-    DESTROY_EVENT_TYPE = "domremoveevent",
-    ERROR_INVALID_OBSERVABLE = "Invalid [observable] Object parameter.",
-    EXPORTS = {
-        initialize: initialize,
-        on: listen,
-        un: unlisten,
-        fire: dispatch,
-        purge: purge
-    };
-    
-var LISTEN, UNLISTEN, DISPATCH, IS;
+    EVENTS = null,
+    IE_CUSTOM_EVENTS = {},
+    HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty,
+    ERROR_OBSERVABLE_NO_SUPPORT = "Invalid [observable] parameter.",
+    EXPORTS = module.exports = {
+                initialize: initialize,
+                on: listen,
+                un: unlisten,
+                fire: dispatch,
+                purge: purge
+            };
+var RESOLVE, LISTEN, UNLISTEN, DISPATCH;
 
 function initialize() {
-    var info, w3c, ie;
+    var info = INFO.event;
     
-    if (INFO) {
-        EVENT_INFO = info = INFO.event;
-        
-        w3c = info.w3c;
-        ie = info.ie;
-        
-        LISTEN = w3c ?
-                    w3cListen :
-                    ie ?
-                        ieListen :
-                        unsupported;
-        UNLISTEN = w3c ?
-                    w3cUnlisten :
-                    ie ?
-                        ieUnlisten :
-                        unsupported;
-        DISPATCH = w3c ?
-                    w3cDispatch :
-                    ie ?
-                        ieDispatch :
-                        unsupported;
-        
-        IS = w3c ?
-                w3cIsObservable :
-                ie ?
-                    ieIsObservable :
-                    unsupported;
-    
-        listen(global, "unload", onUnload);
-        listen(global, "beforeunload", onUnload);
+    switch (true) {
+    case info.w3c:
+        LISTEN = w3cListen;
+        UNLISTEN = w3cUnlisten;
+        DISPATCH = w3cDispatch;
+        RESOLVE = w3cObservable;
+        break;
+    case info.ie:
+        LISTEN = ieListen;
+        UNLISTEN = ieUnlisten;
+        DISPATCH = ieDispatch;
+        RESOLVE = ieObservable;
+        break;
     }
+
 }
 
+
 function listen(observable, type, handler, context) {
+    var last = EVENTS;
+    var current;
     
-    if (!IS(observable)) {
-        throw new Error(ERROR_INVALID_OBSERVABLE);
+    observable = RESOLVE(observable);
+    
+    if (!observable) {
+        throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
     }
     
-    LISTEN(observable, type, handler, context);
+    if (typeof context === 'undefined') {
+        context = null;
+    }
+    current = LISTEN(observable, type, handler, context);
     
-    return EXPORTS.chain;
+    current.unlisten = createUnlistener(current);
+    current.head = last;
+    current.tail = null;
+    
+    if (last) {
+        last.tail = current;
+    }
+    EVENTS = current;
+    
+    return current.unlisten;
     
 }
 
 function unlisten(observable, type, handler, context) {
+    var found, len;
     
-    if (!IS(observable)) {
-        throw new Error(ERROR_INVALID_OBSERVABLE);
+    observable = RESOLVE(observable);
+    
+    if (!observable) {
+        throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
     }
     
-    UNLISTEN(observable, type, handler, context);
+    if (typeof context === 'undefined') {
+        context = null;
+    }
+    found = filter(observable, type, handler, context);
+    
+    for (len = found.length; len--;) {
+        found[len].unlisten();
+    }
+    
+    return EXPORTS.chain;
+}
+
+
+function dispatch(observable, type, defaults) {
+    observable = RESOLVE(observable);
+    
+    if (!observable) {
+        throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
+    }
+    
+    return DISPATCH(observable, type, defaults);
+
+}
+
+function purge() {
+    var found = filter.apply(null, arguments),
+        len = found.length;
+    
+    for (; len--;) {
+        found[len].unlisten();
+    }
     
     return EXPORTS.chain;
 }
 
-function purge(observable) {
-    var unlisten = UNLISTEN;
-    
-    if (arguments.length) {
-        
-        if (!IS(observable)) {
-            throw new Error(ERROR_INVALID_OBSERVABLE);
-        }
-        
-        unlisten(observable, true);
-    }
-    // purge all!
-    else {
-        observable = global;
-        unlisten(observable, true);
-        
-        observable = observable.document;
-        unlisten(observable, true);
-        
-        DOM.eachPostorder(observable.documentElement, onPurgeAllListeners);
-        observable = null;
-    }
-    
-    return EXPORTS.chain;
-    
-}
 
-function onPurgeAllListeners(dom) {
-    UNLISTEN(dom, true);
-}
-
-function dispatch(dom, type, defaults) {
-    
-    if (!IS(dom)) {
-        throw new Error("Invalid Observable [dom] parameter.");
-    }
-    
-    if (Object.prototype.toString.call(defaults) !== '[object Object]') {
-        defaults = {};
-    }
-    DISPATCH(dom, type, defaults);
-    return EXPORTS.chain;
-}
-
-function w3cCreateEventDestroyer(type, handler, original, context) {
-    function destroy(event) {
-        var dom;
-        if (event.allTargetTypes === true ||
-            (type === event.targetType &&
-            original === event.targetHandler &&
-            context === event.targetContext)) {
+function createUnlistener(event) {
+    var destroyed = false;
+    function destroy() {
+        var head, tail;
+        if (!destroyed) {
+            destroyed = true;
             
-            dom = event.target;
-            dom.removeEventListener(type, handler, false);
-            dom.removeEventListener(DESTROY_EVENT_TYPE, destroy, false);
+            UNLISTEN(event[0], event[1], event[4]);
             
+            head = event.head;
+            tail = event.tail;
+            
+            if (head) {
+                head.tail = tail;
+            }
+            
+            if (tail) {
+                tail.head = head;
+            }
+
+            if (event === EVENTS) {
+                EVENTS = tail || head;
+            }
+            
+            event[0] = null;
+            event.splice(0, 4);
+            delete event.unlisten;
+            delete event.head;
+            delete event.tail;
+            event = null;
         }
-        dom = null;
     }
     return destroy;
 }
 
-function w3cListen(dom, type, handler, context) {
-    var original = handler;
-    handler = patchEventHandler(handler, context, false);
-    dom.addEventListener(type, handler, false);
-    dom.addEventListener(DESTROY_EVENT_TYPE,
-                            w3cCreateEventDestroyer(type,
-                                                    handler,
-                                                    original,
-                                                    context),
-                            false);
-    return handler;
+
+function filter(observable, type, handler, context) {
+    var last = EVENTS,
+        found = [],
+        len = 0,
+        argLen = arguments.length,
+        HAS_OBSERVABLE = 0,
+        HAS_TYPE = 0,
+        HAS_HANDLER = 0,
+        HAS_CONTEXT = 0;
+        
+    switch (true) {
+    case argLen > 3: HAS_CONTEXT = 1;
+    /* fall through */
+    case argLen > 2: HAS_HANDLER = 1;
+    /* fall through */
+    case argLen > 1: HAS_TYPE = 1;
+    /* fall through */
+    case argLen > 0: HAS_OBSERVABLE = 1;
+    }
+        
+    for (; last; last = last.head) {
+        if ((HAS_OBSERVABLE && last[0] !== observable) ||
+            (HAS_TYPE && last[1] !== type) ||
+            (HAS_HANDLER && last[2] !== handler) ||
+            (HAS_CONTEXT && last[3] !== context)) {
+            continue;
+        }
+        found[len++] = last;
+
+    }
+    
+    return found;
 }
 
-function w3cUnlisten(dom, type, handler, context) {
-    //dom.removeEventListener(type, handler, false);
-    w3cDispatch(dom, DESTROY_EVENT_TYPE, {
-                                    allTargetTypes: type === true,
-                                    targetType: type,
-                                    targetHandler: handler,
-                                    targetContext: context,
-                                    bubbles: false,
-                                    cancelable: false
-                                });
+
+/**
+ * w3c events
+ */
+function w3cListen(observable, type, handler, context) {
+    var listener = w3cCreateHandler(handler, context);
+    observable.addEventListener(type, listener, false);
+    return [observable, type, handler, context, listener];
 }
 
-function w3cDispatch(dom, type, defaults) {
-    var hasOwn = Object.prototype.hasOwnProperty,
+function w3cUnlisten(observable, type, listener) {
+    observable.removeEventListener(type, listener, false);
+}
+
+function w3cDispatch(observable, type, properties) {
+    var hasOwn = HAS_OWN_PROPERTY,
         event = global.document.createEvent("Event");
     var name;
     
     event.initEvent(type,
-            defaults.bubbles !== false,
-            defaults.cancelable !== false);
+            properties.bubbles !== false,
+            properties.cancelable !== false);
     
-    for (name in defaults) {
-        if (hasOwn.call(defaults, name) && !(name in event)) {
-            event[name] = defaults[name];
+    for (name in properties) {
+        if (hasOwn.call(properties, name) && !(name in event)) {
+            event[name] = properties[name];
         }
     }
-    dom.dispatchEvent(event);
+    observable.dispatchEvent(event);
 }
 
-function w3cIsObservable(subject) {
-    var F = Function,
-        type = typeof subject;
-        
-    return !!subject && (type === 'object' || type === 'function') &&
-            subject.addEventListener instanceof F &&
-            subject.removeEventListener instanceof F &&
-            subject.dispatchEvent instanceof F;
+function w3cObservable(observable) {
+    var F = Function;
+    
+    return observable && typeof observable === 'object' &&
+            observable.addEventListener instanceof F &&
+            observable.removeEventListener instanceof F &&
+            observable.dispatchEvent instanceof F ?
+                observable : false;
+
 }
 
-function ieListen(dom, type, handler, context) {
-    var original = handler;
-    handler = patchEventHandler(handler, context, true);
-    dom.attachEvent('on' + type, handler);
-    dom.attachEvent('on' + DESTROY_EVENT_TYPE,
-                            ieCreateEventDestroyer(type,
-                                                    handler,
-                                                    original,
-                                                    context),
-                            false);
-    return handler;
+function w3cCreateHandler(handler, context) {
+    function onEvent(event) {
+        return handler.call(context, event, event.target);
+    }
+    return onEvent;
 }
 
-function ieUnlisten(dom, type, handler, context) {
-    //dom.detachEvent('on' + type, handler);
-    ieDispatch(dom, 'on' + DESTROY_EVENT_TYPE, {
-                                    allTargetTypes: type === true,
-                                    targetType: type,
-                                    targetHandler: handler,
-                                    targetContext: context,
-                                    bubbles: false,
-                                    cancelable: false
-                                });
+
+/**
+ * ie events
+ */
+function ieListen(observable, type, handler, context) {
+    var isCustomEvent = ieTestCustomEvent(observable, type);
+    var listener = isCustomEvent ?
+                        ieCreateCustomHandler(type, handler, context) :
+                        ieCreateHandler(handler, context);
+    
+    observable.attachEvent(
+            isCustomEvent ?
+                'ondataavailable' :
+                'on' + type,
+            listener);
+    
+    return [observable, type, handler, context, listener];
 }
 
-function ieDispatch(dom, type, defaults) {
-    var hasOwn = Object.prototype.hasOwnProperty,
+function ieUnlisten(observable, type, listener) {
+    
+    observable.detachEvent(
+            listener.customType ?
+                'ondataavailable' :
+                'on' + type,
+            listener);
+}
+
+function ieDispatch(observable, type, properties) {
+    var hasOwn = HAS_OWN_PROPERTY,
         event = global.document.createEventObject();
     var name;
     
-    for (name in defaults) {
-        if (hasOwn.call(defaults, name) && !(name in event)) {
-            event[name] = defaults[name];
+    for (name in properties) {
+        if (hasOwn.call(properties, name) && !(name in event)) {
+            event[name] = properties[name];
         }
     }
     
-   dom.fireEvent('on' + type, event); 
-}
-
-function ieCreateEventDestroyer(type, handler, original, context) {
-    function destroy(event) {
-        var dom;
-        if (event.allTargetTypes === true ||
-            (type === event.targetType &&
-            original === event.targetHandler &&
-            context === event.targetContext)) {
-            
-            dom = event.target;
-            dom.detachEvent('on' + type, handler);
-            dom.detachEvent('on' + DESTROY_EVENT_TYPE, destroy);
-            
-        }
-        dom = null;
+    if (ieTestCustomEvent(observable, type)) {
+        event.customType = type;
+        type = 'dataavailable';
     }
-    return destroy;
+    
+    observable.fireEvent('on' + type, event);
+    
 }
 
-function ieIsObservable(subject) {
-    var F = Function,
-        type = typeof subject;
+function ieObservable(observable) {
+    if (observable) {
+        observable = observable.window ? observable.self : observable;
+        if (observable.attachEvent && observable.detachEvent) {
+            return observable;
+        }
         
-    return !!subject && (type === 'object' || type === 'function') &&
-            subject.attachEvent instanceof F &&
-            subject.detachEvent instanceof F &&
-            subject.fireEvent instanceof F;
-}
-
-
-function unsupported() {
-    throw new Error("Event Model is not supported by the current Browser.");
-}
-
-
-function patchEventHandler(handler, context, isIE) {
-    function patchedEventHandler(event) {
-        var is = isIE;
-        if (is === true) {
-            event = global.event;
-        }
-        handler.call(context, event, is ? event.srcElement : event.target);
-        event = null;
     }
-    return patchedEventHandler;
+    return false;
+}
+
+function ieCreateHandler(handler, context) {
+    function onEvent() {
+        var event = global.event;
+        return handler.call(context, event, event.target || event.srcElement);
+    }
+    return onEvent;
+}
+
+function ieCreateCustomHandler(type, handler, context) {
+    function onEvent() {
+        var event = global.event;
+        if (event.customType === type) {
+            return handler.call(context,
+                                event,
+                                event.target || event.srcElement);
+        }
+    }
+    
+    onEvent.customType = true;
+    
+    return onEvent;
 }
 
 
-function onUnload() {
-    purge();
+
+function ieTestCustomEvent(observable, type) {
+    var supported = false,
+        list = IE_CUSTOM_EVENTS,
+        ontype = 'on' + type;
+    var element, access;
+    
+    if (observable.nodeType === 9) {
+        observable = observable.documentElement;
+    }
+    
+    if (observable.nodeType === 1) {
+        // dont do another test
+        access = observable.tagName + ':' + type;
+        if (access in list) {
+            return list[access];
+        }
+
+        ontype = 'on' + type;
+        element = observable.cloneNode(false);
+        supported = ontype in element;
+        if (!supported) {
+            element.setAttribute(ontype, 'return;');
+            supported = typeof element[ontype] === 'function';
+        }
+        element = null;
+        
+        list[access] = !supported;
+        
+        return !supported;
+    
+    }
+    
+    return false;
+    
 }
 
-EXPORTS.chain = void(0);
-module.exports = EXPORTS;
+
+
+
+EXPORTS.chain = EXPORTS;

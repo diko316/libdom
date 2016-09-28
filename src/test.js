@@ -9,9 +9,11 @@ console.log('testing: ', main);
 
 
 
-function clicked() {
+function clicked(event) {
+    alert('click! ', event.type);
+    console.log('removing!');
     main.un(document, 'click', clicked);
-    alert('click!');
+    
 }
 
 function noEnd(event, element) {

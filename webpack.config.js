@@ -3,15 +3,18 @@
 var PATH = require('path'),
     webpack = require("webpack"),
     DEFINITION = require("./package.json"),
+    ExtractTextPlugin = require('extract-text-webpack-plugin'),
+    es3ifyPlugin = require('es3ify-webpack-plugin'),
+    
     libName = DEFINITION.name,
     buildDirectory = PATH.resolve(__dirname),
-    ExtractTextPlugin = require('extract-text-webpack-plugin'),
     sourcePath = PATH.join(buildDirectory, 'src'),
     hasOwn = Object.prototype.hasOwnProperty,
     entry = {},
     
     plugins = [
             new webpack.DefinePlugin({
+                LIB_NAME: JSON.stringify(libName),
                 LIB_VERSION: JSON.stringify(DEFINITION.version)
             }),
             new webpack.NoErrorsPlugin(),
@@ -55,15 +58,17 @@ case "compressed":
 default:
     console.log("** build test");
     entry.test = [PATH.join(sourcePath, 'test.js')];
-    for (name in entry) {
-        if (hasOwn.call(entry, name)) {
-            entry[name].splice(0, 0,
-                'webpack-hot-middleware/client?reload=true&overlay=false');
-        }
-    }
+    //for (name in entry) {
+    //    if (hasOwn.call(entry, name)) {
+    //        entry[name].splice(0, 0,
+    //            'webpack-hot-middleware/client?reload=true&overlay=false');
+    //    }
+    //}
     plugins.splice(0, 0,
-        new webpack.optimize.OccurenceOrderPlugin(),
-        new webpack.HotModuleReplacementPlugin());
+        new es3ifyPlugin(),
+        new webpack.optimize.OccurenceOrderPlugin());
+        //new webpack.optimize.OccurenceOrderPlugin(),
+        //new webpack.HotModuleReplacementPlugin());
 }
 
 

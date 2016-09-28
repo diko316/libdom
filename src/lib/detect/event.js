@@ -1,18 +1,17 @@
 'use strict';
 
-var F = Function,
-    WINDOW = global,
+var WINDOW = global,
     DOCUMENT = WINDOW.document;
 
 
 
 module.exports = {
-    w3c: WINDOW.addEventListener instanceof F,
-    ie: WINDOW.attachEvent instanceof F,
-    customEvent: 'CustomEvent' in WINDOW,
-    creator: ('createEvent' in DOCUMENT ?
+    w3c: !!WINDOW.addEventListener,
+    ie: !!WINDOW.attachEvent,
+    customEvent: !!WINDOW.CustomEvent,
+    creator: (DOCUMENT.createEvent  ?
                             'createEvent' :
-                            'createEventObject' in DOCUMENT ?
+                            DOCUMENT.createEventObject ?
                                 'createEventObject' : false)
 };
 
