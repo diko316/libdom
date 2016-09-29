@@ -32,7 +32,8 @@ var detect = require("./lib/detect.js"),
             offset: dimension.offset,
             size: dimension.size,
             box: dimension.box,
-            scroll: dimension.scroll
+            scroll: dimension.scroll,
+            screen: dimension.screen
             
         };
 

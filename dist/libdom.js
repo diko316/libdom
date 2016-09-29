@@ -40,7 +40,8 @@
             offset: dimension.offset,
             size: dimension.size,
             box: dimension.box,
-            scroll: dimension.scroll
+            scroll: dimension.scroll,
+            screen: dimension.screen
         };
         function notBrowser() {
             throw new Error("Unable to proceed, not running in a browser.");
@@ -142,10 +143,12 @@
     }, function(module, exports) {
         (function(global) {
             "use strict";
-            var WINDOW = global;
+            var WINDOW = global.window, match = WINDOW.navigator.userAgent.match(/msie ([0-9]+\.[0-9]+)/i), ieVersion = match && parseInt(match[1], 10) || 0;
             module.exports = {
+                screensize: typeof WINDOW.innerWidth !== "undefined",
                 pagescroll: typeof WINDOW.pageXOffset !== "undefined",
-                rectmethod: !!WINDOW.document.documentElement.getBoundingClientRect
+                rectmethod: !!WINDOW.document.documentElement.getBoundingClientRect,
+                zoomfactor: ieVersion > 0 && ieVersion < 8
             };
             WINDOW = null;
         }).call(exports, function() {
@@ -692,7 +695,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), DOM = __webpack_require__(8), CSS = __webpack_require__(9), ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.", ELEMENT_VIEW = 1, PAGE_VIEW = 2, boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, setPageScroll = null, EXPORTS = {
+            var DETECTED = __webpack_require__(2), DOM = __webpack_require__(8), CSS = __webpack_require__(9), ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.", ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, STRICT = false, boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
                 initialize: initialize,
                 offset: offset,
                 size: size,
@@ -719,12 +722,16 @@
                 return getSize(element);
             }
             function box(element, x, y, width, height) {
-                var is = isFinite, M = Math, css = CSS, PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", NUMBER = "number";
+                var is = isFinite, M = Math, css = CSS, PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
                 var hasLeft, hasTop, hasWidth, hasHeight, parent, diff, diff1, diff2, style, style1, style2, styleAttribute;
-                if (isViewable(element) !== ELEMENT_VIEW) {
+                if (!setter && viewmode === PAGE_VIEW) {
+                    console.log("used page box");
+                    return pageBox(element);
+                }
+                if (viewmode !== ELEMENT_VIEW) {
                     throw new Error(ERROR_INVALID_ELEMENT);
                 }
-                if (arguments.length > 1) {
+                if (setter) {
                     if (x instanceof Array) {
                         height = 3 in x ? x[3] : null;
                         width = 2 in x ? x[2] : null;
@@ -826,7 +833,31 @@
                     throw new Error("Invalid [dom] Object parameter.");
                 }
             }
-            function screen() {}
+            function pageBox(element) {
+                var M = Math, window = global.window, document = window.document, root = document.documentElement, box = screen();
+                if (element === window || element === document || element === root) {
+                    box[2] = M.max(root.scrollWidth || 0, box[2]);
+                    box[3] = M.max(root.scrollHeight || 0, box[3]);
+                }
+                window = document = root = null;
+                return box;
+            }
+            function screen() {
+                var box = getPageScroll(), size = getScreenSize();
+                box[2] = size[0];
+                box[3] = size[1];
+                return box;
+            }
+            function w3cScreenSize() {
+                var window = global.window, size = [ window.innerWidth, window.innerHeight ];
+                window = null;
+                return size;
+            }
+            function ieScreenSize() {
+                var factor = USE_ZOOM_FACTOR ? getZoomFactor() : 1, document = global.document, subject = STRICT ? document.documentElement : document.body, size = [ subject.clientWidth * factor, subject.clientHeight * factor ];
+                subject = null;
+                return size;
+            }
             function rectBox(element) {
                 var rect = element.getBoundingClientRect(), box = rectOffset(element, rect), size = rectSize(element, rect);
                 box[2] = size[0];
@@ -875,22 +906,17 @@
                 root = parent = null;
                 return offset;
             }
-            function w3cSetPageScroll(x, y) {
-                global.scrollTo(x, y);
+            function setPageScroll(x, y) {
+                var factor = USE_ZOOM_FACTOR ? getZoomFactor() : 1;
+                global.window.scrollTo(x * factor, y * factor);
             }
             function w3cPageScrollOffset() {
-                var win = global, doc = win.document, root = doc.documentElement, body = doc.body, offset = [ (win.pageXOffset || 0) - (root.clientLeft || body.clientLeft || 0), (win.pageYOffset || 0) - (root.clientTop || body.clientTop || 0) ];
+                var win = global.window, doc = win.document, root = doc.documentElement, body = doc.body, offset = [ win.pageXOffset || 0, win.pageYOffset || 0 ];
                 win = doc = root = body = null;
                 return offset;
             }
-            function ieSetPageScroll(x, y) {
-                var factor = getZoomFactor();
-                global.scrollTo(x * factor, y * factor);
-            }
             function iePageScrollOffset() {
-                var M = Math, doc = global.document, root = doc.documentElement, body = doc.body, factor = getZoomFactor();
-                var offset;
-                offset = [ M.round(root.scrollLeft / factor) - (root.clientLeft || body.clientLeft || 0), M.round(root.scrollTop / factor) - (root.clientTop || body.clientTop || 0) ];
+                var M = Math, doc = global.document, root = doc.documentElement, body = doc.body, factor = USE_ZOOM_FACTOR ? getZoomFactor() : 1, offset = [ M.round(root.scrollLeft / factor), M.round(root.scrollTop / factor) ];
                 doc = root = body = null;
                 return offset;
             }
@@ -909,9 +935,11 @@
                 return help.isView(dom) ? PAGE_VIEW : help.is(dom) && (dom.nodeType !== 9 || !help.contains(dom.ownerDocument.body, dom)) ? ELEMENT_VIEW : false;
             }
             function initialize() {
-                var info = DETECTED.dimension;
+                var all = DETECTED, info = all.dimension;
+                STRICT = all.browser.strict;
+                USE_ZOOM_FACTOR = info.zoomfactor;
                 getPageScroll = info.pagescroll ? w3cPageScrollOffset : iePageScrollOffset;
-                setPageScroll = info.pagescroll ? w3cSetPageScroll : ieSetPageScroll;
+                getScreenSize = info.screensize ? w3cScreenSize : ieScreenSize;
                 boundingRect = info.rectmethod && "getBoundingClientRect";
                 getOffset = boundingRect ? rectOffset : manualOffset;
                 getSize = boundingRect ? rectSize : manualSize;

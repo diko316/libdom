@@ -6,12 +6,14 @@ var DETECTED = require("./detect.js"),
     ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.",
     ELEMENT_VIEW = 1,
     PAGE_VIEW = 2,
+    USE_ZOOM_FACTOR = false,
+    STRICT = false,
     boundingRect = false,
     getPageScroll = null,
     getOffset = null,
     getSize = null,
     getBox = null,
-    setPageScroll = null,
+    getScreenSize = null,
     EXPORTS = {
         initialize: initialize,
         offset: offset,
@@ -59,16 +61,26 @@ function box(element, x, y, width, height) {
         css = CSS,
         PADDING_TOP = 'paddingTop',
         PADDING_LEFT = 'paddingLeft',
-        NUMBER = 'number';
+        NUMBER = 'number',
+        setter = arguments.length > 1,
+        viewmode = isViewable(element);
+        
     var hasLeft, hasTop, hasWidth, hasHeight, parent,
         diff, diff1, diff2, style, style1, style2, styleAttribute;
     
-    if (isViewable(element) !== ELEMENT_VIEW) {
+    // try page box
+    if (!setter && viewmode === PAGE_VIEW) {
+        console.log('used page box');
+        return pageBox(element);
+    }
+    
+    
+    if (viewmode !== ELEMENT_VIEW) {
         throw new Error(ERROR_INVALID_ELEMENT);
     }
     
     // setter
-    if (arguments.length > 1) {
+    if (setter) {
         
         if (x instanceof Array) {
             height = 3 in x ? x[3] : null;
@@ -218,12 +230,59 @@ function scroll(dom, x, y) {
     }
 }
 
+function pageBox(element) {
+    var M = Math,
+        window = global.window,
+        document = window.document,
+        root = document.documentElement,
+        box = screen();
+    
+    // page size
+    if (element === window || element === document || element === root) {
+        box[2] = M.max(root.scrollWidth || 0, box[2]);
+        box[3] = M.max(root.scrollHeight || 0, box[3]);
+    }
+    
+    window = document = root = null;
+    
+    return box;
+}
+
 /**
  * Screen offset and size
  */
 function screen() {
+    var box = getPageScroll(),
+        size = getScreenSize();
+    
+    box[2] = size[0];
+    box[3] = size[1];
+    
+    return box;
     
 }
+
+function w3cScreenSize() {
+    var window = global.window,
+        size = [window.innerWidth, window.innerHeight];
+    
+    window = null;
+    
+    return size;
+}
+
+
+function ieScreenSize() {
+    var factor = USE_ZOOM_FACTOR ? getZoomFactor() : 1,
+        document = global.document,
+        subject = STRICT ? document.documentElement : document.body,
+        size = [subject.clientWidth * factor,
+                subject.clientHeight * factor];
+        
+    subject = null;
+    return size;
+}
+
 
 /**
  * Element Box
@@ -314,27 +373,21 @@ function manualOffset(element) {
 /**
  * Page Scroll
  */
-function w3cSetPageScroll(x, y) {
-    global.scrollTo(x, y);
+function setPageScroll(x, y) {
+    var factor = USE_ZOOM_FACTOR ? getZoomFactor() : 1;
+    global.window.scrollTo(x * factor, y * factor);
 }
 
 function w3cPageScrollOffset() {
-    var win = global,
+    var win = global.window,
         doc = win.document,
         root = doc.documentElement,
         body = doc.body,
-        offset = [
-            (win.pageXOffset || 0) - (root.clientLeft || body.clientLeft || 0),
-            (win.pageYOffset || 0) - (root.clientTop || body.clientTop || 0)];
+        offset = [(win.pageXOffset || 0), (win.pageYOffset || 0)];
         
     win = doc = root = body = null;
     
     return offset;
-}
-
-function ieSetPageScroll(x, y) {
-    var factor = getZoomFactor();
-    global.scrollTo(x * factor, y * factor);
 }
 
 function iePageScrollOffset() {
@@ -342,14 +395,9 @@ function iePageScrollOffset() {
         doc = global.document,
         root = doc.documentElement,
         body = doc.body,
-        factor = getZoomFactor();
-    var offset;
-    
-    offset = [
-        M.round(root.scrollLeft / factor) -
-            (root.clientLeft || body.clientLeft || 0),
-        M.round(root.scrollTop / factor) -
-            (root.clientTop || body.clientTop || 0)];
+        factor = USE_ZOOM_FACTOR ? getZoomFactor() : 1,
+        offset = [M.round(root.scrollLeft / factor),
+                    M.round(root.scrollTop / factor)];
     
     doc = root = body = null;
     
@@ -394,15 +442,23 @@ function isViewable(dom) {
  * initialize
  */
 function initialize() {
-    var info = DETECTED.dimension;
+    var all = DETECTED,
+        info = all.dimension;
+    
+    STRICT = all.browser.strict;
+        
+    USE_ZOOM_FACTOR = info.zoomfactor;
     
     getPageScroll = info.pagescroll ?
-                                w3cPageScrollOffset :
-                                iePageScrollOffset;
-                                
-    setPageScroll = info.pagescroll ?
-                                w3cSetPageScroll :
-                                ieSetPageScroll;
+                        w3cPageScrollOffset :
+                        iePageScrollOffset;
+    
+    getScreenSize = info.screensize ?
+                        w3cScreenSize :
+                        ieScreenSize;
+    //setPageScroll = w3cScroll ?
+    //                            w3cSetPageScroll :
+    //                            ieSetPageScroll;
 
     boundingRect = info.rectmethod && 'getBoundingClientRect';
     getOffset = boundingRect ? rectOffset : manualOffset;
