@@ -63,8 +63,6 @@ function box(element, x, y, width, height) {
         M = Math,
         css = CSS,
         toFloat = parseFloat,
-        PADDING_TOP = 'paddingTop',
-        PADDING_LEFT = 'paddingLeft',
         NUMBER = 'number',
         setter = arguments.length > 1,
         viewmode = isViewable(element);
@@ -95,10 +93,10 @@ function box(element, x, y, width, height) {
         
         style = css.style(element,
                         'position',
-                        PADDING_TOP,
-                        PADDING_LEFT,
                         'marginLeft',
                         'marginTop',
+                        'paddingTop',
+                        'paddingLeft',
                         'paddingRight',
                         'paddingBottom');
         
