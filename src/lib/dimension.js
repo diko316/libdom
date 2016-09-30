@@ -4,10 +4,11 @@ var DETECTED = require("./detect.js"),
     DOM = require("./dom.js"),
     CSS = require("./css.js"),
     ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.",
+    DEFAULTVIEW = null,
     ELEMENT_VIEW = 1,
     PAGE_VIEW = 2,
     USE_ZOOM_FACTOR = false,
-    STRICT = false,
+    IE_PAGE_STAT_ACCESS = 'documentElement',
     boundingRect = false,
     getPageScroll = null,
     getOffset = null,
@@ -28,23 +29,24 @@ var DETECTED = require("./detect.js"),
  */
 function offset(element, x, y) {
     
-    if (isViewable(element) !== ELEMENT_VIEW) {
-        throw new Error(ERROR_INVALID_ELEMENT);
-    }
-    
     // setter
     if (arguments.length > 1) {
         return box(element, x, y);
     }
     
     // getter
-    return getOffset(element);
+    switch (isViewable(element)) {
+    case PAGE_VIEW:
+        return pageBox(element).slice(0, 2);
+    case ELEMENT_VIEW:
+        return getOffset(element);
+    }
+    //console.log(element);
+    throw new Error(ERROR_INVALID_ELEMENT);
+    
 }
 
 function size(element, width, height) {
-    if (isViewable(element) !== ELEMENT_VIEW) {
-        throw new Error(ERROR_INVALID_ELEMENT);
-    }
     
     // setter
     if (arguments.length > 1) {
@@ -52,7 +54,8 @@ function size(element, width, height) {
     }
     
     // getter
-    return getSize(element);
+    return isViewable(element) === PAGE_VIEW ?
+                pageBox(element).slice(2, 4) : getSize(element);
 }
 
 function box(element, x, y, width, height) {
@@ -70,7 +73,6 @@ function box(element, x, y, width, height) {
     
     // try page box
     if (!setter && viewmode === PAGE_VIEW) {
-        console.log('used page box');
         return pageBox(element);
     }
     
@@ -119,37 +121,90 @@ function box(element, x, y, width, height) {
                 diff = getOffset(element);
                 diff1 = diff2 = 0;
                 
-                if (hasLeft) {
-                    diff1 = x - diff[0];
-                }
+                parent = element.offsetParent;
+                style = parent ? getOffset(element) : [0, 0];
                 
-                if (hasTop) {
-                    diff2 = y - diff[1];
-                }
+                console.log('parent offset: ', style, parent);
                 
-                style1 = element.offsetLeft || 0;
-                style2 = element.offsetTop || 0;
+                diff1 = x - style[0] + diff[0];
+                diff2 = y - style[1] + diff[1];
+                
+                
+                styleAttribute.left = diff1 + 'px';
+                styleAttribute.top = diff2 + 'px';
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                //console.log('offset ', diff[0], ',',diff[1]);
+                //console.log('minus: ', x, y, ' dom:offset ', element.offsetLeft, element.offsetTop);
+                //var xy = CSS.style(element,
+                //                    'top',
+                //                    'left');
+                //console.log('bounding: ', xy.left, xy.top);
+                //
+                //if (hasLeft) {
+                //    diff1 = x - diff[0];
+                //}
+                //
+                //if (hasTop) {
+                //    diff2 = y - diff[1];
+                //}
+                //
+                ////style1 = element.offsetLeft || 0;
+                ////style2 = element.offsetTop || 0;
+                //
+                //parent = element.offsetParent;
+                //style = parent ? getOffset(element) : [0, 0];
+                //style1 = diff[0] - style[0];
+                //style2 = diff[1] - style[1];
+                
+                styleAttribute.left = style1 + 'px';
+                styleAttribute.top = style2 + 'px';
+                
+                //console.log('result: ', style1, ',', style2, ' diff: ', diff1, ',', diff2);
+                //console.log('style: ', style[0], ',', style[1]);
                 
                 // apply only if relative or absolute position
-                switch (style.position) {
-                case 'relative': // minus padding
-                    parent = element.offsetParent;
-                    if (parent) {
-                        parent = css.style(parent,
-                                            PADDING_TOP,
-                                            PADDING_LEFT);
-                        
-                        style1 -= parseInt(parent.paddingLeft, 10) || 0;
-                        style2 -= parseInt(parent.paddingTop, 10) || 0;
-                    }
-                    
-                /* falls through */
-                case 'absolute': // apply as is
-                case 'fixed':
-                    styleAttribute.left = style1 + diff1 + 'px';
-                    styleAttribute.top = style2 + diff2 + 'px';
-                    break;
-                }
+                //switch (style.position) {
+                //case 'relative': // minus padding
+                //    parent = element.offsetParent;
+                //    if (parent) {
+                //        parent = css.style(parent,
+                //                            PADDING_TOP,
+                //                            PADDING_LEFT);
+                //        
+                //        style1 -= parseInt(parent.paddingLeft, 10) || 0;
+                //        style2 -= parseInt(parent.paddingTop, 10) || 0;
+                //    }
+                //    break;
+                //    
+                ///* falls through */
+                //case 'absolute': // apply as is
+                //case 'fixed':
+                //    
+                //    
+                //    break;
+                //}
+                //
+                //if (hasLeft) {
+                //    styleAttribute.left = style1 + diff1 + 'px';
+                //}
+                //
+                //if (hasTop) {
+                //    styleAttribute.top = style2 + diff2 + 'px';
+                //}
                 
             }
             
@@ -189,7 +244,7 @@ function box(element, x, y, width, height) {
 
 function scroll(dom, x, y) {
     var setter = arguments.length > 1;
-    var current;
+    var current, window;
     
     // validate x and y
     if (setter) {
@@ -203,9 +258,13 @@ function scroll(dom, x, y) {
     
     switch (isViewable(dom)) {
     case PAGE_VIEW:
-        current = getPageScroll();
+        window = DOM.is(dom) ?
+                        dom[DEFAULTVIEW] : dom;
+        current = getPageScroll(window);
+        
         if (setter) {
-            setPageScroll(x === false ?
+            setPageScroll(window,
+                            x === false ?
                                 current[0] : x,
                             y === false ?
                                 current[1] : y);
@@ -230,20 +289,23 @@ function scroll(dom, x, y) {
     }
 }
 
-function pageBox(element) {
+function pageBox(dom) {
     var M = Math,
-        window = global.window,
-        document = window.document,
-        root = document.documentElement,
+        help = DOM,
+        subject = dom,
         box = screen();
     
     // page size
-    if (element === window || element === document || element === root) {
-        box[2] = M.max(root.scrollWidth || 0, box[2]);
-        box[3] = M.max(root.scrollHeight || 0, box[3]);
+    if (help.isView(subject)) {
+        subject = subject.document;
     }
     
-    window = document = root = null;
+    if (subject.nodeType === 9) {
+        subject = subject[IE_PAGE_STAT_ACCESS];
+        box[2] = M.max(subject.scrollWidth, box[2]);
+        box[3] = M.max(subject.scrollHeight, box[3]);
+    }
+    subject = null;
     
     return box;
 }
@@ -252,8 +314,9 @@ function pageBox(element) {
  * Screen offset and size
  */
 function screen() {
-    var box = getPageScroll(),
-        size = getScreenSize();
+    var window = global.window,
+        box = getPageScroll(window),
+        size = getScreenSize(window);
     
     box[2] = size[0];
     box[3] = size[1];
@@ -262,20 +325,14 @@ function screen() {
     
 }
 
-function w3cScreenSize() {
-    var window = global.window,
-        size = [window.innerWidth, window.innerHeight];
-    
-    window = null;
-    
-    return size;
+function w3cScreenSize(window) {
+    return [window.innerWidth, window.innerHeight];
 }
 
 
-function ieScreenSize() {
-    var factor = USE_ZOOM_FACTOR ? getZoomFactor() : 1,
-        document = global.document,
-        subject = STRICT ? document.documentElement : document.body,
+function ieScreenSize(window) {
+    var factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1,
+        subject = window.document[IE_PAGE_STAT_ACCESS],
         size = [subject.clientWidth * factor,
                 subject.clientHeight * factor];
         
@@ -339,7 +396,7 @@ function manualSize(element) {
  * Element Offset
  */
 function rectOffset(element, boundingRect) {
-    var scrolled = getPageScroll(),
+    var scrolled = getPageScroll(element.ownerDocument[DEFAULTVIEW]),
         rect = boundingRect || element.getBoundingClientRect(),
         offset = [rect.left + scrolled[0], rect.top + scrolled[1]];
     rect = null;
@@ -350,7 +407,7 @@ function manualOffset(element) {
     var root = global.document.documentElement,
         offset = [element.offsetLeft, element.offsetTop],
         parent = element.offsetParent;
-
+    
     for (; parent; parent = parent.offsetParent) {
         if (parent.nodeType === 1) {
             offset[0] += (parent.offsetLeft || 0) + (parent.clientLeft || 0);
@@ -373,43 +430,37 @@ function manualOffset(element) {
 /**
  * Page Scroll
  */
-function setPageScroll(x, y) {
-    var factor = USE_ZOOM_FACTOR ? getZoomFactor() : 1;
-    global.window.scrollTo(x * factor, y * factor);
+function setPageScroll(window, x, y) {
+    var factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1;
+    window.scrollTo(x * factor, y * factor);
 }
 
-function w3cPageScrollOffset() {
-    var win = global.window,
-        doc = win.document,
-        root = doc.documentElement,
-        body = doc.body,
-        offset = [(win.pageXOffset || 0), (win.pageYOffset || 0)];
-        
-    win = doc = root = body = null;
-    
+function w3cPageScrollOffset(window) {
+    var offset = [(window.pageXOffset || 0), (window.pageYOffset || 0)];
     return offset;
 }
 
-function iePageScrollOffset() {
+function iePageScrollOffset(window) {
     var M = Math,
-        doc = global.document,
-        root = doc.documentElement,
-        body = doc.body,
-        factor = USE_ZOOM_FACTOR ? getZoomFactor() : 1,
-        offset = [M.round(root.scrollLeft / factor),
-                    M.round(root.scrollTop / factor)];
+        subject = window.document[IE_PAGE_STAT_ACCESS],
+        factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1,
+        offset = [M.round(subject.scrollLeft / factor),
+                    M.round(subject.scrollTop / factor)];
     
-    doc = root = body = null;
+    subject = null;
+    
+    console.log('strict? ', DETECTED.browser.strict);
     
     return offset;
 }
 
-function getZoomFactor() {
-    var factor = 1,
-        body = global.document.body;
-    var rect;
+function getZoomFactor(window) {
+    var factor = 1;
+    var rect, body;
     
     if (boundingRect) {
+        body = window.document.body;
+        
         // rect is only in physical pixel size in IE before version 8 
         rect = body.getBoundingClientRect();
 
@@ -429,13 +480,22 @@ function getZoomFactor() {
  */
 function isViewable(dom) {
     var help = DOM;
+    var body, viewable;
     
-    return help.isView(dom) ?
-            PAGE_VIEW :
-            help.is(dom) && (dom.nodeType !== 9 ||
-                !help.contains(dom.ownerDocument.body, dom)) ?
-                    ELEMENT_VIEW :
-                    false;
+    if (help.is(dom)) {
+        switch (dom.nodeType) {
+        case 9:
+        case 11:
+            return PAGE_VIEW;
+        }
+        body = dom.ownerDocument.body;
+        viewable = (dom === body || help.contains(body, dom)) && ELEMENT_VIEW;
+        body = null;
+        return viewable;
+        
+    }
+    
+    return help.isView(dom) ? PAGE_VIEW : false;
 }
 
 /**
@@ -445,9 +505,12 @@ function initialize() {
     var all = DETECTED,
         info = all.dimension;
     
-    STRICT = all.browser.strict;
+    if (!all.browser.strict) {
+        IE_PAGE_STAT_ACCESS = 'body';
+    }
         
     USE_ZOOM_FACTOR = info.zoomfactor;
+    DEFAULTVIEW = all.dom.defaultView;
     
     getPageScroll = info.pagescroll ?
                         w3cPageScrollOffset :
@@ -456,9 +519,6 @@ function initialize() {
     getScreenSize = info.screensize ?
                         w3cScreenSize :
                         ieScreenSize;
-    //setPageScroll = w3cScroll ?
-    //                            w3cSetPageScroll :
-    //                            ieSetPageScroll;
 
     boundingRect = info.rectmethod && 'getBoundingClientRect';
     getOffset = boundingRect ? rectOffset : manualOffset;

@@ -119,12 +119,13 @@
     }, function(module, exports) {
         (function(global) {
             "use strict";
-            var ROOT = global.document.documentElement;
+            var DOCUMENT = global.document, ROOT = DOCUMENT.documentElement;
             module.exports = {
                 compare: !!ROOT.compareDocumentPosition,
-                contains: !!ROOT.contains
+                contains: !!ROOT.contains,
+                defaultView: DOCUMENT.defaultView ? "defaultView" : DOCUMENT.parentWindow ? "parentWindow" : null
             };
-            ROOT = null;
+            DOCUMENT = ROOT = null;
         }).call(exports, function() {
             return this;
         }());
@@ -156,24 +157,43 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var DETECTED = __webpack_require__(2), ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", ERROR_INVALID_CALLBACK = "Invalid tree traverse [callback] parameter.", EXPORTS = {
+        var DETECTED = __webpack_require__(2), ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", ERROR_INVALID_CALLBACK = "Invalid tree traverse [callback] parameter.", INVALID_DESCENDANT_NODE_TYPES = {
+            9: 1,
+            11: 1
+        }, STD_CONTAINS = notSupportedContains, EXPORTS = {
             initialize: initialize,
-            contains: notSupportedContains,
+            contains: contains,
             is: isDom,
             isView: isDefaultView,
             eachPreorder: preOrderTraverse,
             eachPostorder: postOrderTraverse,
-            eachLevel: levelTraverse
+            eachLevel: levelTraverse,
+            documentViewAccess: "defaultView"
         };
         function initialize() {
-            var info = DETECTED.dom, context = EXPORTS;
-            context.contains = info.compare ? w3cContains : info.contains ? ieContains : notSupportedContains;
+            var info = DETECTED.dom;
+            STD_CONTAINS = info.compare ? w3cContains : info.contains ? ieContains : notSupportedContains;
+        }
+        function contains(ancestor, descendant) {
+            var is = isDom;
+            if (!is(ancestor, 1, 9, 11)) {
+                throw new Error("Invalid DOM [ancestor] parameter.");
+            }
+            if (!is(descendant) || descendant.nodeType in INVALID_DESCENDANT_NODE_TYPES) {
+                throw new Error("Invalid DOM [descendant] parameter.");
+            }
+            switch (ancestor.nodeType) {
+              case 9:
+              case 11:
+                ancestor = ancestor.documentElement;
+            }
+            return STD_CONTAINS(ancestor, descendant);
         }
         function notSupportedContains() {
             throw new Error("DOM position comparison is not supported");
         }
         function w3cContains(ancestor, descendant) {
-            return 0 < ancestor.compareDocumentPosition(descendant) & 16;
+            return (ancestor.compareDocumentPosition(descendant) & 16) > 0;
         }
         function ieContains(ancestor, descendant) {
             return ancestor.contains(descendant);
@@ -256,16 +276,24 @@
             last = queue = node = current = null;
             return EXPORTS.chain;
         }
-        function isDom(node, nodeType) {
+        function isDom(node) {
             var is = isFinite;
-            var type;
+            var type, c, len, items, match, matched;
             if (node && typeof node === "object") {
                 type = node.nodeType;
                 if (typeof type === "number" && is(type)) {
-                    if (typeof nodeType === "number" && is(nodeType)) {
-                        return type === nodeType;
+                    items = arguments;
+                    len = Math.max(items.length - 1, 0);
+                    matched = !len;
+                    for (c = 0; len--; ) {
+                        match = items[++c];
+                        if (typeof match === "number" && is(match)) {
+                            if (type === match) {
+                                return true;
+                            }
+                        }
                     }
-                    return true;
+                    return matched;
                 }
             }
             return false;
@@ -695,7 +723,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), DOM = __webpack_require__(8), CSS = __webpack_require__(9), ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.", ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, STRICT = false, boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
+            var DETECTED = __webpack_require__(2), DOM = __webpack_require__(8), CSS = __webpack_require__(9), ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
                 initialize: initialize,
                 offset: offset,
                 size: size,
@@ -704,28 +732,28 @@
                 screen: screen
             };
             function offset(element, x, y) {
-                if (isViewable(element) !== ELEMENT_VIEW) {
-                    throw new Error(ERROR_INVALID_ELEMENT);
-                }
                 if (arguments.length > 1) {
                     return box(element, x, y);
                 }
-                return getOffset(element);
+                switch (isViewable(element)) {
+                  case PAGE_VIEW:
+                    return pageBox(element).slice(0, 2);
+
+                  case ELEMENT_VIEW:
+                    return getOffset(element);
+                }
+                throw new Error(ERROR_INVALID_ELEMENT);
             }
             function size(element, width, height) {
-                if (isViewable(element) !== ELEMENT_VIEW) {
-                    throw new Error(ERROR_INVALID_ELEMENT);
-                }
                 if (arguments.length > 1) {
                     return box(element, null, null, width, height);
                 }
-                return getSize(element);
+                return isViewable(element) === PAGE_VIEW ? pageBox(element).slice(2, 4) : getSize(element);
             }
             function box(element, x, y, width, height) {
                 var is = isFinite, M = Math, css = CSS, PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
                 var hasLeft, hasTop, hasWidth, hasHeight, parent, diff, diff1, diff2, style, style1, style2, styleAttribute;
                 if (!setter && viewmode === PAGE_VIEW) {
-                    console.log("used page box");
                     return pageBox(element);
                 }
                 if (viewmode !== ELEMENT_VIEW) {
@@ -757,29 +785,15 @@
                         if (hasLeft || hasTop) {
                             diff = getOffset(element);
                             diff1 = diff2 = 0;
-                            if (hasLeft) {
-                                diff1 = x - diff[0];
-                            }
-                            if (hasTop) {
-                                diff2 = y - diff[1];
-                            }
-                            style1 = element.offsetLeft || 0;
-                            style2 = element.offsetTop || 0;
-                            switch (style.position) {
-                              case "relative":
-                                parent = element.offsetParent;
-                                if (parent) {
-                                    parent = css.style(parent, PADDING_TOP, PADDING_LEFT);
-                                    style1 -= parseInt(parent.paddingLeft, 10) || 0;
-                                    style2 -= parseInt(parent.paddingTop, 10) || 0;
-                                }
-
-                              case "absolute":
-                              case "fixed":
-                                styleAttribute.left = style1 + diff1 + "px";
-                                styleAttribute.top = style2 + diff2 + "px";
-                                break;
-                            }
+                            parent = element.offsetParent;
+                            style = parent ? getOffset(element) : [ 0, 0 ];
+                            console.log("parent offset: ", style, parent);
+                            diff1 = x - style[0] + diff[0];
+                            diff2 = y - style[1] + diff[1];
+                            styleAttribute.left = diff1 + "px";
+                            styleAttribute.top = diff2 + "px";
+                            styleAttribute.left = style1 + "px";
+                            styleAttribute.top = style2 + "px";
                         }
                         if (hasWidth || hasHeight) {
                             if (hasWidth) {
@@ -801,7 +815,7 @@
             }
             function scroll(dom, x, y) {
                 var setter = arguments.length > 1;
-                var current;
+                var current, window;
                 if (setter) {
                     if (typeof x !== "number" || !isFinite(x)) {
                         x = false;
@@ -812,9 +826,10 @@
                 }
                 switch (isViewable(dom)) {
                   case PAGE_VIEW:
-                    current = getPageScroll();
+                    window = DOM.is(dom) ? dom[DEFAULTVIEW] : dom;
+                    current = getPageScroll(window);
                     if (setter) {
-                        setPageScroll(x === false ? current[0] : x, y === false ? current[1] : y);
+                        setPageScroll(window, x === false ? current[0] : x, y === false ? current[1] : y);
                     } else {
                         return current;
                     }
@@ -833,28 +848,30 @@
                     throw new Error("Invalid [dom] Object parameter.");
                 }
             }
-            function pageBox(element) {
-                var M = Math, window = global.window, document = window.document, root = document.documentElement, box = screen();
-                if (element === window || element === document || element === root) {
-                    box[2] = M.max(root.scrollWidth || 0, box[2]);
-                    box[3] = M.max(root.scrollHeight || 0, box[3]);
+            function pageBox(dom) {
+                var M = Math, help = DOM, subject = dom, box = screen();
+                if (help.isView(subject)) {
+                    subject = subject.document;
                 }
-                window = document = root = null;
+                if (subject.nodeType === 9) {
+                    subject = subject[IE_PAGE_STAT_ACCESS];
+                    box[2] = M.max(subject.scrollWidth, box[2]);
+                    box[3] = M.max(subject.scrollHeight, box[3]);
+                }
+                subject = null;
                 return box;
             }
             function screen() {
-                var box = getPageScroll(), size = getScreenSize();
+                var window = global.window, box = getPageScroll(window), size = getScreenSize(window);
                 box[2] = size[0];
                 box[3] = size[1];
                 return box;
             }
-            function w3cScreenSize() {
-                var window = global.window, size = [ window.innerWidth, window.innerHeight ];
-                window = null;
-                return size;
+            function w3cScreenSize(window) {
+                return [ window.innerWidth, window.innerHeight ];
             }
-            function ieScreenSize() {
-                var factor = USE_ZOOM_FACTOR ? getZoomFactor() : 1, document = global.document, subject = STRICT ? document.documentElement : document.body, size = [ subject.clientWidth * factor, subject.clientHeight * factor ];
+            function ieScreenSize(window) {
+                var factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1, subject = window.document[IE_PAGE_STAT_ACCESS], size = [ subject.clientWidth * factor, subject.clientHeight * factor ];
                 subject = null;
                 return size;
             }
@@ -885,7 +902,7 @@
                 return [ M.max(0, element.offsetWidth || 0), M.max(0, element.offsetHeight || 0) ];
             }
             function rectOffset(element, boundingRect) {
-                var scrolled = getPageScroll(), rect = boundingRect || element.getBoundingClientRect(), offset = [ rect.left + scrolled[0], rect.top + scrolled[1] ];
+                var scrolled = getPageScroll(element.ownerDocument[DEFAULTVIEW]), rect = boundingRect || element.getBoundingClientRect(), offset = [ rect.left + scrolled[0], rect.top + scrolled[1] ];
                 rect = null;
                 return offset;
             }
@@ -906,24 +923,25 @@
                 root = parent = null;
                 return offset;
             }
-            function setPageScroll(x, y) {
-                var factor = USE_ZOOM_FACTOR ? getZoomFactor() : 1;
-                global.window.scrollTo(x * factor, y * factor);
+            function setPageScroll(window, x, y) {
+                var factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1;
+                window.scrollTo(x * factor, y * factor);
             }
-            function w3cPageScrollOffset() {
-                var win = global.window, doc = win.document, root = doc.documentElement, body = doc.body, offset = [ win.pageXOffset || 0, win.pageYOffset || 0 ];
-                win = doc = root = body = null;
+            function w3cPageScrollOffset(window) {
+                var offset = [ window.pageXOffset || 0, window.pageYOffset || 0 ];
                 return offset;
             }
-            function iePageScrollOffset() {
-                var M = Math, doc = global.document, root = doc.documentElement, body = doc.body, factor = USE_ZOOM_FACTOR ? getZoomFactor() : 1, offset = [ M.round(root.scrollLeft / factor), M.round(root.scrollTop / factor) ];
-                doc = root = body = null;
+            function iePageScrollOffset(window) {
+                var M = Math, subject = window.document[IE_PAGE_STAT_ACCESS], factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1, offset = [ M.round(subject.scrollLeft / factor), M.round(subject.scrollTop / factor) ];
+                subject = null;
+                console.log("strict? ", DETECTED.browser.strict);
                 return offset;
             }
-            function getZoomFactor() {
-                var factor = 1, body = global.document.body;
-                var rect;
+            function getZoomFactor(window) {
+                var factor = 1;
+                var rect, body;
                 if (boundingRect) {
+                    body = window.document.body;
                     rect = body.getBoundingClientRect();
                     factor = Math.round((rect.right - rect.left / body.offsetWidth) * 100) / 100;
                 }
@@ -932,12 +950,27 @@
             }
             function isViewable(dom) {
                 var help = DOM;
-                return help.isView(dom) ? PAGE_VIEW : help.is(dom) && (dom.nodeType !== 9 || !help.contains(dom.ownerDocument.body, dom)) ? ELEMENT_VIEW : false;
+                var body, viewable;
+                if (help.is(dom)) {
+                    switch (dom.nodeType) {
+                      case 9:
+                      case 11:
+                        return PAGE_VIEW;
+                    }
+                    body = dom.ownerDocument.body;
+                    viewable = (dom === body || help.contains(body, dom)) && ELEMENT_VIEW;
+                    body = null;
+                    return viewable;
+                }
+                return help.isView(dom) ? PAGE_VIEW : false;
             }
             function initialize() {
                 var all = DETECTED, info = all.dimension;
-                STRICT = all.browser.strict;
+                if (!all.browser.strict) {
+                    IE_PAGE_STAT_ACCESS = "body";
+                }
                 USE_ZOOM_FACTOR = info.zoomfactor;
+                DEFAULTVIEW = all.dom.defaultView;
                 getPageScroll = info.pagescroll ? w3cPageScrollOffset : iePageScrollOffset;
                 getScreenSize = info.screensize ? w3cScreenSize : ieScreenSize;
                 boundingRect = info.rectmethod && "getBoundingClientRect";

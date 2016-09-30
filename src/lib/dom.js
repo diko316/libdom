@@ -3,21 +3,23 @@
 var DETECTED = require("./detect.js"),
     ERROR_INVALID_DOM = "Invalid DOM [element] parameter.",
     ERROR_INVALID_CALLBACK = "Invalid tree traverse [callback] parameter.",
+    INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 },
+    STD_CONTAINS = notSupportedContains,
     EXPORTS = {
         initialize: initialize,
-        contains: notSupportedContains,
+        contains: contains,
         is: isDom,
         isView: isDefaultView,
         eachPreorder: preOrderTraverse,
         eachPostorder: postOrderTraverse,
-        eachLevel: levelTraverse
+        eachLevel: levelTraverse,
+        documentViewAccess: 'defaultView'
     };
 
 function initialize() {
-    var info = DETECTED.dom,
-        context = EXPORTS;
+    var info = DETECTED.dom;
     
-    context.contains = info.compare ?
+    STD_CONTAINS = info.compare ?
                             w3cContains :
                             info.contains ?
                                 ieContains :
@@ -27,12 +29,34 @@ function initialize() {
 /**
  * node contains...
  */
+function contains(ancestor, descendant) {
+    var is = isDom;
+    
+    if (!is(ancestor, 1, 9, 11)) {
+        throw new Error("Invalid DOM [ancestor] parameter.");
+    }
+    
+    if (!is(descendant) ||
+        (descendant.nodeType in INVALID_DESCENDANT_NODE_TYPES)) {
+        throw new Error("Invalid DOM [descendant] parameter.");
+    }
+    
+    switch (ancestor.nodeType) {
+    case 9:
+    case 11:
+        ancestor = ancestor.documentElement;
+    }
+
+    return STD_CONTAINS(ancestor, descendant);
+    
+}
+
 function notSupportedContains() {
     throw new Error("DOM position comparison is not supported");
 }
 
 function w3cContains(ancestor, descendant) {
-    return 0 < ancestor.compareDocumentPosition(descendant) & 16;
+    return (ancestor.compareDocumentPosition(descendant) & 16) > 0;
 }
 
 function ieContains(ancestor, descendant) {
@@ -84,8 +108,6 @@ function orderTraverse(element, callback, preOrderOnly) {
         postOrderOnly = !preOrderOnly,
         depth = 0;
 	var node;
-    
-    
 
 	main: for (; current;) {
 
@@ -177,17 +199,25 @@ function levelTraverse(element, callback) {
 /**
  * is node
  */
-function isDom(node, nodeType) {
+function isDom(node) {
     var is = isFinite;
-    var type;
+    var type, c, len, items, match, matched;
     
     if (node && typeof node === 'object') {
         type = node.nodeType;
         if (typeof type === 'number' && is(type)) {
-            if (typeof nodeType === 'number' && is(nodeType)) {
-                return type === nodeType;
+            items = arguments;
+            len = Math.max(items.length - 1, 0);
+            matched = !len;
+            for (c = 0; len--;) {
+                match = items[++c];
+                if (typeof match === 'number' && is(match)) {
+                    if (type === match) {
+                        return true;
+                    }
+                }
             }
-            return true;
+            return matched;
         }
     }
     

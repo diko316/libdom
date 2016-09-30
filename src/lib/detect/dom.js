@@ -1,15 +1,24 @@
 'use strict';
 
-var ROOT = global.document.documentElement;
+var DOCUMENT = global.document,
+    ROOT = DOCUMENT.documentElement;
 
 /**
  * TODO:
  *  querySelectorAll detect
  */
 
+
+
+
+
 module.exports = {
     compare: !!ROOT.compareDocumentPosition,
-    contains: !!ROOT.contains
+    contains: !!ROOT.contains,
+    defaultView: DOCUMENT.defaultView ?
+                    'defaultView' :
+                    DOCUMENT.parentWindow ?
+                        'parentWindow' : null
 };
 
-ROOT = null;
+DOCUMENT = ROOT = null;
