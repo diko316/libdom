@@ -751,8 +751,8 @@
                 return isViewable(element) === PAGE_VIEW ? pageBox(element).slice(2, 4) : getSize(element);
             }
             function box(element, x, y, width, height) {
-                var is = isFinite, M = Math, css = CSS, PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
-                var hasLeft, hasTop, hasWidth, hasHeight, parent, diff, diff1, diff2, style, style1, style2, styleAttribute;
+                var is = isFinite, M = Math, css = CSS, toFloat = parseFloat, PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
+                var hasLeft, hasTop, hasWidth, hasHeight, parent, hasPosition, hasSize, diff, diff1, diff2, style, style1, style2, styleAttribute;
                 if (!setter && viewmode === PAGE_VIEW) {
                     return pageBox(element);
                 }
@@ -766,44 +766,50 @@
                         y = 1 in y ? x[1] : null;
                         x = x[0];
                     }
-                    hasLeft = hasTop = hasWidth = hasHeight = false;
-                    if (typeof x === NUMBER && is(x)) {
-                        hasLeft = true;
-                    }
-                    if (typeof y === NUMBER && is(y)) {
-                        hasTop = true;
+                    style = css.style(element, "position", PADDING_TOP, PADDING_LEFT, "marginLeft", "marginTop", "paddingRight", "paddingBottom");
+                    hasLeft = hasTop = hasWidth = hasHeight = hasPosition = hasSize = false;
+                    switch (style.position) {
+                      case "relative":
+                      case "absolute":
+                      case "fixed":
+                        if (typeof x === NUMBER && is(x)) {
+                            hasLeft = hasPosition = true;
+                        }
+                        if (typeof y === NUMBER && is(y)) {
+                            hasTop = hasPosition = true;
+                        }
                     }
                     if (typeof width === NUMBER && is(width)) {
-                        hasWidth = true;
+                        hasWidth = hasSize = true;
                     }
                     if (typeof height === NUMBER && is(height)) {
-                        hasHeight = true;
+                        hasHeight = hasSize = true;
                     }
-                    if (hasLeft || hasTop || hasWidth || hasHeight) {
+                    if (hasPosition || hasSize) {
                         styleAttribute = element.style;
-                        style = css.style(element, "position", PADDING_TOP, PADDING_LEFT, "paddingRight", "paddingBottom");
-                        if (hasLeft || hasTop) {
+                        if (hasPosition) {
                             diff = getOffset(element);
                             diff1 = diff2 = 0;
-                            parent = element.offsetParent;
-                            style = parent ? getOffset(element) : [ 0, 0 ];
-                            console.log("parent offset: ", style, parent);
-                            diff1 = x - style[0] + diff[0];
-                            diff2 = y - style[1] + diff[1];
-                            styleAttribute.left = diff1 + "px";
-                            styleAttribute.top = diff2 + "px";
-                            styleAttribute.left = style1 + "px";
-                            styleAttribute.top = style2 + "px";
+                            if (hasLeft) {
+                                diff1 = hasLeft ? x - diff[0] : 0;
+                                style1 = element.offsetLeft + (toFloat(style.marginLeft) || 0);
+                                styleAttribute.left = style1 + diff1 + "px";
+                            }
+                            if (hasTop) {
+                                diff2 = hasTop ? x - diff[1] : 0;
+                                style2 = element.offsetTop + (toFloat(style.marginTop) || 0);
+                                styleAttribute.top = style2 + diff2 + "px";
+                            }
                         }
-                        if (hasWidth || hasHeight) {
+                        if (hasSize) {
                             if (hasWidth) {
                                 diff = width - element.offsetWidth;
-                                style1 = element.clientWidth - (parseInt(style.paddingLeft, 10) || 0) - (parseInt(style.paddingRight, 10) || 0);
+                                style1 = element.clientWidth - (toFloat(style.paddingLeft) || 0) - (toFloat(style.paddingRight) || 0);
                                 styleAttribute.width = M.max(style1 + diff, 0) + "px";
                             }
                             if (hasHeight) {
                                 diff = height - element.offsetHeight;
-                                style1 = element.clientHeight - (parseInt(style.paddingTop, 10) || 0) - (parseInt(style.paddingBottom, 10) || 0);
+                                style1 = element.clientHeight - (toFloat(style.paddingTop) || 0) - (toFloat(style.paddingBottom) || 0);
                                 styleAttribute.height = M.max(style1 + diff, 0) + "px";
                             }
                         }
