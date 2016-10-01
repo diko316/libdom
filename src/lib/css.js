@@ -9,23 +9,15 @@ var STRING = require("./string.js"),
     NUMBER_RE = /\d/,
     ERROR_INVALID_DOM = "Invalid DOM [element] parameter.",
     EXPORTS = {
-        initialize: initialize,
         add: addClass,
         remove: removeClass,
         style: computedStyleNotSupported
     },
     SLICE = Array.prototype.slice;
     
-function initialize() {
-    var info = DETECTED.css,
-        context = EXPORTS;
+var CSS_INFO;
     
-    context.style = info.w3cStyle ?
-                            w3cGetCurrentStyle :
-                            info.ieStyle ?
-                                ieGetCurrentStyle :
-                                computedStyleNotSupported;
-}
+
 
 function addClass(element) {
     var className;
@@ -158,5 +150,15 @@ function getPixelSize(element, style, property, fontSize) {
     }
 }
 
-module.exports = EXPORTS;
-EXPORTS.chain = EXPORTS;
+
+CSS_INFO = DETECTED && DETECTED.css;
+if (CSS_INFO) {
+    EXPORTS.style = CSS_INFO.w3cStyle ?
+                        w3cGetCurrentStyle :
+                        CSS_INFO.ieStyle ?
+                            ieGetCurrentStyle :
+                            computedStyleNotSupported;
+}
+
+
+module.exports = EXPORTS.chain = EXPORTS;

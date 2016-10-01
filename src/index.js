@@ -1,88 +1,82 @@
 'use strict';
 
 var detect = require("./lib/detect.js"),
-    dom = require("./lib/dom.js"),
-    css = require("./lib/css.js"),
-    event = require("./lib/event.js"),
-    dimension = require("./lib/dimension.js"),
     EXPORTS = {
-            version: LIB_VERSION,
-            info: detect,
-            
-            // dom structure
-            is: dom.is,
-            isView: dom.isView,
-            contains: dom.contains,
-            
-            eachNodePreorder: dom.eachPreorder,
-            eachNodePostorder: dom.eachPostorder,
-            eachNodeLevelorder: dom.eachLevel,
-            
-            // classes
-            addClass: css.add,
-            removeClass: css.remove,
-            
-            // event
-            on: event.on,
-            un: event.un,
-            purge: event.purge,
-            dispatch: event.fire,
-            
-            // dimension
-            offset: dimension.offset,
-            size: dimension.size,
-            box: dimension.box,
-            scroll: dimension.scroll,
-            screen: dimension.screen
-            
-        };
+        version: LIB_VERSION,
+        info: detect
+    };
+var css, event, dimension;
 
 function notBrowser() {
     throw new Error("Unable to proceed, not running in a browser.");
 }
 
-function notBrowserMethodOverride(context) {
-    var O = Object.prototype,
-        F = Function,
-        handler = notBrowser,
-        hasOwn = O.hasOwnProperty;
+function applyIf(api, moduleObject, access) {
+    var hasOwn = Object.prototype.hasOwnProperty,
+        handler = detect ? false : notBrowser;
     var name;
     
-    if (O.toString.call(context) === '[object Object]') {
-        if (!(handler instanceof F)) {
-            handler = notBrowser;
+    for (name in access) {
+        if (hasOwn.call(access, name)) {
+            
+            api[name] = handler || moduleObject[access[name]];
+            
         }
         
-        for (name in context) {
-            if (hasOwn.call(context, name) &&
-                context[name] instanceof F) {
-                context[name] = handler;
-            }
-        }
     }
-    return context;
 }
 
 
+// dom structure
+applyIf(EXPORTS,
+        require("./lib/dom.js"),
+        {
+            'is': 'is',
+            'isView': 'isView',
+            'contains': 'contains',
+            
+            'select': 'select',
+            
+            'eachNodePreorder': 'eachPreorder',
+            'eachNodePostorder': 'eachPostorder',
+            'eachNodeLevelorder': 'eachLevel'
+        });
+
+applyIf(EXPORTS,
+        css = require("./lib/css.js"),
+        {
+            'addClass': 'add',
+            'removeClass': 'remove'
+        });
+
+
+applyIf(EXPORTS,
+        event = require("./lib/event.js"),
+        {
+            'on': 'on',
+            'un': 'un',
+            'purge': 'purge',
+            'dispatch': 'fire'
+        });
+
+applyIf(EXPORTS,
+        dimension = require("./lib/dimension.js"),
+        {
+            'offset': 'offset',
+            'size': 'size',
+            'box': 'box',
+            'scroll': 'scroll',
+            'screen': 'screen'
+        });
+
 if (detect) {
-    
     css.chain =
         event.chain = 
         dimension.chain = EXPORTS;
-    
-    dom.initialize();
-    css.initialize();
-    event.initialize();
-    dimension.initialize();
-    
-}
-else {
-    
-    notBrowserMethodOverride(EXPORTS);
 }
 
 
 
-module.exports = EXPORTS;
+module.exports = global[LIB_NAME] = EXPORTS;
 //global[LIB_NAME] = EXPORTS;
 //console.log(LIB_NAME);

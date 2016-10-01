@@ -21,56 +21,58 @@
     }([ function(module, exports, __webpack_require__) {
         module.exports = __webpack_require__(1);
     }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var detect = __webpack_require__(2), dom = __webpack_require__(8), css = __webpack_require__(9), event = __webpack_require__(11), dimension = __webpack_require__(12), EXPORTS = {
-            version: "0.0.4",
-            info: detect,
-            is: dom.is,
-            isView: dom.isView,
-            contains: dom.contains,
-            eachNodePreorder: dom.eachPreorder,
-            eachNodePostorder: dom.eachPostorder,
-            eachNodeLevelorder: dom.eachLevel,
-            addClass: css.add,
-            removeClass: css.remove,
-            on: event.on,
-            un: event.un,
-            purge: event.purge,
-            dispatch: event.fire,
-            offset: dimension.offset,
-            size: dimension.size,
-            box: dimension.box,
-            scroll: dimension.scroll,
-            screen: dimension.screen
-        };
-        function notBrowser() {
-            throw new Error("Unable to proceed, not running in a browser.");
-        }
-        function notBrowserMethodOverride(context) {
-            var O = Object.prototype, F = Function, handler = notBrowser, hasOwn = O.hasOwnProperty;
-            var name;
-            if (O.toString.call(context) === "[object Object]") {
-                if (!(handler instanceof F)) {
-                    handler = notBrowser;
-                }
-                for (name in context) {
-                    if (hasOwn.call(context, name) && context[name] instanceof F) {
-                        context[name] = handler;
+        (function(global) {
+            "use strict";
+            var detect = __webpack_require__(2), EXPORTS = {
+                version: "0.0.4",
+                info: detect
+            };
+            var css, event, dimension;
+            function notBrowser() {
+                throw new Error("Unable to proceed, not running in a browser.");
+            }
+            function applyIf(api, moduleObject, access) {
+                var hasOwn = Object.prototype.hasOwnProperty, handler = detect ? false : notBrowser;
+                var name;
+                for (name in access) {
+                    if (hasOwn.call(access, name)) {
+                        api[name] = handler || moduleObject[access[name]];
                     }
                 }
             }
-            return context;
-        }
-        if (detect) {
-            css.chain = event.chain = dimension.chain = EXPORTS;
-            dom.initialize();
-            css.initialize();
-            event.initialize();
-            dimension.initialize();
-        } else {
-            notBrowserMethodOverride(EXPORTS);
-        }
-        module.exports = EXPORTS;
+            applyIf(EXPORTS, __webpack_require__(8), {
+                is: "is",
+                isView: "isView",
+                contains: "contains",
+                select: "select",
+                eachNodePreorder: "eachPreorder",
+                eachNodePostorder: "eachPostorder",
+                eachNodeLevelorder: "eachLevel"
+            });
+            applyIf(EXPORTS, css = __webpack_require__(9), {
+                addClass: "add",
+                removeClass: "remove"
+            });
+            applyIf(EXPORTS, event = __webpack_require__(11), {
+                on: "on",
+                un: "un",
+                purge: "purge",
+                dispatch: "fire"
+            });
+            applyIf(EXPORTS, dimension = __webpack_require__(12), {
+                offset: "offset",
+                size: "size",
+                box: "box",
+                scroll: "scroll",
+                screen: "screen"
+            });
+            if (detect) {
+                css.chain = event.chain = dimension.chain = EXPORTS;
+            }
+            module.exports = global["libdom"] = EXPORTS;
+        }).call(exports, function() {
+            return this;
+        }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var browser = __webpack_require__(3), EXPORTS = false;
@@ -123,7 +125,8 @@
             module.exports = {
                 compare: !!ROOT.compareDocumentPosition,
                 contains: !!ROOT.contains,
-                defaultView: DOCUMENT.defaultView ? "defaultView" : DOCUMENT.parentWindow ? "parentWindow" : null
+                defaultView: DOCUMENT.defaultView ? "defaultView" : DOCUMENT.parentWindow ? "parentWindow" : null,
+                querySelectorAll: !!DOCUMENT.querySelectorAll
             };
             DOCUMENT = ROOT = null;
         }).call(exports, function() {
@@ -157,23 +160,23 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var DETECTED = __webpack_require__(2), ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", ERROR_INVALID_CALLBACK = "Invalid tree traverse [callback] parameter.", INVALID_DESCENDANT_NODE_TYPES = {
+        var DETECTED = __webpack_require__(2), OBJECT_TYPE = "[object Object]", ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", ERROR_INVALID_CALLBACK = "Invalid tree traverse [callback] parameter.", ERROR_INVALID_ELEMENT_CONFIG = "Invalid DOM Element [config] parameter.", INVALID_DESCENDANT_NODE_TYPES = {
             9: 1,
             11: 1
-        }, STD_CONTAINS = notSupportedContains, EXPORTS = {
-            initialize: initialize,
+        }, STD_CONTAINS = notSupportedContains, OBJECT_TOSTRING = Object.prototype.toString, EXPORTS = {
             contains: contains,
             is: isDom,
             isView: isDefaultView,
             eachPreorder: preOrderTraverse,
             eachPostorder: postOrderTraverse,
             eachLevel: levelTraverse,
-            documentViewAccess: "defaultView"
+            documentViewAccess: "defaultView",
+            select: notSupportedQuerySelector,
+            add: add,
+            remove: remove,
+            find: find
         };
-        function initialize() {
-            var info = DETECTED.dom;
-            STD_CONTAINS = info.compare ? w3cContains : info.contains ? ieContains : notSupportedContains;
-        }
+        var DOM_INFO;
         function contains(ancestor, descendant) {
             var is = isDom;
             if (!is(ancestor, 1, 9, 11)) {
@@ -184,19 +187,144 @@
             }
             switch (ancestor.nodeType) {
               case 9:
-              case 11:
                 ancestor = ancestor.documentElement;
+                break;
+
+              case 11:
+                ancestor = ancestor.firstChild;
+                break;
             }
             return STD_CONTAINS(ancestor, descendant);
         }
         function notSupportedContains() {
-            throw new Error("DOM position comparison is not supported");
+            throw new Error("DOM position comparison is not supported.");
         }
         function w3cContains(ancestor, descendant) {
             return (ancestor.compareDocumentPosition(descendant) & 16) > 0;
         }
         function ieContains(ancestor, descendant) {
             return ancestor.contains(descendant);
+        }
+        function add(element, config, before) {
+            var tagName, toInsert;
+            if (!isDom(element, 1, 11)) {
+                throw new Error(ERROR_INVALID_DOM);
+            }
+            tagName = getTagNameFromConfig(config);
+            if (!tagName) {
+                throw new Error(ERROR_INVALID_ELEMENT_CONFIG);
+            }
+            toInsert = config;
+            if (OBJECT_TOSTRING.call(config) === OBJECT_TYPE) {
+                toInsert = element.ownerDocument.createElement(tagName);
+                applyConfigToElement(toInsert, config);
+            }
+            if (!isDom(toInsert)) {
+                throw new Error(ERROR_INVALID_ELEMENT_CONFIG);
+            }
+            element.insertBefore(toInsert, findChild(element, before));
+            return toInsert;
+        }
+        function remove(element) {
+            var parentNode;
+            if (!isDom(element, 1, 3, 4, 7, 8)) {
+                throw new Error(ERROR_INVALID_DOM);
+            }
+            parentNode = element.parentNode;
+            if (parentNode) {
+                parentNode.removeChild(element);
+            }
+            parentNode = null;
+            return element;
+        }
+        function find(element, node) {
+            if (!isDom(element, 1, 11)) {
+                throw new Error(ERROR_INVALID_DOM);
+            }
+            return findChild(element, node, 1);
+        }
+        function getTagNameFromConfig(config) {
+            if (OBJECT_TOSTRING.call(config) === OBJECT_TYPE) {
+                config = config.tagName;
+            }
+            return config && typeof config === "string" ? config : false;
+        }
+        function applyConfigToElement(element, config) {
+            var hasOwn = Object.prototype.hasOwnProperty, toString = OBJECT_TOSTRING, objectType = OBJECT_TYPE, string = "string";
+            var name, value, item, itemName;
+            if (toString.call(config) === objectType) {
+                main: for (name in config) {
+                    if (hasOwn.call(name, config)) {
+                        value = config[name];
+                        switch (name) {
+                          case "tagName":
+                            continue main;
+
+                          case "class":
+                            if (typeof value !== string) {
+                                continue main;
+                            }
+                            name = "className";
+                            break;
+
+                          case "for":
+                            if (typeof value !== string) {
+                                continue main;
+                            }
+                            name = "htmlFor";
+                            break;
+
+                          case "style":
+                            item = element.style;
+                            if (typeof value === string) {
+                                item.cssText = value;
+                            } else if (toString.call(value) === objectType) {
+                                for (itemName in value) {
+                                    if (hasOwn.call(value, itemName)) {
+                                        item[itemName] = value[itemName];
+                                    }
+                                }
+                            }
+                            continue main;
+                        }
+                        element[name] = value;
+                    }
+                }
+                item = null;
+            }
+        }
+        function findChild(element, node, nodeType) {
+            var number = "number", is = isFinite;
+            var index, counter, any;
+            if (isDom(node, 1, 3, 4, 7, 8) && node.parentNode === element) {
+                return node;
+            } else if (typeof node === number && is(node) && node > -1) {
+                index = node;
+                counter = -1;
+                any = typeof nodeType !== number || !is(nodeType);
+                node = element.firstChild;
+                for (;node; node = node.nextSibling) {
+                    if (any || nodeType === node.nodeType) {
+                        counter++;
+                    }
+                    if (counter === index) {
+                        return node;
+                    }
+                }
+            }
+            return null;
+        }
+        function querySelectorAll(dom, selector) {
+            if (!isDom(dom, 9, 1)) {
+                throw new Error("Invalid DOM [node] parameter.");
+            }
+            if (!selector || typeof selector !== "string") {
+                throw new Error("Invalid CSS [selector] parameter.");
+            }
+            return dom.querySelectorAll(selector);
+        }
+        function notSupportedQuerySelector() {
+            throw new Error("CSS Selector query form DOM is not supported.");
         }
         function preOrderTraverse(element, callback) {
             if (!isDom(element, 1)) {
@@ -277,17 +405,17 @@
             return EXPORTS.chain;
         }
         function isDom(node) {
-            var is = isFinite;
+            var is = isFinite, number = "number";
             var type, c, len, items, match, matched;
             if (node && typeof node === "object") {
                 type = node.nodeType;
-                if (typeof type === "number" && is(type)) {
+                if (typeof type === number && is(type)) {
                     items = arguments;
                     len = Math.max(items.length - 1, 0);
                     matched = !len;
                     for (c = 0; len--; ) {
                         match = items[++c];
-                        if (typeof match === "number" && is(match)) {
+                        if (typeof match === number && is(match)) {
                             if (type === match) {
                                 return true;
                             }
@@ -302,20 +430,23 @@
             var type = typeof defaultView;
             return !!defaultView && (type === "object" || type === "function") && defaultView.self === defaultView.window && !!defaultView.document;
         }
+        DOM_INFO = DETECTED && DETECTED.dom;
+        if (DOM_INFO) {
+            STD_CONTAINS = DOM_INFO.compare ? w3cContains : DOM_INFO.contains ? ieContains : notSupportedContains;
+            if (DOM_INFO.querySelectorAll) {
+                EXPORTS.select = querySelectorAll;
+            }
+        }
         module.exports = EXPORTS.chain = EXPORTS;
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
             var STRING = __webpack_require__(10), DETECTED = __webpack_require__(2), DOM = __webpack_require__(8), DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", EXPORTS = {
-                initialize: initialize,
                 add: addClass,
                 remove: removeClass,
                 style: computedStyleNotSupported
             }, SLICE = Array.prototype.slice;
-            function initialize() {
-                var info = DETECTED.css, context = EXPORTS;
-                context.style = info.w3cStyle ? w3cGetCurrentStyle : info.ieStyle ? ieGetCurrentStyle : computedStyleNotSupported;
-            }
+            var CSS_INFO;
             function addClass(element) {
                 var className;
                 if (!DOM.is(element, 1)) {
@@ -408,8 +539,11 @@
                     return size;
                 }
             }
-            module.exports = EXPORTS;
-            EXPORTS.chain = EXPORTS;
+            CSS_INFO = DETECTED && DETECTED.css;
+            if (CSS_INFO) {
+                EXPORTS.style = CSS_INFO.w3cStyle ? w3cGetCurrentStyle : CSS_INFO.ieStyle ? ieGetCurrentStyle : computedStyleNotSupported;
+            }
+            module.exports = EXPORTS.chain = EXPORTS;
         }).call(exports, function() {
             return this;
         }());
@@ -459,39 +593,13 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var INFO = __webpack_require__(2), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty, ERROR_OBSERVABLE_NO_SUPPORT = "Invalid [observable] parameter.", ERROR_INVALID_TYPE = "Invalid Event [type] parameter.", ERROR_INVALID_HANDLER = "Invalid Event [handler] parameter.", IE_CUSTOM_TYPE_EVENT = "dataavailable", EXPORTS = module.exports = {
-                initialize: initialize,
+            var INFO = __webpack_require__(2), DOM = __webpack_require__(8), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty, ERROR_OBSERVABLE_NO_SUPPORT = "Invalid [observable] parameter.", ERROR_INVALID_TYPE = "Invalid Event [type] parameter.", ERROR_INVALID_HANDLER = "Invalid Event [handler] parameter.", IE_CUSTOM_TYPE_EVENT = "propertychange", EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
                 purge: purge
             };
-            var RESOLVE, LISTEN, UNLISTEN, DISPATCH;
-            function initialize() {
-                var info = INFO.event, isCapable = true, beforeUnload = onBeforeUnload, main = global;
-                switch (true) {
-                  case info.w3c:
-                    LISTEN = w3cListen;
-                    UNLISTEN = w3cUnlisten;
-                    DISPATCH = w3cDispatch;
-                    RESOLVE = w3cObservable;
-                    break;
-
-                  case info.ie:
-                    LISTEN = ieListen;
-                    UNLISTEN = ieUnlisten;
-                    DISPATCH = ieDispatch;
-                    RESOLVE = ieObservable;
-                    break;
-
-                  default:
-                    isCapable = false;
-                }
-                if (isCapable) {
-                    listen(main, "beforeunload", beforeUnload);
-                    listen(main, "unload", beforeUnload);
-                }
-            }
+            var RESOLVE, LISTEN, UNLISTEN, DISPATCH, EVENT_INFO, IS_CAPABLE, SUBJECT;
             function listen(observable, type, handler, context) {
                 var last = EVENTS;
                 var current;
@@ -625,6 +733,7 @@
                     }
                 }
                 observable.dispatchEvent(event);
+                return event;
             }
             function w3cObservable(observable) {
                 var F = Function;
@@ -647,7 +756,7 @@
             }
             function ieDispatch(observable, type, properties) {
                 var hasOwn = HAS_OWN_PROPERTY, event = global.document.createEventObject();
-                var name;
+                var name, node;
                 for (name in properties) {
                     if (hasOwn.call(properties, name) && !(name in event)) {
                         event[name] = properties[name];
@@ -657,7 +766,22 @@
                     event.customType = type;
                     type = IE_CUSTOM_TYPE_EVENT;
                 }
-                observable.fireEvent("on" + type, event);
+                name = "on" + type;
+                if (DOM.is(observable, 1) && properties.bubbles !== false) {
+                    for (node = observable; node; node = node.parentNode) {
+                        node.fireEvent(name, event);
+                        if (event.cancelBubble) {
+                            break;
+                        }
+                    }
+                } else {
+                    observable.fireEvent(name, event);
+                }
+                if (properties.cancelable === false) {
+                    event.returnValue = true;
+                }
+                node = null;
+                return event;
             }
             function ieObservable(observable) {
                 if (observable) {
@@ -716,6 +840,34 @@
                 }
             }
             RESOLVE = LISTEN = UNLISTEN = DISPATCH;
+            EVENT_INFO = INFO && INFO.event;
+            if (EVENT_INFO) {
+                IS_CAPABLE = true;
+                switch (true) {
+                  case EVENT_INFO.w3c:
+                    LISTEN = w3cListen;
+                    UNLISTEN = w3cUnlisten;
+                    DISPATCH = w3cDispatch;
+                    RESOLVE = w3cObservable;
+                    break;
+
+                  case EVENT_INFO.ie:
+                    LISTEN = ieListen;
+                    UNLISTEN = ieUnlisten;
+                    DISPATCH = ieDispatch;
+                    RESOLVE = ieObservable;
+                    break;
+
+                  default:
+                    IS_CAPABLE = false;
+                }
+                if (IS_CAPABLE) {
+                    SUBJECT = global;
+                    listen(SUBJECT, "beforeunload", onBeforeUnload);
+                    listen(SUBJECT, "unload", onBeforeUnload);
+                    SUBJECT = null;
+                }
+            }
             EXPORTS.chain = EXPORTS;
         }).call(exports, function() {
             return this;
@@ -724,13 +876,13 @@
         (function(global) {
             "use strict";
             var DETECTED = __webpack_require__(2), DOM = __webpack_require__(8), CSS = __webpack_require__(9), ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
-                initialize: initialize,
                 offset: offset,
                 size: size,
                 box: box,
                 scroll: scroll,
                 screen: screen
             };
+            var DIMENSION_INFO;
             function offset(element, x, y) {
                 if (arguments.length > 1) {
                     return box(element, x, y);
@@ -751,7 +903,7 @@
                 return isViewable(element) === PAGE_VIEW ? pageBox(element).slice(2, 4) : getSize(element);
             }
             function box(element, x, y, width, height) {
-                var is = isFinite, M = Math, css = CSS, toFloat = parseFloat, PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
+                var is = isFinite, M = Math, css = CSS, toFloat = parseFloat, NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
                 var hasLeft, hasTop, hasWidth, hasHeight, parent, hasPosition, hasSize, diff, diff1, diff2, style, style1, style2, styleAttribute;
                 if (!setter && viewmode === PAGE_VIEW) {
                     return pageBox(element);
@@ -766,7 +918,7 @@
                         y = 1 in y ? x[1] : null;
                         x = x[0];
                     }
-                    style = css.style(element, "position", PADDING_TOP, PADDING_LEFT, "marginLeft", "marginTop", "paddingRight", "paddingBottom");
+                    style = css.style(element, "position", "marginLeft", "marginTop", "paddingTop", "paddingLeft", "paddingRight", "paddingBottom");
                     hasLeft = hasTop = hasWidth = hasHeight = hasPosition = hasSize = false;
                     switch (style.position) {
                       case "relative":
@@ -970,22 +1122,21 @@
                 }
                 return help.isView(dom) ? PAGE_VIEW : false;
             }
-            function initialize() {
-                var all = DETECTED, info = all.dimension;
-                if (!all.browser.strict) {
+            DIMENSION_INFO = DETECTED && DETECTED.dimension;
+            if (DIMENSION_INFO) {
+                if (!DETECTED.browser.strict) {
                     IE_PAGE_STAT_ACCESS = "body";
                 }
-                USE_ZOOM_FACTOR = info.zoomfactor;
-                DEFAULTVIEW = all.dom.defaultView;
-                getPageScroll = info.pagescroll ? w3cPageScrollOffset : iePageScrollOffset;
-                getScreenSize = info.screensize ? w3cScreenSize : ieScreenSize;
-                boundingRect = info.rectmethod && "getBoundingClientRect";
+                USE_ZOOM_FACTOR = DIMENSION_INFO.zoomfactor;
+                DEFAULTVIEW = DETECTED.dom.defaultView;
+                getPageScroll = DIMENSION_INFO.pagescroll ? w3cPageScrollOffset : iePageScrollOffset;
+                getScreenSize = DIMENSION_INFO.screensize ? w3cScreenSize : ieScreenSize;
+                boundingRect = DIMENSION_INFO.rectmethod && "getBoundingClientRect";
                 getOffset = boundingRect ? rectOffset : manualOffset;
                 getSize = boundingRect ? rectSize : manualSize;
                 getBox = boundingRect ? rectBox : manualBox;
             }
-            module.exports = EXPORTS;
-            EXPORTS.chain = EXPORTS;
+            module.exports = EXPORTS.chain = EXPORTS;
         }).call(exports, function() {
             return this;
         }());

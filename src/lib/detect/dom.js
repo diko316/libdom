@@ -18,7 +18,8 @@ module.exports = {
     defaultView: DOCUMENT.defaultView ?
                     'defaultView' :
                     DOCUMENT.parentWindow ?
-                        'parentWindow' : null
+                        'parentWindow' : null,
+    querySelectorAll: !!DOCUMENT.querySelectorAll
 };
 
 DOCUMENT = ROOT = null;

@@ -1,6 +1,7 @@
 'use strict';
 
 var INFO = require("./detect.js"),
+    DOM = require("./dom.js"),
     EVENTS = null,
     PAGE_UNLOADED = false,
     IE_CUSTOM_EVENTS = {},
@@ -8,48 +9,14 @@ var INFO = require("./detect.js"),
     ERROR_OBSERVABLE_NO_SUPPORT = "Invalid [observable] parameter.",
     ERROR_INVALID_TYPE = "Invalid Event [type] parameter.",
     ERROR_INVALID_HANDLER = "Invalid Event [handler] parameter.",
-    IE_CUSTOM_TYPE_EVENT = 'dataavailable',
+    IE_CUSTOM_TYPE_EVENT = 'propertychange',
     EXPORTS = module.exports = {
-                initialize: initialize,
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
                 purge: purge
             };
-var RESOLVE, LISTEN, UNLISTEN, DISPATCH;
-
-function initialize() {
-    var info = INFO.event,
-        isCapable = true,
-        beforeUnload = onBeforeUnload,
-        main = global;
-    
-    switch (true) {
-    case info.w3c:
-        LISTEN = w3cListen;
-        UNLISTEN = w3cUnlisten;
-        DISPATCH = w3cDispatch;
-        RESOLVE = w3cObservable;
-        break;
-    
-    case info.ie:
-        LISTEN = ieListen;
-        UNLISTEN = ieUnlisten;
-        DISPATCH = ieDispatch;
-        RESOLVE = ieObservable;
-        break;
-    
-    default:
-        isCapable = false;
-    }
-    
-    if (isCapable) {
-        listen(main, 'beforeunload', beforeUnload);
-        listen(main, 'unload', beforeUnload);
-    }
-
-}
-
+var RESOLVE, LISTEN, UNLISTEN, DISPATCH, EVENT_INFO, IS_CAPABLE, SUBJECT;
 
 function listen(observable, type, handler, context) {
     var last = EVENTS;
@@ -244,6 +211,8 @@ function w3cDispatch(observable, type, properties) {
         }
     }
     observable.dispatchEvent(event);
+    
+    return event;
 }
 
 function w3cObservable(observable) {
@@ -291,7 +260,7 @@ function ieUnlisten(observable, type, listener) {
 function ieDispatch(observable, type, properties) {
     var hasOwn = HAS_OWN_PROPERTY,
         event = global.document.createEventObject();
-    var name;
+    var name, node;
     
     for (name in properties) {
         if (hasOwn.call(properties, name) && !(name in event)) {
@@ -304,8 +273,32 @@ function ieDispatch(observable, type, properties) {
         type = IE_CUSTOM_TYPE_EVENT;
     }
     
-    observable.fireEvent('on' + type, event);
+    name = 'on' + type;
     
+    // bubbling event
+    if (DOM.is(observable, 1) && properties.bubbles !== false) {
+        //cancelable = properties.cancelable !== false;
+        
+        for (node = observable; node; node = node.parentNode) {
+            node.fireEvent(name, event);
+            
+            if (event.cancelBubble) {
+                break;
+            }
+        }
+    }
+    else {
+        observable.fireEvent(name, event);
+    }
+    
+    // set to not cancel if not cancelable
+    if (properties.cancelable === false) {
+        event.returnValue = true;
+    }
+    
+    node = null;
+    
+    return event;
 }
 
 function ieObservable(observable) {
@@ -394,5 +387,39 @@ function onBeforeUnload() {
 
 
 RESOLVE = LISTEN = UNLISTEN = DISPATCH;
+
+/**
+ * Initialize
+ */
+EVENT_INFO = INFO && INFO.event;
+
+if (EVENT_INFO) {
+    IS_CAPABLE = true;
+    switch (true) {
+    case EVENT_INFO.w3c:
+        LISTEN = w3cListen;
+        UNLISTEN = w3cUnlisten;
+        DISPATCH = w3cDispatch;
+        RESOLVE = w3cObservable;
+        break;
+    
+    case EVENT_INFO.ie:
+        LISTEN = ieListen;
+        UNLISTEN = ieUnlisten;
+        DISPATCH = ieDispatch;
+        RESOLVE = ieObservable;
+        break;
+    
+    default:
+        IS_CAPABLE = false;
+    }
+    if (IS_CAPABLE) {
+        SUBJECT = global;
+        listen(SUBJECT, 'beforeunload', onBeforeUnload);
+        listen(SUBJECT, 'unload', onBeforeUnload);
+        SUBJECT = null;
+    }
+}
+
 
 EXPORTS.chain = EXPORTS;

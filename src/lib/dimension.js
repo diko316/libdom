@@ -16,14 +16,15 @@ var DETECTED = require("./detect.js"),
     getBox = null,
     getScreenSize = null,
     EXPORTS = {
-        initialize: initialize,
         offset: offset,
         size: size,
         box: box,
         scroll: scroll,
         screen: screen
     };
-    
+
+var DIMENSION_INFO;
+
 /**
  * Accessors
  */
@@ -438,37 +439,58 @@ function isViewable(dom) {
 /**
  * initialize
  */
-function initialize() {
-    var all = DETECTED,
-        info = all.dimension;
+DIMENSION_INFO = DETECTED && DETECTED.dimension;
+if (DIMENSION_INFO) {
     
-    if (!all.browser.strict) {
+    // strict mode
+    if (!DETECTED.browser.strict) {
         IE_PAGE_STAT_ACCESS = 'body';
     }
-        
-    USE_ZOOM_FACTOR = info.zoomfactor;
-    DEFAULTVIEW = all.dom.defaultView;
     
-    getPageScroll = info.pagescroll ?
+    USE_ZOOM_FACTOR = DIMENSION_INFO.zoomfactor;
+    DEFAULTVIEW = DETECTED.dom.defaultView;
+    
+    getPageScroll = DIMENSION_INFO.pagescroll ?
                         w3cPageScrollOffset :
                         iePageScrollOffset;
     
-    getScreenSize = info.screensize ?
+    getScreenSize = DIMENSION_INFO.screensize ?
                         w3cScreenSize :
                         ieScreenSize;
 
-    boundingRect = info.rectmethod && 'getBoundingClientRect';
+    boundingRect = DIMENSION_INFO.rectmethod && 'getBoundingClientRect';
     getOffset = boundingRect ? rectOffset : manualOffset;
     getSize = boundingRect ? rectSize : manualSize;
     getBox = boundingRect ? rectBox : manualBox;
-
 }
 
+//function initialize() {
+//    var all = DETECTED,
+//        info = all.dimension;
+//    
+//    if (!all.browser.strict) {
+//        IE_PAGE_STAT_ACCESS = 'body';
+//    }
+//        
+//    USE_ZOOM_FACTOR = info.zoomfactor;
+//    DEFAULTVIEW = all.dom.defaultView;
+//    
+//    getPageScroll = info.pagescroll ?
+//                        w3cPageScrollOffset :
+//                        iePageScrollOffset;
+//    
+//    getScreenSize = info.screensize ?
+//                        w3cScreenSize :
+//                        ieScreenSize;
+//
+//    boundingRect = info.rectmethod && 'getBoundingClientRect';
+//    getOffset = boundingRect ? rectOffset : manualOffset;
+//    getSize = boundingRect ? rectSize : manualSize;
+//    getBox = boundingRect ? rectBox : manualBox;
+//
+//}
 
 
-
-
-module.exports = EXPORTS;
-EXPORTS.chain = EXPORTS;
+module.exports = EXPORTS.chain = EXPORTS;
 
 

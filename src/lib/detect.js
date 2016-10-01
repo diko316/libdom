@@ -3,6 +3,7 @@
 var browser = require("./detect/browser.js"),
     EXPORTS = false;
     
+
 if (browser) {
     EXPORTS = {
         browser: browser,
