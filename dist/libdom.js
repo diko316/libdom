@@ -152,7 +152,8 @@
                 screensize: typeof WINDOW.innerWidth !== "undefined",
                 pagescroll: typeof WINDOW.pageXOffset !== "undefined",
                 rectmethod: !!WINDOW.document.documentElement.getBoundingClientRect,
-                zoomfactor: ieVersion > 0 && ieVersion < 8
+                zoomfactor: ieVersion > 0 && ieVersion < 8,
+                ie8: ieVersion === 8
             };
             WINDOW = null;
         }).call(exports, function() {
@@ -944,7 +945,7 @@
                             diff1 = diff2 = 0;
                             if (hasLeft) {
                                 diff1 = hasLeft ? x - diff[0] : 0;
-                                style1 = element.offsetLeft + (toFloat(style.marginLeft) || 0);
+                                style1 = element.offsetLeft - (toFloat(style.marginLeft) || 0);
                                 styleAttribute.left = style1 + diff1 + "px";
                             }
                             if (hasTop) {
@@ -1033,6 +1034,9 @@
                 subject = null;
                 return size;
             }
+            function visible(element) {
+                if (isViewable(element)) {}
+            }
             function rectBox(element) {
                 var rect = element.getBoundingClientRect(), box = rectOffset(element, rect), size = rectSize(element, rect);
                 box[2] = size[0];
@@ -1060,16 +1064,19 @@
                 return [ M.max(0, element.offsetWidth || 0), M.max(0, element.offsetHeight || 0) ];
             }
             function rectOffset(element, boundingRect) {
-                var scrolled = getPageScroll(element.ownerDocument[DEFAULTVIEW]), rect = boundingRect || element.getBoundingClientRect(), offset = [ rect.left + scrolled[0], rect.top + scrolled[1] ];
+                var scrolled = getPageScroll(element.ownerDocument[DEFAULTVIEW]), rect = boundingRect || element.getBoundingClientRect(), factor = DIMENSION_INFO.zoomfactor ? getZoomFactor(global.window.document[IE_PAGE_STAT_ACCESS]) : 1, offset = [ rect.left * factor + scrolled[0], rect.top * factor + scrolled[1] ];
                 rect = null;
                 return offset;
             }
             function manualOffset(element) {
-                var root = global.document.documentElement, offset = [ element.offsetLeft, element.offsetTop ], parent = element.offsetParent;
+                var root = global.document[IE_PAGE_STAT_ACCESS], css = CSS, offset = [ element.offsetLeft, element.offsetTop ], findStyles = [ "marginLeft", "marginTop" ], parent = element.offsetParent, style = css.style(element, findStyles);
+                offset[0] += parseFloat(style.marginLeft) || 0;
+                offset[1] += parseFloat(style.marginTop) || 0;
                 for (;parent; parent = parent.offsetParent) {
                     if (parent.nodeType === 1) {
-                        offset[0] += (parent.offsetLeft || 0) + (parent.clientLeft || 0);
-                        offset[1] += (parent.offsetTop || 0) + (parent.clientTop || 0);
+                        style = css.style(parent, findStyles);
+                        offset[0] += (parent.offsetLeft || 0) + (parent.clientLeft || 0) + (parseFloat(style.marginLeft) || 0);
+                        offset[1] += (parent.offsetTop || 0) + (parent.clientTop || 0) + (parseFloat(style.marginTop) || 0);
                     }
                 }
                 for (parent = element.parentNode; parent; parent = parent.parentNode) {
@@ -1132,7 +1139,7 @@
                 getPageScroll = DIMENSION_INFO.pagescroll ? w3cPageScrollOffset : iePageScrollOffset;
                 getScreenSize = DIMENSION_INFO.screensize ? w3cScreenSize : ieScreenSize;
                 boundingRect = DIMENSION_INFO.rectmethod && "getBoundingClientRect";
-                getOffset = boundingRect ? rectOffset : manualOffset;
+                getOffset = boundingRect && !DIMENSION_INFO.ie8 ? rectOffset : manualOffset;
                 getSize = boundingRect ? rectSize : manualSize;
                 getBox = boundingRect ? rectBox : manualBox;
             }

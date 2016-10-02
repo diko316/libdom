@@ -128,11 +128,12 @@ function box(element, x, y, width, height) {
             
             if (hasPosition) {
                 diff = getOffset(element);
+                //diff = manualOffset(element);
                 diff1 = diff2 = 0;
                 // this will fail in IE 8
                 if (hasLeft) {
                     diff1 = hasLeft ? x - diff[0] : 0;
-                    style1 = element.offsetLeft +
+                    style1 = element.offsetLeft -
                             (toFloat(style.marginLeft) || 0);
                     styleAttribute.left = (style1 + diff1) + 'px';
                     
@@ -278,6 +279,14 @@ function ieScreenSize(window) {
     return size;
 }
 
+/**
+ * Visibility
+ */
+function visible(element) {
+    if (isViewable(element)) {
+        
+    }
+}
 
 /**
  * Element Box
@@ -336,20 +345,36 @@ function manualSize(element) {
 function rectOffset(element, boundingRect) {
     var scrolled = getPageScroll(element.ownerDocument[DEFAULTVIEW]),
         rect = boundingRect || element.getBoundingClientRect(),
-        offset = [rect.left + scrolled[0], rect.top + scrolled[1]];
+        factor = DIMENSION_INFO.zoomfactor ?
+                    getZoomFactor(global.window.document[IE_PAGE_STAT_ACCESS]) :
+                    1,
+        offset = [rect.left * factor + scrolled[0],
+                    rect.top * factor + scrolled[1]];
     rect = null;
     return offset;
 }
 
 function manualOffset(element) {
-    var root = global.document.documentElement,
+    var root = global.document[IE_PAGE_STAT_ACCESS],
+        css = CSS,
         offset = [element.offsetLeft, element.offsetTop],
-        parent = element.offsetParent;
+        findStyles = ['marginLeft', 'marginTop'],
+        parent = element.offsetParent,
+        style = css.style(element, findStyles);
+    
+    offset[0] += parseFloat(style.marginLeft) || 0;
+    offset[1] += parseFloat(style.marginTop) || 0;
     
     for (; parent; parent = parent.offsetParent) {
         if (parent.nodeType === 1) {
-            offset[0] += (parent.offsetLeft || 0) + (parent.clientLeft || 0);
-            offset[1] += (parent.offsetTop || 0) + (parent.clientTop || 0);
+            style = css.style(parent, findStyles);
+            offset[0] += (parent.offsetLeft || 0) +
+                            (parent.clientLeft || 0) +
+                            (parseFloat(style.marginLeft) || 0);
+                            
+            offset[1] += (parent.offsetTop || 0) +
+                            (parent.clientTop || 0) +
+                            (parseFloat(style.marginTop) || 0);
         }
     }
 
@@ -459,36 +484,12 @@ if (DIMENSION_INFO) {
                         ieScreenSize;
 
     boundingRect = DIMENSION_INFO.rectmethod && 'getBoundingClientRect';
-    getOffset = boundingRect ? rectOffset : manualOffset;
+    getOffset = boundingRect && !DIMENSION_INFO.ie8 ?
+                    rectOffset : manualOffset;
     getSize = boundingRect ? rectSize : manualSize;
     getBox = boundingRect ? rectBox : manualBox;
 }
 
-//function initialize() {
-//    var all = DETECTED,
-//        info = all.dimension;
-//    
-//    if (!all.browser.strict) {
-//        IE_PAGE_STAT_ACCESS = 'body';
-//    }
-//        
-//    USE_ZOOM_FACTOR = info.zoomfactor;
-//    DEFAULTVIEW = all.dom.defaultView;
-//    
-//    getPageScroll = info.pagescroll ?
-//                        w3cPageScrollOffset :
-//                        iePageScrollOffset;
-//    
-//    getScreenSize = info.screensize ?
-//                        w3cScreenSize :
-//                        ieScreenSize;
-//
-//    boundingRect = info.rectmethod && 'getBoundingClientRect';
-//    getOffset = boundingRect ? rectOffset : manualOffset;
-//    getSize = boundingRect ? rectSize : manualSize;
-//    getBox = boundingRect ? rectBox : manualBox;
-//
-//}
 
 
 module.exports = EXPORTS.chain = EXPORTS;
