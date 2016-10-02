@@ -3,6 +3,8 @@
 var DETECTED = require("./detect.js"),
     OBJECT_TYPE = '[object Object]',
     ERROR_INVALID_DOM = "Invalid DOM [element] parameter.",
+    ERROR_INVALID_DOM_NODE = "Invalid DOM [node] parameter.",
+    ERROR_INVALID_CSS_SELECTOR = "Invalid CSS [selector] parameter.",
     ERROR_INVALID_CALLBACK = "Invalid tree traverse [callback] parameter.",
     ERROR_INVALID_ELEMENT_CONFIG = "Invalid DOM Element [config] parameter.",
     INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 },
@@ -205,16 +207,38 @@ function findChild(element, node, nodeType) {
 /**
  * DOM select
  */
-function querySelectorAll(dom, selector) {
+function noArrayQuerySelectorAll(dom, selector) {
+    var list, c, l, result;
+    
     if (!isDom(dom, 9, 1)) {
-        throw new Error("Invalid DOM [node] parameter.");
+        throw new Error(ERROR_INVALID_DOM_NODE);
     }
     
     if (!selector || typeof selector !== "string") {
-        throw new Error("Invalid CSS [selector] parameter.");
+        throw new Error(ERROR_INVALID_CSS_SELECTOR);
     }
     
-    return dom.querySelectorAll(selector);
+    list = dom.querySelectorAll(selector);
+    c = -1;
+    l = list.length;
+    result = new Array(l);
+    for (; l--;) {
+        result[++c] = list[c];
+    }
+    list = null;
+    return result;
+}
+
+function toArrayQuerySelectorAll(dom, selector) {
+    if (!isDom(dom, 9, 1)) {
+        throw new Error(ERROR_INVALID_DOM_NODE);
+    }
+    
+    if (!selector || typeof selector !== "string") {
+        throw new Error(ERROR_INVALID_CSS_SELECTOR);
+    }
+
+    return Array.prototype.slice.call(dom.querySelectorAll(selector));
 }
 
 function notSupportedQuerySelector() {
@@ -389,7 +413,9 @@ if (DOM_INFO) {
                                 notSupportedContains;
     
     if (DOM_INFO.querySelectorAll) {
-        EXPORTS.select = querySelectorAll;
+        EXPORTS.select = DOM_INFO.listToArray ?
+                                toArrayQuerySelectorAll :
+                                noArrayQuerySelectorAll;
     }
 }
 

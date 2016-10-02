@@ -90,12 +90,17 @@
         (function(global) {
             "use strict";
             var WINDOW = global, EXPORTS = false;
+            var match, ieVersion;
             var DOCUMENT;
             if (typeof WINDOW.window === "object") {
                 DOCUMENT = WINDOW.document;
                 if (typeof DOCUMENT === "object" && (DOCUMENT.defaultView || DOCUMENT.parentWindow).document === DOCUMENT) {
+                    match = WINDOW.navigator.userAgent.match(/msie ([0-9]+\.[0-9]+)/i);
+                    ieVersion = match && parseInt(match[1], 10) || 0;
                     EXPORTS = {
-                        strict: DOCUMENT.compatMode === "CSS1Compat"
+                        strict: DOCUMENT.compatMode === "CSS1Compat",
+                        ieVersion: ieVersion,
+                        ie8: ieVersion === 8
                     };
                 }
             }
@@ -118,15 +123,16 @@
         }).call(exports, function() {
             return this;
         }());
-    }, function(module, exports) {
+    }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DOCUMENT = global.document, ROOT = DOCUMENT.documentElement;
+            var DETECTED = __webpack_require__(3), DOCUMENT = global.document, ROOT = DOCUMENT.documentElement, ieVersion = DETECTED.ieVersion;
             module.exports = {
                 compare: !!ROOT.compareDocumentPosition,
                 contains: !!ROOT.contains,
                 defaultView: DOCUMENT.defaultView ? "defaultView" : DOCUMENT.parentWindow ? "parentWindow" : null,
-                querySelectorAll: !!DOCUMENT.querySelectorAll
+                querySelectorAll: !!DOCUMENT.querySelectorAll,
+                listToArray: ieVersion === 0 || ieVersion > 8
             };
             DOCUMENT = ROOT = null;
         }).call(exports, function() {
@@ -144,10 +150,10 @@
         }).call(exports, function() {
             return this;
         }());
-    }, function(module, exports) {
+    }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var WINDOW = global.window, match = WINDOW.navigator.userAgent.match(/msie ([0-9]+\.[0-9]+)/i), ieVersion = match && parseInt(match[1], 10) || 0;
+            var DETECTED = __webpack_require__(3), WINDOW = global.window, ieVersion = DETECTED.ieVersion;
             module.exports = {
                 screensize: typeof WINDOW.innerWidth !== "undefined",
                 pagescroll: typeof WINDOW.pageXOffset !== "undefined",
@@ -161,7 +167,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var DETECTED = __webpack_require__(2), OBJECT_TYPE = "[object Object]", ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", ERROR_INVALID_CALLBACK = "Invalid tree traverse [callback] parameter.", ERROR_INVALID_ELEMENT_CONFIG = "Invalid DOM Element [config] parameter.", INVALID_DESCENDANT_NODE_TYPES = {
+        var DETECTED = __webpack_require__(2), OBJECT_TYPE = "[object Object]", ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", ERROR_INVALID_DOM_NODE = "Invalid DOM [node] parameter.", ERROR_INVALID_CSS_SELECTOR = "Invalid CSS [selector] parameter.", ERROR_INVALID_CALLBACK = "Invalid tree traverse [callback] parameter.", ERROR_INVALID_ELEMENT_CONFIG = "Invalid DOM Element [config] parameter.", INVALID_DESCENDANT_NODE_TYPES = {
             9: 1,
             11: 1
         }, STD_CONTAINS = notSupportedContains, OBJECT_TOSTRING = Object.prototype.toString, EXPORTS = {
@@ -315,14 +321,32 @@
             }
             return null;
         }
-        function querySelectorAll(dom, selector) {
+        function noArrayQuerySelectorAll(dom, selector) {
+            var list, c, l, result;
             if (!isDom(dom, 9, 1)) {
-                throw new Error("Invalid DOM [node] parameter.");
+                throw new Error(ERROR_INVALID_DOM_NODE);
             }
             if (!selector || typeof selector !== "string") {
-                throw new Error("Invalid CSS [selector] parameter.");
+                throw new Error(ERROR_INVALID_CSS_SELECTOR);
             }
-            return dom.querySelectorAll(selector);
+            list = dom.querySelectorAll(selector);
+            c = -1;
+            l = list.length;
+            result = new Array(l);
+            for (;l--; ) {
+                result[++c] = list[c];
+            }
+            list = null;
+            return result;
+        }
+        function toArrayQuerySelectorAll(dom, selector) {
+            if (!isDom(dom, 9, 1)) {
+                throw new Error(ERROR_INVALID_DOM_NODE);
+            }
+            if (!selector || typeof selector !== "string") {
+                throw new Error(ERROR_INVALID_CSS_SELECTOR);
+            }
+            return Array.prototype.slice.call(dom.querySelectorAll(selector));
         }
         function notSupportedQuerySelector() {
             throw new Error("CSS Selector query form DOM is not supported.");
@@ -435,7 +459,7 @@
         if (DOM_INFO) {
             STD_CONTAINS = DOM_INFO.compare ? w3cContains : DOM_INFO.contains ? ieContains : notSupportedContains;
             if (DOM_INFO.querySelectorAll) {
-                EXPORTS.select = querySelectorAll;
+                EXPORTS.select = DOM_INFO.listToArray ? toArrayQuerySelectorAll : noArrayQuerySelectorAll;
             }
         }
         module.exports = EXPORTS.chain = EXPORTS;
@@ -881,7 +905,8 @@
                 size: size,
                 box: box,
                 scroll: scroll,
-                screen: screen
+                screen: screen,
+                visible: visible
             };
             var DIMENSION_INFO;
             function offset(element, x, y) {
@@ -1020,6 +1045,34 @@
                 subject = null;
                 return box;
             }
+            function visible(element, visibility, displayed) {
+                var style = null, len = arguments.length, string = "string", attached = isViewable(element) === ELEMENT_VIEW;
+                var styleAttribute;
+                if (len > 1) {
+                    styleAttribute = element.style;
+                    switch (typeof visibility) {
+                      case string:
+                        styleAttribute.style.visibility = visibility;
+                        break;
+
+                      case "boolean":
+                        styleAttribute.style.visibility = "visible";
+                    }
+                    if (displayed === false) {
+                        displayed = "none";
+                    }
+                    if (displayed && typeof displayed === string) {
+                        styleAttribute.style.display = displayed;
+                    }
+                    styleAttribute = null;
+                    return EXPORTS.chain;
+                }
+                if (attached) {
+                    style = CSS.style(element, "display", "visibility");
+                    return style.display !== "none" && style.visibility !== "hidden";
+                }
+                return false;
+            }
             function screen() {
                 var window = global.window, box = getPageScroll(window), size = getScreenSize(window);
                 box[2] = size[0];
@@ -1033,9 +1086,6 @@
                 var factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1, subject = window.document[IE_PAGE_STAT_ACCESS], size = [ subject.clientWidth * factor, subject.clientHeight * factor ];
                 subject = null;
                 return size;
-            }
-            function visible(element) {
-                if (isViewable(element)) {}
             }
             function rectBox(element) {
                 var rect = element.getBoundingClientRect(), box = rectOffset(element, rect), size = rectSize(element, rect);

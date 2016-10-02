@@ -1,8 +1,8 @@
 'use strict';
 
-var WINDOW = global.window,
-    match = WINDOW.navigator.userAgent.match(/msie ([0-9]+\.[0-9]+)/i),
-    ieVersion = match && parseInt(match[1], 10) || 0;
+var DETECTED = require("./browser.js"),
+    WINDOW = global.window,
+    ieVersion = DETECTED.ieVersion;
 
 module.exports = {
         screensize: typeof WINDOW.innerWidth !== 'undefined',

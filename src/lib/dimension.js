@@ -20,7 +20,8 @@ var DETECTED = require("./detect.js"),
         size: size,
         box: box,
         scroll: scroll,
-        screen: screen
+        screen: screen,
+        visible: visible
     };
 
 var DIMENSION_INFO;
@@ -249,6 +250,55 @@ function pageBox(dom) {
     return box;
 }
 
+
+/**
+ * Visibility
+ */
+function visible(element, visibility, displayed) {
+    var style = null,
+        len = arguments.length,
+        string = 'string',
+        attached = isViewable(element) === ELEMENT_VIEW;
+        
+    var styleAttribute;
+    
+    // setter
+    if (len > 1) {
+        styleAttribute = element.style;
+        
+        switch (typeof visibility) {
+        case string:
+            styleAttribute.style.visibility = visibility;
+            break;
+        case 'boolean':
+            styleAttribute.style.visibility = 'visible';
+        }
+        
+        if (displayed === false) {
+            displayed = 'none';
+        }
+        
+        if (displayed && typeof displayed === string) {
+            styleAttribute.style.display = displayed;
+        }
+        
+        styleAttribute = null;
+        
+        return EXPORTS.chain;
+        
+    }
+    
+    // getter
+    if (attached) {
+        style = CSS.style(element,
+                        'display',
+                        'visibility');
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    }
+    
+    return false;
+}
+
 /**
  * Screen offset and size
  */
@@ -279,14 +329,7 @@ function ieScreenSize(window) {
     return size;
 }
 
-/**
- * Visibility
- */
-function visible(element) {
-    if (isViewable(element)) {
-        
-    }
-}
+
 
 /**
  * Element Box

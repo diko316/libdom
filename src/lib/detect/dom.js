@@ -1,16 +1,9 @@
 'use strict';
 
-var DOCUMENT = global.document,
-    ROOT = DOCUMENT.documentElement;
-
-/**
- * TODO:
- *  querySelectorAll detect
- */
-
-
-
-
+var DETECTED = require("./browser.js"),
+    DOCUMENT = global.document,
+    ROOT = DOCUMENT.documentElement,
+    ieVersion = DETECTED.ieVersion;
 
 module.exports = {
     compare: !!ROOT.compareDocumentPosition,
@@ -19,7 +12,8 @@ module.exports = {
                     'defaultView' :
                     DOCUMENT.parentWindow ?
                         'parentWindow' : null,
-    querySelectorAll: !!DOCUMENT.querySelectorAll
+    querySelectorAll: !!DOCUMENT.querySelectorAll,
+    listToArray: ieVersion === 0 || ieVersion > 8
 };
 
 DOCUMENT = ROOT = null;
