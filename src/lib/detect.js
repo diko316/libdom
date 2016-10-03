@@ -10,7 +10,8 @@ if (browser) {
         event: require("./detect/event.js"),
         dom: require("./detect/dom.js"),
         css: require("./detect/css.js"),
-        dimension: require("./detect/dimension.js")
+        dimension: require("./detect/dimension.js"),
+        selection: require("./detect/selection.js")
     };
 }
 

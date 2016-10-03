@@ -27,7 +27,7 @@
                 version: "0.0.4",
                 info: detect
             };
-            var css, event, dimension;
+            var css, event, dimension, selection;
             function notBrowser() {
                 throw new Error("Unable to proceed, not running in a browser.");
             }
@@ -40,7 +40,7 @@
                     }
                 }
             }
-            applyIf(EXPORTS, __webpack_require__(8), {
+            applyIf(EXPORTS, __webpack_require__(9), {
                 is: "is",
                 isView: "isView",
                 contains: "contains",
@@ -49,25 +49,29 @@
                 eachNodePostorder: "eachPostorder",
                 eachNodeLevelorder: "eachLevel"
             });
-            applyIf(EXPORTS, css = __webpack_require__(9), {
+            applyIf(EXPORTS, css = __webpack_require__(10), {
                 addClass: "add",
                 removeClass: "remove"
             });
-            applyIf(EXPORTS, event = __webpack_require__(11), {
+            applyIf(EXPORTS, event = __webpack_require__(12), {
                 on: "on",
                 un: "un",
                 purge: "purge",
                 dispatch: "fire"
             });
-            applyIf(EXPORTS, dimension = __webpack_require__(12), {
+            applyIf(EXPORTS, dimension = __webpack_require__(13), {
                 offset: "offset",
                 size: "size",
                 box: "box",
                 scroll: "scroll",
                 screen: "screen"
             });
+            applyIf(EXPORTS, selection = __webpack_require__(14), {
+                highlight: "select",
+                clearHighlight: "clear"
+            });
             if (detect) {
-                css.chain = event.chain = dimension.chain = EXPORTS;
+                css.chain = event.chain = dimension.chain = selection.chain = EXPORTS;
             }
             module.exports = global["libdom"] = EXPORTS;
         }).call(exports, function() {
@@ -82,7 +86,8 @@
                 event: __webpack_require__(4),
                 dom: __webpack_require__(5),
                 css: __webpack_require__(6),
-                dimension: __webpack_require__(7)
+                dimension: __webpack_require__(7),
+                selection: __webpack_require__(8)
             };
         }
         module.exports = EXPORTS;
@@ -162,6 +167,17 @@
                 ie8: ieVersion === 8
             };
             WINDOW = null;
+        }).call(exports, function() {
+            return this;
+        }());
+    }, function(module, exports) {
+        (function(global) {
+            "use strict";
+            var DOCUMENT = global.document;
+            module.exports = {
+                range: DOCUMENT.createRange,
+                textrange: DOCUMENT.createElement("input").createTextRange
+            };
         }).call(exports, function() {
             return this;
         }());
@@ -466,7 +482,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var STRING = __webpack_require__(10), DETECTED = __webpack_require__(2), DOM = __webpack_require__(8), DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", EXPORTS = {
+            var STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", EXPORTS = {
                 add: addClass,
                 remove: removeClass,
                 style: computedStyleNotSupported
@@ -618,7 +634,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var INFO = __webpack_require__(2), DOM = __webpack_require__(8), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty, ERROR_OBSERVABLE_NO_SUPPORT = "Invalid [observable] parameter.", ERROR_INVALID_TYPE = "Invalid Event [type] parameter.", ERROR_INVALID_HANDLER = "Invalid Event [handler] parameter.", IE_CUSTOM_TYPE_EVENT = "propertychange", EXPORTS = module.exports = {
+            var INFO = __webpack_require__(2), DOM = __webpack_require__(9), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty, ERROR_OBSERVABLE_NO_SUPPORT = "Invalid [observable] parameter.", ERROR_INVALID_TYPE = "Invalid Event [type] parameter.", ERROR_INVALID_HANDLER = "Invalid Event [handler] parameter.", IE_CUSTOM_TYPE_EVENT = "propertychange", EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
@@ -900,7 +916,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), DOM = __webpack_require__(8), CSS = __webpack_require__(9), ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
+            var DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), CSS = __webpack_require__(10), ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
                 offset: offset,
                 size: size,
                 box: box,
@@ -1192,6 +1208,87 @@
                 getOffset = boundingRect && !DIMENSION_INFO.ie8 ? rectOffset : manualOffset;
                 getSize = boundingRect ? rectSize : manualSize;
                 getBox = boundingRect ? rectBox : manualBox;
+            }
+            module.exports = EXPORTS.chain = EXPORTS;
+        }).call(exports, function() {
+            return this;
+        }());
+    }, function(module, exports, __webpack_require__) {
+        (function(global) {
+            "use strict";
+            var DETECTED = __webpack_require__(2), DETECTED_SELECTION = DETECTED.selection, DOM = __webpack_require__(9), DIMENSION = __webpack_require__(13), SELECT_ELEMENT = null, CLEAR_SELECTION = null, EXPORTS = {
+                select: select,
+                clear: clear
+            };
+            function select(element, endElement) {
+                var dimension = DIMENSION;
+                if (DOM.is(element, 9)) {
+                    element = element.body;
+                }
+                if (!dimension.visible(element)) {
+                    throw new Error("Invalid DOM [element] parameter.");
+                }
+                if (arguments.length < 2) {
+                    endElement = null;
+                }
+                if (endElement !== null && !dimension.visible(endElement)) {
+                    throw new Error("Invalid DOM [endElement] parameter.");
+                }
+                SELECT_ELEMENT(element, endElement);
+                return EXPORTS.chain;
+            }
+            function clear(document) {
+                if (!DOM.is(document, 9)) {
+                    if (arguments.length > 0) {
+                        throw new Error("Invalid DOM [document] parameter.");
+                    } else {
+                        document = global.document;
+                    }
+                }
+                CLEAR_SELECTION(document);
+                return EXPORTS.chain;
+            }
+            function selectionNotSupported() {
+                throw new Error("DOM selection not supported.");
+            }
+            function ieSelectElement(startElement, endElement) {
+                var body = startElement.ownerDocument.body, startRange = body.createTextRange();
+                var endRange;
+                startRange.moveToElementText(startElement);
+                if (endElement) {
+                    endRange = body.createTextRange();
+                    endRange.moveToElementText(endElement);
+                    startRange.setEndPoint("EndToEnd", endRange);
+                }
+                startRange.select();
+                body = endRange = startRange = null;
+            }
+            function ieClearSelection(document) {
+                document.selection.empty();
+            }
+            function w3cSelectElement(startElement, endElement) {
+                var document = startElement.ownerDocument, startRange = document.createRange(), endRange = document.createRange(), selection = document[DETECTED.dom.defaultView].getSelection();
+                startRange.selectNodeContents(startElement);
+                if (endElement) {
+                    endRange.selectNodeContents(endElement);
+                }
+                selection.addRange(startRange);
+                if (endElement) {
+                    selection.addRange(endRange);
+                }
+                document = selection = startRange = endRange;
+            }
+            function w3cClearSelection(document) {
+                document[DETECTED.dom.defaultView].getSelection().removeAllRanges();
+            }
+            if (DETECTED_SELECTION.range) {
+                SELECT_ELEMENT = w3cSelectElement;
+                CLEAR_SELECTION = w3cClearSelection;
+            } else if (DETECTED_SELECTION.textrange) {
+                SELECT_ELEMENT = ieSelectElement;
+                CLEAR_SELECTION = ieClearSelection;
+            } else {
+                SELECT_ELEMENT = CLEAR_SELECTION = selectionNotSupported;
             }
             module.exports = EXPORTS.chain = EXPORTS;
         }).call(exports, function() {

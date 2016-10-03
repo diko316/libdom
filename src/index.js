@@ -5,7 +5,7 @@ var detect = require("./lib/detect.js"),
         version: LIB_VERSION,
         info: detect
     };
-var css, event, dimension;
+var css, event, dimension, selection;
 
 function notBrowser() {
     throw new Error("Unable to proceed, not running in a browser.");
@@ -69,10 +69,18 @@ applyIf(EXPORTS,
             'screen': 'screen'
         });
 
+applyIf(EXPORTS,
+        selection = require("./lib/selection.js"),
+        {
+            'highlight': 'select',
+            'clearHighlight': 'clear'
+        });
+
 if (detect) {
     css.chain =
         event.chain = 
-        dimension.chain = EXPORTS;
+        dimension.chain =
+        selection.chain = EXPORTS;
 }
 
 

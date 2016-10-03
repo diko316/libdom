@@ -4,6 +4,6 @@ var DOCUMENT = global.document;
 
 module.exports = {
     range: DOCUMENT.createRange,
-    textrange: DOCUMENT.createTextRange
+    textrange: DOCUMENT.createElement('input').createTextRange
 };
 
