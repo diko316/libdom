@@ -3,6 +3,11 @@
 var DETECTED = require("./detect.js"),
     STRING = require("./string.js"),
     OBJECT_TYPE = '[object Object]',
+    
+    ORDER_TYPE_PREORDER = 1,
+    ORDER_TYPE_POSTORDER = 2,
+    ORDER_TYPE_LEVELORDER = 3,
+    
     ERROR_INVALID_DOM = STRING.ERROR_ELEMENT,
     ERROR_INVALID_DOM_NODE = STRING.ERROR_NODE,
     ERROR_INVALID_CSS_SELECTOR = STRING.ERROR_SELECTOR,
@@ -222,8 +227,8 @@ function noArrayQuerySelectorAll(dom, selector) {
     
     list = dom.querySelectorAll(selector);
     c = -1;
-    l = list.length;
-    result = new Array(l);
+    (result = []).length = l = list.length;
+    
     for (; l--;) {
         result[++c] = list[c];
     }
@@ -247,81 +252,25 @@ function notSupportedQuerySelector() {
     throw new Error(STRING.ERROR_NS_SELQUERY);
 }
 
-function preOrderTraverse(element, callback) {
-    if (!isDom(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM);
-    }
+function preOrderTraverse(element, callback, context) {
     
-    if (!(callback instanceof Function)) {
-        throw new Error(ERROR_INVALID_CALLBACK);
-    }
-
-    return orderTraverse(element, callback, true);
+    return orderTraverse(element, callback, ORDER_TYPE_PREORDER, context);
 }
 
-function postOrderTraverse(element, callback) {
-    if (!isDom(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM);
-    }
+function postOrderTraverse(element, callback, context) {
+
+    return orderTraverse(element, callback, ORDER_TYPE_POSTORDER, context);
+}
+
+function levelTraverse(element, callback, context) {
     
-    if (!(callback instanceof Function)) {
-        throw new Error(ERROR_INVALID_CALLBACK);
-    }
-
-    return orderTraverse(element, callback, false);
+    return orderTraverse(element, callback, ORDER_TYPE_LEVELORDER, context);
 }
 
-function orderTraverse(element, callback, preOrderOnly) {
-    var current = element,
-        postOrderOnly = !preOrderOnly,
-        depth = 0;
-	var node;
-
-	main: for (; current;) {
-
-		// process pre-order
-		if (preOrderOnly && current.nodeType === 1 &&
-            callback(current) === false) {
-			break;
-		}
-
-		// go into first child
-		node = current.firstChild;
-
-		if (node) {
-			depth++;
-		}
-        // go next sibling or parentNode's nextSibling
-        else {
-            // process post-order
-            if (postOrderOnly && current.nodeType === 1 &&
-                callback(current) === false) {
-                break;
-            }
-            
-            node = current.nextSibling;
-            
-            for (; !node && depth-- && current;) {
-                current = current.parentNode;
-                
-                // process post-order
-                if (postOrderOnly && current.nodeType === 1 &&
-                    callback(current) === false) {
-                    break main;
-                }
-                
-                node = current.nextSibling;
-            }
-        }
-        current = node;
-	}
-
-	node = current = null;
-    return EXPORTS.chain;
-}
-
-function levelTraverse(element, callback) {
-	var queue, last, node, current;
+function orderTraverse(element, callback, orderType, context) {
+    var depth = 0,
+        isPostOrder = 0;
+    var queue, last, node, current;
     
     if (!isDom(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
@@ -331,37 +280,89 @@ function levelTraverse(element, callback) {
         throw new Error(ERROR_INVALID_CALLBACK);
     }
     
-    queue = last = {
+    if (typeof context === 'undefined') {
+        context = null;
+    }
+    
+    switch (orderType) {
+    case ORDER_TYPE_LEVELORDER:
+        
+        queue = last = {
                     node: element,
                     next: null
                 };
+                
+        for (; queue; queue = queue.next) {
 
-	// iterate level siblings
-	for (; queue; queue = queue.next) {
+            node = queue.node;
+            queue.node = null;
+    
+            // iterate siblings
+            for (; node; node = node.nextSibling) {
+    
+                current = node.firstChild;
+                if (callback.call(context, current) === false) {
+                    break;
+                }
+    
+                // insert
+                if (current) {
+                    last.next = { node: current, next: null };
+                    last = last.next;
+                }
+            }
+        }
+        break;
+    case ORDER_TYPE_POSTORDER:
+        isPostOrder = 1;
 
-		node = queue.node;
-		queue.node = null;
-
-		// iterate siblings
-		for (; node; node = node.nextSibling) {
-
-			current = node.firstChild;
-			if (callback(current) === false) {
-				break;
-			}
-
-			// insert
-			if (current) {
-				last.next = { node: current, next: null };
-				last = last.next;
-			}
-		}
-	}
-
-	last = queue = node = current = null;
+    /* falls through */
+    case ORDER_TYPE_PREORDER:
+    
+        main: for (current = element; current;) {
+    
+            // process pre-order
+            if (!isPostOrder && current.nodeType === 1 &&
+                callback.call(context, current) === false) {
+                break;
+            }
+    
+            // go into first child
+            node = current.firstChild;
+    
+            if (node) {
+                depth++;
+            }
+            // go next sibling or parentNode's nextSibling
+            else {
+                // process post-order
+                if (isPostOrder && current.nodeType === 1 &&
+                    callback.call(context, current) === false) {
+                    break;
+                }
+                
+                node = current.nextSibling;
+                
+                for (; !node && depth-- && current;) {
+                    current = current.parentNode;
+                    
+                    // process post-order
+                    if (isPostOrder && current.nodeType === 1 &&
+                        callback.call(context, current) === false) {
+                        break main;
+                    }
+                    
+                    node = current.nextSibling;
+                }
+            }
+            current = node;
+        }
+    }
+    
+    last = queue = node = current = null;
+    
     
     return EXPORTS.chain;
-    
 }
 
 /**

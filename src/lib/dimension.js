@@ -46,7 +46,7 @@ function offset(element, x, y) {
     case ELEMENT_VIEW:
         return getOffset(element);
     }
-    //console.log(element);
+    
     throw new Error(ERROR_INVALID_ELEMENT);
     
 }
@@ -469,8 +469,6 @@ function iePageScrollOffset(window) {
                     M.round(subject.scrollTop / factor)];
     
     subject = null;
-    
-    console.log('strict? ', DETECTED.browser.strict);
     
     return offset;
 }

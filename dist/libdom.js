@@ -24,7 +24,7 @@
         (function(global) {
             "use strict";
             var detect = __webpack_require__(2), EXPORTS = {
-                version: "0.0.6",
+                version: "0.0.7",
                 info: detect
             };
             var css, event, dimension, selection;
@@ -188,7 +188,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var DETECTED = __webpack_require__(2), STRING = __webpack_require__(10), OBJECT_TYPE = "[object Object]", ERROR_INVALID_DOM = STRING.ERROR_ELEMENT, ERROR_INVALID_DOM_NODE = STRING.ERROR_NODE, ERROR_INVALID_CSS_SELECTOR = STRING.ERROR_SELECTOR, ERROR_INVALID_CALLBACK = STRING.ERROR_TREE_CALLBACK, ERROR_INVALID_ELEMENT_CONFIG = STRING.ERROR_DOM_CONFIG, INVALID_DESCENDANT_NODE_TYPES = {
+        var DETECTED = __webpack_require__(2), STRING = __webpack_require__(10), OBJECT_TYPE = "[object Object]", ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING.ERROR_ELEMENT, ERROR_INVALID_DOM_NODE = STRING.ERROR_NODE, ERROR_INVALID_CSS_SELECTOR = STRING.ERROR_SELECTOR, ERROR_INVALID_CALLBACK = STRING.ERROR_TREE_CALLBACK, ERROR_INVALID_ELEMENT_CONFIG = STRING.ERROR_DOM_CONFIG, INVALID_DESCENDANT_NODE_TYPES = {
             9: 1,
             11: 1
         }, STD_CONTAINS = notSupportedContains, OBJECT_TOSTRING = Object.prototype.toString, EXPORTS = {
@@ -352,8 +352,7 @@
             }
             list = dom.querySelectorAll(selector);
             c = -1;
-            l = list.length;
-            result = new Array(l);
+            (result = []).length = l = list.length;
             for (;l--; ) {
                 result[++c] = list[c];
             }
@@ -372,53 +371,17 @@
         function notSupportedQuerySelector() {
             throw new Error(STRING.ERROR_NS_SELQUERY);
         }
-        function preOrderTraverse(element, callback) {
-            if (!isDom(element, 1)) {
-                throw new Error(ERROR_INVALID_DOM);
-            }
-            if (!(callback instanceof Function)) {
-                throw new Error(ERROR_INVALID_CALLBACK);
-            }
-            return orderTraverse(element, callback, true);
+        function preOrderTraverse(element, callback, context) {
+            return orderTraverse(element, callback, ORDER_TYPE_PREORDER, context);
         }
-        function postOrderTraverse(element, callback) {
-            if (!isDom(element, 1)) {
-                throw new Error(ERROR_INVALID_DOM);
-            }
-            if (!(callback instanceof Function)) {
-                throw new Error(ERROR_INVALID_CALLBACK);
-            }
-            return orderTraverse(element, callback, false);
+        function postOrderTraverse(element, callback, context) {
+            return orderTraverse(element, callback, ORDER_TYPE_POSTORDER, context);
         }
-        function orderTraverse(element, callback, preOrderOnly) {
-            var current = element, postOrderOnly = !preOrderOnly, depth = 0;
-            var node;
-            main: for (;current; ) {
-                if (preOrderOnly && current.nodeType === 1 && callback(current) === false) {
-                    break;
-                }
-                node = current.firstChild;
-                if (node) {
-                    depth++;
-                } else {
-                    if (postOrderOnly && current.nodeType === 1 && callback(current) === false) {
-                        break;
-                    }
-                    node = current.nextSibling;
-                    for (;!node && depth-- && current; ) {
-                        current = current.parentNode;
-                        if (postOrderOnly && current.nodeType === 1 && callback(current) === false) {
-                            break main;
-                        }
-                        node = current.nextSibling;
-                    }
-                }
-                current = node;
-            }
-            node = current = null;
-            return EXPORTS.chain;
+        function levelTraverse(element, callback, context) {
+            return orderTraverse(element, callback, ORDER_TYPE_LEVELORDER, context);
         }
-        function levelTraverse(element, callback) {
+        function orderTraverse(element, callback, orderType, context) {
+            var depth = 0, isPostOrder = 0;
             var queue, last, node, current;
             if (!isDom(element, 1)) {
                 throw new Error(ERROR_INVALID_DOM);
@@ -426,25 +389,59 @@
             if (!(callback instanceof Function)) {
                 throw new Error(ERROR_INVALID_CALLBACK);
             }
-            queue = last = {
-                node: element,
-                next: null
-            };
-            for (;queue; queue = queue.next) {
-                node = queue.node;
-                queue.node = null;
-                for (;node; node = node.nextSibling) {
-                    current = node.firstChild;
-                    if (callback(current) === false) {
+            if (typeof context === "undefined") {
+                context = null;
+            }
+            switch (orderType) {
+              case ORDER_TYPE_LEVELORDER:
+                queue = last = {
+                    node: element,
+                    next: null
+                };
+                for (;queue; queue = queue.next) {
+                    node = queue.node;
+                    queue.node = null;
+                    for (;node; node = node.nextSibling) {
+                        current = node.firstChild;
+                        if (callback.call(context, current) === false) {
+                            break;
+                        }
+                        if (current) {
+                            last.next = {
+                                node: current,
+                                next: null
+                            };
+                            last = last.next;
+                        }
+                    }
+                }
+                break;
+
+              case ORDER_TYPE_POSTORDER:
+                isPostOrder = 1;
+
+              case ORDER_TYPE_PREORDER:
+                main: for (current = element; current; ) {
+                    if (!isPostOrder && current.nodeType === 1 && callback.call(context, current) === false) {
                         break;
                     }
-                    if (current) {
-                        last.next = {
-                            node: current,
-                            next: null
-                        };
-                        last = last.next;
+                    node = current.firstChild;
+                    if (node) {
+                        depth++;
+                    } else {
+                        if (isPostOrder && current.nodeType === 1 && callback.call(context, current) === false) {
+                            break;
+                        }
+                        node = current.nextSibling;
+                        for (;!node && depth-- && current; ) {
+                            current = current.parentNode;
+                            if (isPostOrder && current.nodeType === 1 && callback.call(context, current) === false) {
+                                break main;
+                            }
+                            node = current.nextSibling;
+                        }
                     }
+                    current = node;
                 }
             }
             last = queue = node = current = null;
@@ -1305,7 +1302,6 @@
             function iePageScrollOffset(window) {
                 var M = Math, subject = window.document[IE_PAGE_STAT_ACCESS], factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1, offset = [ M.round(subject.scrollLeft / factor), M.round(subject.scrollTop / factor) ];
                 subject = null;
-                console.log("strict? ", DETECTED.browser.strict);
                 return offset;
             }
             function getZoomFactor(window) {
