@@ -87,5 +87,4 @@ if (detect) {
 
 
 module.exports = global[LIB_NAME] = EXPORTS;
-//global[LIB_NAME] = EXPORTS;
-//console.log(LIB_NAME);
+

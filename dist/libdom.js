@@ -24,7 +24,7 @@
         (function(global) {
             "use strict";
             var detect = __webpack_require__(2), EXPORTS = {
-                version: "0.0.4",
+                version: "0.0.5",
                 info: detect
             };
             var css, event, dimension, selection;
@@ -182,7 +182,7 @@
                 textrange: !!DOCUMENT.createElement("input").createTextRange,
                 cssUnselectable: typeof ROOTSTYLE.MozUserSelect !== UNDEFINED ? "MozUserSelect" : typeof ROOTSTYLE.webkitUserSelect !== UNDEFINED ? "webkitUserSelect" : false
             };
-            DOCUMENT = null;
+            DOCUMENT = ROOTSTYLE = null;
         }).call(exports, function() {
             return this;
         }());

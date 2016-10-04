@@ -14,4 +14,4 @@ module.exports = {
 };
 
 
-DOCUMENT = null;
+DOCUMENT = ROOTSTYLE = null;
