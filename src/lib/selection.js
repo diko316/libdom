@@ -1,14 +1,20 @@
 'use strict';
 
 var DETECTED = require("./detect.js"),
-    DETECTED_SELECTION = DETECTED.selection,
+    STRING = require("./string.js"),
     DOM = require("./dom.js"),
     DIMENSION = require("./dimension.js"),
+    DETECTED_DOM = DETECTED.dom,
+    DETECTED_SELECTION = DETECTED.selection,
+    ERROR_DOM = STRING.ERROR_DOM,
     SELECT_ELEMENT = null,
     CLEAR_SELECTION = null,
+    UNSELECTABLE = attributeUnselectable,
+    CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable,
     EXPORTS = {
         select: select,
-        clear: clear
+        clear: clear,
+        unselectable: unselectable
     };
 
 function select(element, endElement) {
@@ -19,7 +25,7 @@ function select(element, endElement) {
     }
     
     if (!dimension.visible(element)) {
-        throw new Error("Invalid DOM [element] parameter.");
+        throw new Error(STRING.ERROR_ELEMENT);
     }
     
     if (arguments.length < 2) {
@@ -27,7 +33,7 @@ function select(element, endElement) {
     }
     
     if (endElement !== null && !dimension.visible(endElement)) {
-        throw new Error("Invalid DOM [endElement] parameter.");
+        throw new Error(ERROR_DOM);
     }
     
     SELECT_ELEMENT(element, endElement);
@@ -39,7 +45,7 @@ function select(element, endElement) {
 function clear(document) {
     if (!DOM.is(document, 9)) {
         if (arguments.length > 0) {
-            throw new Error("Invalid DOM [document] parameter.");
+            throw new Error(STRING.ERROR_DOC);
         }
         else {
             document = global.document;
@@ -51,8 +57,33 @@ function clear(document) {
     return EXPORTS.chain;
 }
 
+function unselectable(element, disableSelect) {
+    if (!DOM.is(element, 1)) {
+        throw new Error(ERROR_DOM);
+    }
+    
+    UNSELECTABLE(element, disableSelect === false);
+    return EXPORTS.chain;
+}
+
+function webkitUnselectable(element, selectable) {
+    element.style.webkitUserSelect = selectable ? 'text' : 'none';
+}
+
+function geckoUnselectable(element, selectable) {
+    element.style.MozUserSelect = selectable ? 'text' : 'none';
+}
+
+function attributeUnselectable(element, selectable) {
+    element.unselectable = selectable ? 'off' : 'on';
+    
+}
+
+
+
+
 function selectionNotSupported() {
-    throw new Error("DOM selection not supported.");
+    throw new Error(STRING.ERROR_NS_MARK);
 }
 
 /**
@@ -85,7 +116,7 @@ function w3cSelectElement(startElement, endElement) {
     var document = startElement.ownerDocument,
         startRange = document.createRange(),
         endRange = document.createRange(),
-        selection = document[DETECTED.dom.defaultView].getSelection();
+        selection = document[DETECTED_DOM.defaultView].getSelection();
     
     startRange.selectNodeContents(startElement);
     if (endElement) {
@@ -101,7 +132,7 @@ function w3cSelectElement(startElement, endElement) {
 }
 
 function w3cClearSelection(document) {
-    document[DETECTED.dom.defaultView].getSelection().removeAllRanges();
+    document[DETECTED_DOM.defaultView].getSelection().removeAllRanges();
 }
 
 if (DETECTED_SELECTION.range) {
@@ -116,6 +147,10 @@ else {
     SELECT_ELEMENT = CLEAR_SELECTION = selectionNotSupported;
 }
 
+if (CSS_UNSELECT) {
+    UNSELECTABLE = CSS_UNSELECT === 'MozUserSelect' ?
+                        geckoUnselectable : webkitUnselectable;
+}
 
 
 module.exports = EXPORTS.chain = EXPORTS;

@@ -1,11 +1,16 @@
 'use strict';
 
 
-var WINDOW = global;
+var WINDOW = global,
+    ROOT = WINDOW.document.documentElement,
+    STYLE = ROOT.style;
 
 module.exports = {
     w3cStyle: !!WINDOW.getComputedStyle,
-    ieStyle: !!WINDOW.document.documentElement.currentStyle
+    ieStyle: !!ROOT.currentStyle,
+    setattribute: !!STYLE.setAttribute,
+    setproperty: !!STYLE.setProperty
+    
 };
 
-WINDOW = null;
+WINDOW = ROOT = STYLE = null;

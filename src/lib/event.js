@@ -1,14 +1,15 @@
 'use strict';
 
 var INFO = require("./detect.js"),
+    STRING = require("./string.js"),
     DOM = require("./dom.js"),
     EVENTS = null,
     PAGE_UNLOADED = false,
     IE_CUSTOM_EVENTS = {},
     HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty,
-    ERROR_OBSERVABLE_NO_SUPPORT = "Invalid [observable] parameter.",
-    ERROR_INVALID_TYPE = "Invalid Event [type] parameter.",
-    ERROR_INVALID_HANDLER = "Invalid Event [handler] parameter.",
+    ERROR_OBSERVABLE_NO_SUPPORT = STRING.ERROR_OBSERV,
+    ERROR_INVALID_TYPE = STRING.ERROR_EVENTTYPE,
+    ERROR_INVALID_HANDLER = STRING.ERROR_EVENTHNDL,
     IE_CUSTOM_TYPE_EVENT = 'propertychange',
     EXPORTS = module.exports = {
                 on: listen,

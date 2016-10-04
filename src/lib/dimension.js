@@ -1,14 +1,17 @@
 'use strict';
 
 var DETECTED = require("./detect.js"),
+    STRING = require("./string.js"),
     DOM = require("./dom.js"),
     CSS = require("./css.js"),
-    ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.",
+    ERROR_INVALID_ELEMENT = STRING.ERROR_ELEMENT,
+    ERROR_INVALID_DOM = STRING.ERROR_DOM,
     DEFAULTVIEW = null,
     ELEMENT_VIEW = 1,
     PAGE_VIEW = 2,
     USE_ZOOM_FACTOR = false,
     IE_PAGE_STAT_ACCESS = 'documentElement',
+    
     boundingRect = false,
     getPageScroll = null,
     getOffset = null,
@@ -24,7 +27,7 @@ var DETECTED = require("./detect.js"),
         visible: visible
     };
 
-var DIMENSION_INFO;
+var DIMENSION_INFO, IEVERSION;
 
 /**
  * Accessors
@@ -61,17 +64,17 @@ function size(element, width, height) {
 }
 
 function box(element, x, y, width, height) {
-    var is = isFinite,
-        M = Math,
-        css = CSS,
+    var css = CSS,
         toFloat = parseFloat,
+        cssValue = css.unitValue,
         NUMBER = 'number',
         setter = arguments.length > 1,
         viewmode = isViewable(element);
         
     var hasLeft, hasTop, hasWidth, hasHeight, parent,
         hasPosition, hasSize,
-        diff, diff1, diff2, style, style1, style2, styleAttribute;
+        diff, style, styleAttribute,
+        applyStyle;
     
     // try page box
     if (!setter && viewmode === PAGE_VIEW) {
@@ -85,6 +88,7 @@ function box(element, x, y, width, height) {
     
     // setter
     if (setter) {
+        applyStyle = null;
         
         if (x instanceof Array) {
             height = 3 in x ? x[3] : null;
@@ -93,7 +97,7 @@ function box(element, x, y, width, height) {
             x = x[0];
         }
         
-        style = css.style(element,
+        style = css.computedStyle(element,
                         'position',
                         'marginLeft',
                         'marginTop',
@@ -107,69 +111,78 @@ function box(element, x, y, width, height) {
         case 'relative':
         case 'absolute':
         case 'fixed':
-            if (typeof x === NUMBER && is(x)) {
+            x = cssValue(x);
+            if (x !== false) {
                 hasLeft = hasPosition = true;
             }
-            if (typeof y === NUMBER && is(y)) {
+            y = cssValue(y);
+            if (y !== false) {
                 hasTop = hasPosition = true;
             }
         }
-        
-        if (typeof width === NUMBER && is(width)) {
+        width = cssValue(width);
+        if (width !== false) {
             hasWidth = hasSize = true;
         }
         
-        if (typeof height === NUMBER && is(height)) {
+        height = cssValue(height);
+        if (height !== false) {
             hasHeight = hasSize = true;
         }
         
         if (hasPosition || hasSize) {
-            
-            styleAttribute = element.style;
+            applyStyle = {};
             
             if (hasPosition) {
                 diff = getOffset(element);
-                //diff = manualOffset(element);
-                diff1 = diff2 = 0;
-                // this will fail in IE 8
+                
                 if (hasLeft) {
-                    diff1 = hasLeft ? x - diff[0] : 0;
-                    style1 = element.offsetLeft -
-                            (toFloat(style.marginLeft) || 0);
-                    styleAttribute.left = (style1 + diff1) + 'px';
+                    applyStyle.left = typeof x === NUMBER ? (
+                                        element.offsetLeft -
+                                        (toFloat(style.marginLeft) || 0) +
+                                        (x - diff[0])
+                                    ) + 'px' :
+                                    x;
                     
                 }
                 
                 if (hasTop) {
-                    diff2 = hasTop ? x - diff[1] : 0;
-                    style2 = element.offsetTop +
-                            (toFloat(style.marginTop) || 0);
-                    styleAttribute.top = (style2 + diff2) + 'px';
+                    applyStyle.top = typeof y === NUMBER ? (
+                                        element.offsetTop -
+                                        (toFloat(style.marginTop) || 0) +
+                                        (y - diff[1])
+                                    ) + 'px' :
+                                    y;
                 }
+                
             }
             
             // size
             if (hasSize) {
                 
                 if (hasWidth) {
-                    diff = width - element.offsetWidth;
-                    style1 = element.clientWidth -
-                                (toFloat(style.paddingLeft) || 0) -
-                                (toFloat(style.paddingRight) || 0);
-                                
-                    styleAttribute.width = M.max(style1 + diff, 0) + 'px';
+                    applyStyle.width = typeof width === NUMBER ? (
+                                        element.clientWidth -
+                                        (toFloat(style.paddingLeft) || 0) -
+                                        (toFloat(style.paddingRight) || 0) +
+                                        (width - element.offsetWidth)
+                                    ) + 'px' :
+                                    width;
                 }
                 
                 if (hasHeight) {
-                    diff = height - element.offsetHeight;
-                    style1 = element.clientHeight -
-                                (toFloat(style.paddingTop) || 0) -
-                                (toFloat(style.paddingBottom) || 0);
-                                
-                    styleAttribute.height = M.max(style1 + diff, 0) + 'px';
+                    applyStyle.height = typeof height === NUMBER ? (
+                                        element.clientHeight -
+                                        (toFloat(style.paddingTop) || 0) -
+                                        (toFloat(style.paddingBottom) || 0) +
+                                        (height - element.offsetHeight)
+                                    ) + 'px' :
+                                    height;
                 }
                 
             }
+            
+            css.style(element, applyStyle);
             
         }
         
@@ -183,15 +196,17 @@ function box(element, x, y, width, height) {
 
 
 function scroll(dom, x, y) {
-    var setter = arguments.length > 1;
+    var setter = arguments.length > 1,
+        is = isFinite,
+        NUMBER = 'number';
     var current, window;
     
     // validate x and y
     if (setter) {
-        if (typeof x !== 'number' || !isFinite(x)) {
+        if (typeof x !== NUMBER || !is(x)) {
             x = false;
         }
-        if (typeof y !== 'number' || !isFinite(y)) {
+        if (typeof y !== NUMBER || !is(y)) {
             y = false;
         }
     }
@@ -225,7 +240,7 @@ function scroll(dom, x, y) {
         break;
     
     default:
-        throw new Error("Invalid [dom] Object parameter.");
+        throw new Error(ERROR_INVALID_DOM);
     }
 }
 
@@ -290,7 +305,7 @@ function visible(element, visibility, displayed) {
     
     // getter
     if (attached) {
-        style = CSS.style(element,
+        style = CSS.computedStyle(element,
                         'display',
                         'visibility');
         return style.display !== 'none' && style.visibility !== 'hidden';
@@ -403,14 +418,14 @@ function manualOffset(element) {
         offset = [element.offsetLeft, element.offsetTop],
         findStyles = ['marginLeft', 'marginTop'],
         parent = element.offsetParent,
-        style = css.style(element, findStyles);
+        style = css.computedStyle(element, findStyles);
     
     offset[0] += parseFloat(style.marginLeft) || 0;
     offset[1] += parseFloat(style.marginTop) || 0;
     
     for (; parent; parent = parent.offsetParent) {
         if (parent.nodeType === 1) {
-            style = css.style(parent, findStyles);
+            style = css.computedStyle(parent, findStyles);
             offset[0] += (parent.offsetLeft || 0) +
                             (parent.clientLeft || 0) +
                             (parseFloat(style.marginLeft) || 0);
@@ -517,6 +532,7 @@ if (DIMENSION_INFO) {
     
     USE_ZOOM_FACTOR = DIMENSION_INFO.zoomfactor;
     DEFAULTVIEW = DETECTED.dom.defaultView;
+    IEVERSION = DETECTED.browser.ieVersion;
     
     getPageScroll = DIMENSION_INFO.pagescroll ?
                         w3cPageScrollOffset :
@@ -527,8 +543,9 @@ if (DIMENSION_INFO) {
                         ieScreenSize;
 
     boundingRect = DIMENSION_INFO.rectmethod && 'getBoundingClientRect';
-    getOffset = boundingRect && !DIMENSION_INFO.ie8 ?
-                    rectOffset : manualOffset;
+    getOffset = boundingRect && (!IEVERSION || IEVERSION > 8) ?
+                        rectOffset : manualOffset;
+                        
     getSize = boundingRect ? rectSize : manualSize;
     getBox = boundingRect ? rectBox : manualBox;
 }

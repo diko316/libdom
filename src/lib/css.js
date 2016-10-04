@@ -5,13 +5,23 @@ var STRING = require("./string.js"),
     DOM = require("./dom.js"),
     DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/,
     EM_OR_PERCENT_RE = /%|em/,
+    CSS_MEASUREMENT_RE =
+        /^([0-9]+(\.[0-9]+)?)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/,
     WIDTH_RE = /width/i,
     NUMBER_RE = /\d/,
-    ERROR_INVALID_DOM = "Invalid DOM [element] parameter.",
+    
+    SET_STYLE = styleManipulationNotSupported,
+    GET_STYLE = styleManipulationNotSupported,
+    REMOVE_STYLE = styleManipulationNotSupported,
+    
+    ERROR_INVALID_DOM = STRING.ERROR_ELEMENT,
+    
     EXPORTS = {
         add: addClass,
         remove: removeClass,
-        style: computedStyleNotSupported
+        computedStyle: computedStyleNotSupported,
+        style: applyStyle,
+        unitValue: getCSSUnitValue
     },
     SLICE = Array.prototype.slice;
     
@@ -48,7 +58,7 @@ function removeClass(element) {
 }
 
 function computedStyleNotSupported() {
-    throw new Error("Computed style is not supported in this browser.");
+    throw new Error(STRING.ERROR_NS_COMPSTYLE);
 }
 
 function w3cGetCurrentStyle(element) {
@@ -150,14 +160,178 @@ function getPixelSize(element, style, property, fontSize) {
     }
 }
 
+function applyStyle(element, style) {
+    var O = Object.prototype,
+        is = isFinite,
+        camelize = STRING.camelize,
+        parse = parseCSSText;
+    var hasOwn, name, value, type, elementStyle;
+    
+    if (!DOM.is(element, 1)) {
+        throw new Error(ERROR_INVALID_DOM);
+    }
+    
+    // setter
+    if (arguments.length > 1) {
+        if (typeof style === 'string') {
+            style = parse(style);
+        }
+        
+        if (O.toString.call(style) !== '[object Object]') {
+            throw new Error(STRING.ERROR_RULE);
+        }
+        
+        hasOwn = O.hasOwnProperty;
+        elementStyle = element.style;
+        for (name in style) {
+            if (hasOwn.call(style, name)) {
+                value = style[name];
+                type = typeof value;
+                // remove
+                if (value === null || type === 'undefined')  {
+                    REMOVE_STYLE(elementStyle, camelize(name), value);
+                }
+                else if ((value && type === 'string') ||
+                        (type === 'number' && is(value))) {
+                    
+                    SET_STYLE(elementStyle, camelize(name), value);
+                }
+            }
+        }
+        elementStyle = null;
+        return EXPORTS.chain;
+    }
+    
+    // getter
+    return parse(element.style.cssText);
+    
+}
+
+function parseCSSText(str) {
+    var STATE_NAME = 1,
+        STATE_VALUE = 2,
+        state = STATE_NAME,
+        c = -1,
+        l = str.length,
+        il = 0,
+        name = [],
+        result = {};
+    var chr, value;
+    
+    for (; l--;) {
+        chr = str.charAt(++c);
+        
+        switch (state) {
+        case STATE_NAME:
+            if (chr === ':') {
+                name = name.join('');
+                value = [];
+                il = 0;
+            }
+            else {
+                name[il++] = chr;
+            }
+            break;
+        
+        case STATE_VALUE:
+            if (chr === ';' || !l) {
+                result[name] = value.join('');
+                name = [];
+                il = 0;
+            }
+            else {
+                value[il++] = chr;
+            }
+        }
+    }
+    
+    return result;
+}
+
+function getCSSUnitValue(value) {
+    var is = isFinite;
+    
+    switch (typeof value) {
+    case 'number':
+        if (is(value)) {
+            return value;
+        }
+        break;
+    case 'string':
+        if (value === 'auto' ||
+            value === 'inherit' ||
+            CSS_MEASUREMENT_RE.test(value)) {
+            return value;
+        }
+        value = parseFloat(value);
+        if (is(value)) {
+            return value;
+        }
+    }
+    
+    if (value === null) {
+        return value;
+    }
+    
+    return false;
+    
+}
+
+function styleManipulationNotSupported() {
+    throw new Error(STRING.ERROR_NS_ATTRSTYLE);
+}
+
+
+/**
+ * Style manipulation
+ */
+
+function w3cSetStyleValue(style, name, value) {
+    style.setProperty(name,
+                        value,
+                        style.getPropertyPriority(name) || '');
+}
+
+function w3cGetStyleValue(style, name) {
+    return style.getPropertyValue(name);
+}
+
+function w3cRemoveStyleValue(style, name) {
+    style.removeProperty(name);
+}
+
+function ieSetStyleValue(style, name, value) {
+    style.setAttribute(name, value);
+}
+function ieGetStyleValue(style, name) {
+    return style.getAttribute(name);
+}
+
+function ieRemoveStyleValue(style, name) {
+    style.removeAttribute(name);
+}
 
 CSS_INFO = DETECTED && DETECTED.css;
 if (CSS_INFO) {
-    EXPORTS.style = CSS_INFO.w3cStyle ?
+    
+    EXPORTS.computedStyle = CSS_INFO.w3cStyle ?
                         w3cGetCurrentStyle :
                         CSS_INFO.ieStyle ?
                             ieGetCurrentStyle :
                             computedStyleNotSupported;
+                            
+    if (CSS_INFO.setattribute) {
+        SET_STYLE = ieSetStyleValue;
+        GET_STYLE = ieGetStyleValue;
+        REMOVE_STYLE = ieRemoveStyleValue;
+    }
+    else if (CSS_INFO.setproperty) {
+        SET_STYLE = w3cSetStyleValue;
+        GET_STYLE = w3cGetStyleValue;
+        REMOVE_STYLE = w3cRemoveStyleValue;
+    }
+    
+        
 }
 
 

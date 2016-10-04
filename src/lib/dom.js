@@ -1,12 +1,13 @@
 'use strict';
 
 var DETECTED = require("./detect.js"),
+    STRING = require("./string.js"),
     OBJECT_TYPE = '[object Object]',
-    ERROR_INVALID_DOM = "Invalid DOM [element] parameter.",
-    ERROR_INVALID_DOM_NODE = "Invalid DOM [node] parameter.",
-    ERROR_INVALID_CSS_SELECTOR = "Invalid CSS [selector] parameter.",
-    ERROR_INVALID_CALLBACK = "Invalid tree traverse [callback] parameter.",
-    ERROR_INVALID_ELEMENT_CONFIG = "Invalid DOM Element [config] parameter.",
+    ERROR_INVALID_DOM = STRING.ERROR_ELEMENT,
+    ERROR_INVALID_DOM_NODE = STRING.ERROR_NODE,
+    ERROR_INVALID_CSS_SELECTOR = STRING.ERROR_SELECTOR,
+    ERROR_INVALID_CALLBACK = STRING.ERROR_TREE_CALLBACK,
+    ERROR_INVALID_ELEMENT_CONFIG = STRING.ERROR_DOM_CONFIG,
     INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 },
     STD_CONTAINS = notSupportedContains,
     OBJECT_TOSTRING = Object.prototype.toString,
@@ -31,15 +32,16 @@ var DOM_INFO;
  * node contains...
  */
 function contains(ancestor, descendant) {
-    var is = isDom;
+    var str = STRING,
+        is = isDom;
     
     if (!is(ancestor, 1, 9, 11)) {
-        throw new Error("Invalid DOM [ancestor] parameter.");
+        throw new Error(str.ERROR_DOM);
     }
     
     if (!is(descendant) ||
         (descendant.nodeType in INVALID_DESCENDANT_NODE_TYPES)) {
-        throw new Error("Invalid DOM [descendant] parameter.");
+        throw new Error(str.ERROR_DOM);
     }
     
     switch (ancestor.nodeType) {
@@ -56,7 +58,7 @@ function contains(ancestor, descendant) {
 }
 
 function notSupportedContains() {
-    throw new Error("DOM position comparison is not supported.");
+    throw new Error(STRING.ERROR_NS_POSITION);
 }
 
 function w3cContains(ancestor, descendant) {
@@ -242,7 +244,7 @@ function toArrayQuerySelectorAll(dom, selector) {
 }
 
 function notSupportedQuerySelector() {
-    throw new Error("CSS Selector query form DOM is not supported.");
+    throw new Error(STRING.ERROR_NS_SELQUERY);
 }
 
 function preOrderTraverse(element, callback) {

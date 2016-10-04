@@ -2,7 +2,33 @@
 
 
 var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
-    CAMEL_RE = /[^a-z]+[a-z]/ig;
+    CAMEL_RE = /[^a-z]+[a-z]/ig,
+    EXPORTS = {
+        camelize: camelize,
+        addWord: addWord,
+        removeWord: removeWord,
+    
+        ERROR_ELEMENT: "Invalid DOM [element] parameter.",
+        ERROR_DOM: "Invalid [dom] Object parameter.",
+        ERROR_NODE: "Invalid DOM [node] parameter.",
+        ERROR_DOC: "Invalid DOM [document] parameter.",
+        ERROR_SELECTOR: "Invalid CSS [selector] parameter.",
+        ERROR_TREE_CALLBACK: "Invalid tree traverse [callback] parameter.",
+        ERROR_DOM_CONFIG: "Invalid DOM Element [config] parameter.",
+        ERROR_RULE: "Invalid [style] Rule parameter.",
+        
+        ERROR_OBSERV: "Invalid [observable] parameter.",
+        ERROR_EVENTTYPE: "Invalid Event [type] parameter.",
+        ERROR_EVENTHNDL: "Invalid Event [handler] parameter.",
+        
+        
+        ERROR_NS_ATTRSTYLE: "Style Attribute manipulation is not supported",
+        ERROR_NS_COMPSTYLE: "Computed style is not supported in this browser.",
+        ERROR_NS_SELQUERY : "CSS Selector query form DOM is not supported.",
+        ERROR_NS_POSITION: "DOM position comparison is not supported.",
+        ERROR_NS_MARK: "DOM selection not supported."
+        
+    };
 
 
 function camelize(str) {
@@ -12,7 +38,6 @@ function camelize(str) {
 function onCamelizeMatch(all) {
     return all[all.length - 1].toUpperCase();
 }
-
 
 function addWord(str, items) {
     var c = -1,
@@ -53,8 +78,6 @@ function removeWord(str, items) {
     return str.join(' ');    
 }
 
-module.exports = {
-    camelize: camelize,
-    addWord: addWord,
-    removeWord: removeWord
-};
+
+
+module.exports = EXPORTS;

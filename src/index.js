@@ -73,6 +73,7 @@ applyIf(EXPORTS,
         selection = require("./lib/selection.js"),
         {
             'highlight': 'select',
+            'noHighlight': 'unselectable',
             'clearHighlight': 'clear'
         });
 

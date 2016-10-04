@@ -49,7 +49,7 @@
                 eachNodePostorder: "eachPostorder",
                 eachNodeLevelorder: "eachLevel"
             });
-            applyIf(EXPORTS, css = __webpack_require__(10), {
+            applyIf(EXPORTS, css = __webpack_require__(11), {
                 addClass: "add",
                 removeClass: "remove"
             });
@@ -68,6 +68,7 @@
             });
             applyIf(EXPORTS, selection = __webpack_require__(14), {
                 highlight: "select",
+                noHighlight: "unselectable",
                 clearHighlight: "clear"
             });
             if (detect) {
@@ -146,12 +147,14 @@
     }, function(module, exports) {
         (function(global) {
             "use strict";
-            var WINDOW = global;
+            var WINDOW = global, ROOT = WINDOW.document.documentElement, STYLE = ROOT.style;
             module.exports = {
                 w3cStyle: !!WINDOW.getComputedStyle,
-                ieStyle: !!WINDOW.document.documentElement.currentStyle
+                ieStyle: !!ROOT.currentStyle,
+                setattribute: !!STYLE.setAttribute,
+                setproperty: !!STYLE.setProperty
             };
-            WINDOW = null;
+            WINDOW = ROOT = STYLE = null;
         }).call(exports, function() {
             return this;
         }());
@@ -173,17 +176,19 @@
     }, function(module, exports) {
         (function(global) {
             "use strict";
-            var DOCUMENT = global.document;
+            var DOCUMENT = global.document, ROOTSTYLE = DOCUMENT.documentElement.style, UNDEFINED = "undefined";
             module.exports = {
-                range: DOCUMENT.createRange,
-                textrange: DOCUMENT.createElement("input").createTextRange
+                range: !!DOCUMENT.createRange,
+                textrange: !!DOCUMENT.createElement("input").createTextRange,
+                cssUnselectable: typeof ROOTSTYLE.MozUserSelect !== UNDEFINED ? "MozUserSelect" : typeof ROOTSTYLE.webkitUserSelect !== UNDEFINED ? "webkitUserSelect" : false
             };
+            DOCUMENT = null;
         }).call(exports, function() {
             return this;
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var DETECTED = __webpack_require__(2), OBJECT_TYPE = "[object Object]", ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", ERROR_INVALID_DOM_NODE = "Invalid DOM [node] parameter.", ERROR_INVALID_CSS_SELECTOR = "Invalid CSS [selector] parameter.", ERROR_INVALID_CALLBACK = "Invalid tree traverse [callback] parameter.", ERROR_INVALID_ELEMENT_CONFIG = "Invalid DOM Element [config] parameter.", INVALID_DESCENDANT_NODE_TYPES = {
+        var DETECTED = __webpack_require__(2), STRING = __webpack_require__(10), OBJECT_TYPE = "[object Object]", ERROR_INVALID_DOM = STRING.ERROR_ELEMENT, ERROR_INVALID_DOM_NODE = STRING.ERROR_NODE, ERROR_INVALID_CSS_SELECTOR = STRING.ERROR_SELECTOR, ERROR_INVALID_CALLBACK = STRING.ERROR_TREE_CALLBACK, ERROR_INVALID_ELEMENT_CONFIG = STRING.ERROR_DOM_CONFIG, INVALID_DESCENDANT_NODE_TYPES = {
             9: 1,
             11: 1
         }, STD_CONTAINS = notSupportedContains, OBJECT_TOSTRING = Object.prototype.toString, EXPORTS = {
@@ -201,12 +206,12 @@
         };
         var DOM_INFO;
         function contains(ancestor, descendant) {
-            var is = isDom;
+            var str = STRING, is = isDom;
             if (!is(ancestor, 1, 9, 11)) {
-                throw new Error("Invalid DOM [ancestor] parameter.");
+                throw new Error(str.ERROR_DOM);
             }
             if (!is(descendant) || descendant.nodeType in INVALID_DESCENDANT_NODE_TYPES) {
-                throw new Error("Invalid DOM [descendant] parameter.");
+                throw new Error(str.ERROR_DOM);
             }
             switch (ancestor.nodeType) {
               case 9:
@@ -220,7 +225,7 @@
             return STD_CONTAINS(ancestor, descendant);
         }
         function notSupportedContains() {
-            throw new Error("DOM position comparison is not supported.");
+            throw new Error(STRING.ERROR_NS_POSITION);
         }
         function w3cContains(ancestor, descendant) {
             return (ancestor.compareDocumentPosition(descendant) & 16) > 0;
@@ -365,7 +370,7 @@
             return Array.prototype.slice.call(dom.querySelectorAll(selector));
         }
         function notSupportedQuerySelector() {
-            throw new Error("CSS Selector query form DOM is not supported.");
+            throw new Error(STRING.ERROR_NS_SELQUERY);
         }
         function preOrderTraverse(element, callback) {
             if (!isDom(element, 1)) {
@@ -479,13 +484,74 @@
             }
         }
         module.exports = EXPORTS.chain = EXPORTS;
+    }, function(module, exports) {
+        "use strict";
+        var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/, CAMEL_RE = /[^a-z]+[a-z]/gi, EXPORTS = {
+            camelize: camelize,
+            addWord: addWord,
+            removeWord: removeWord,
+            ERROR_ELEMENT: "Invalid DOM [element] parameter.",
+            ERROR_DOM: "Invalid [dom] Object parameter.",
+            ERROR_NODE: "Invalid DOM [node] parameter.",
+            ERROR_DOC: "Invalid DOM [document] parameter.",
+            ERROR_SELECTOR: "Invalid CSS [selector] parameter.",
+            ERROR_TREE_CALLBACK: "Invalid tree traverse [callback] parameter.",
+            ERROR_DOM_CONFIG: "Invalid DOM Element [config] parameter.",
+            ERROR_RULE: "Invalid [style] Rule parameter.",
+            ERROR_OBSERV: "Invalid [observable] parameter.",
+            ERROR_EVENTTYPE: "Invalid Event [type] parameter.",
+            ERROR_EVENTHNDL: "Invalid Event [handler] parameter.",
+            ERROR_NS_ATTRSTYLE: "Style Attribute manipulation is not supported",
+            ERROR_NS_COMPSTYLE: "Computed style is not supported in this browser.",
+            ERROR_NS_SELQUERY: "CSS Selector query form DOM is not supported.",
+            ERROR_NS_POSITION: "DOM position comparison is not supported.",
+            ERROR_NS_MARK: "DOM selection not supported."
+        };
+        function camelize(str) {
+            return str.replace(CAMEL_RE, onCamelizeMatch);
+        }
+        function onCamelizeMatch(all) {
+            return all[all.length - 1].toUpperCase();
+        }
+        function addWord(str, items) {
+            var c = -1, l = items.length;
+            var cl, name;
+            str = str.split(SEPARATE_RE);
+            cl = str.length;
+            for (;l--; ) {
+                name = items[++c];
+                if (name && typeof name === "string" && str.indexOf(name) === -1) {
+                    str[cl++] = name;
+                }
+            }
+            return str.join(" ");
+        }
+        function removeWord(str, items) {
+            var c = -1, l = items.length;
+            var cl, total, name;
+            str = str.split(SEPARATE_RE);
+            total = str.length;
+            for (;l--; ) {
+                name = items[++c];
+                for (cl = total; cl--; ) {
+                    if (name === str[cl]) {
+                        str.splice(cl, 1);
+                        total--;
+                    }
+                }
+            }
+            return str.join(" ");
+        }
+        module.exports = EXPORTS;
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, ERROR_INVALID_DOM = "Invalid DOM [element] parameter.", EXPORTS = {
+            var STRING = __webpack_require__(10), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]+(\.[0-9]+)?)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, REMOVE_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING.ERROR_ELEMENT, EXPORTS = {
                 add: addClass,
                 remove: removeClass,
-                style: computedStyleNotSupported
+                computedStyle: computedStyleNotSupported,
+                style: applyStyle,
+                unitValue: getCSSUnitValue
             }, SLICE = Array.prototype.slice;
             var CSS_INFO;
             function addClass(element) {
@@ -507,7 +573,7 @@
                 return EXPORTS.chain;
             }
             function computedStyleNotSupported() {
-                throw new Error("Computed style is not supported in this browser.");
+                throw new Error(STRING.ERROR_NS_COMPSTYLE);
             }
             function w3cGetCurrentStyle(element) {
                 var camel = STRING.camelize;
@@ -580,61 +646,130 @@
                     return size;
                 }
             }
+            function applyStyle(element, style) {
+                var O = Object.prototype, is = isFinite, camelize = STRING.camelize, parse = parseCSSText;
+                var hasOwn, name, value, type, elementStyle;
+                if (!DOM.is(element, 1)) {
+                    throw new Error(ERROR_INVALID_DOM);
+                }
+                if (arguments.length > 1) {
+                    if (typeof style === "string") {
+                        style = parse(style);
+                    }
+                    if (O.toString.call(style) !== "[object Object]") {
+                        throw new Error(STRING.ERROR_RULE);
+                    }
+                    hasOwn = O.hasOwnProperty;
+                    elementStyle = element.style;
+                    for (name in style) {
+                        if (hasOwn.call(style, name)) {
+                            value = style[name];
+                            type = typeof value;
+                            if (value === null || type === "undefined") {
+                                REMOVE_STYLE(elementStyle, camelize(name), value);
+                            } else if (value && type === "string" || type === "number" && is(value)) {
+                                SET_STYLE(elementStyle, camelize(name), value);
+                            }
+                        }
+                    }
+                    elementStyle = null;
+                    return EXPORTS.chain;
+                }
+                return parse(element.style.cssText);
+            }
+            function parseCSSText(str) {
+                var STATE_NAME = 1, STATE_VALUE = 2, state = STATE_NAME, c = -1, l = str.length, il = 0, name = [], result = {};
+                var chr, value;
+                for (;l--; ) {
+                    chr = str.charAt(++c);
+                    switch (state) {
+                      case STATE_NAME:
+                        if (chr === ":") {
+                            name = name.join("");
+                            value = [];
+                            il = 0;
+                        } else {
+                            name[il++] = chr;
+                        }
+                        break;
+
+                      case STATE_VALUE:
+                        if (chr === ";" || !l) {
+                            result[name] = value.join("");
+                            name = [];
+                            il = 0;
+                        } else {
+                            value[il++] = chr;
+                        }
+                    }
+                }
+                return result;
+            }
+            function getCSSUnitValue(value) {
+                var is = isFinite;
+                switch (typeof value) {
+                  case "number":
+                    if (is(value)) {
+                        return value;
+                    }
+                    break;
+
+                  case "string":
+                    if (value === "auto" || value === "inherit" || CSS_MEASUREMENT_RE.test(value)) {
+                        return value;
+                    }
+                    value = parseFloat(value);
+                    if (is(value)) {
+                        return value;
+                    }
+                }
+                if (value === null) {
+                    return value;
+                }
+                return false;
+            }
+            function styleManipulationNotSupported() {
+                throw new Error(STRING.ERROR_NS_ATTRSTYLE);
+            }
+            function w3cSetStyleValue(style, name, value) {
+                style.setProperty(name, value, style.getPropertyPriority(name) || "");
+            }
+            function w3cGetStyleValue(style, name) {
+                return style.getPropertyValue(name);
+            }
+            function w3cRemoveStyleValue(style, name) {
+                style.removeProperty(name);
+            }
+            function ieSetStyleValue(style, name, value) {
+                style.setAttribute(name, value);
+            }
+            function ieGetStyleValue(style, name) {
+                return style.getAttribute(name);
+            }
+            function ieRemoveStyleValue(style, name) {
+                style.removeAttribute(name);
+            }
             CSS_INFO = DETECTED && DETECTED.css;
             if (CSS_INFO) {
-                EXPORTS.style = CSS_INFO.w3cStyle ? w3cGetCurrentStyle : CSS_INFO.ieStyle ? ieGetCurrentStyle : computedStyleNotSupported;
+                EXPORTS.computedStyle = CSS_INFO.w3cStyle ? w3cGetCurrentStyle : CSS_INFO.ieStyle ? ieGetCurrentStyle : computedStyleNotSupported;
+                if (CSS_INFO.setattribute) {
+                    SET_STYLE = ieSetStyleValue;
+                    GET_STYLE = ieGetStyleValue;
+                    REMOVE_STYLE = ieRemoveStyleValue;
+                } else if (CSS_INFO.setproperty) {
+                    SET_STYLE = w3cSetStyleValue;
+                    GET_STYLE = w3cGetStyleValue;
+                    REMOVE_STYLE = w3cRemoveStyleValue;
+                }
             }
             module.exports = EXPORTS.chain = EXPORTS;
         }).call(exports, function() {
             return this;
         }());
-    }, function(module, exports) {
-        "use strict";
-        var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/, CAMEL_RE = /[^a-z]+[a-z]/gi;
-        function camelize(str) {
-            return str.replace(CAMEL_RE, onCamelizeMatch);
-        }
-        function onCamelizeMatch(all) {
-            return all[all.length - 1].toUpperCase();
-        }
-        function addWord(str, items) {
-            var c = -1, l = items.length;
-            var cl, name;
-            str = str.split(SEPARATE_RE);
-            cl = str.length;
-            for (;l--; ) {
-                name = items[++c];
-                if (name && typeof name === "string" && str.indexOf(name) === -1) {
-                    str[cl++] = name;
-                }
-            }
-            return str.join(" ");
-        }
-        function removeWord(str, items) {
-            var c = -1, l = items.length;
-            var cl, total, name;
-            str = str.split(SEPARATE_RE);
-            total = str.length;
-            for (;l--; ) {
-                name = items[++c];
-                for (cl = total; cl--; ) {
-                    if (name === str[cl]) {
-                        str.splice(cl, 1);
-                        total--;
-                    }
-                }
-            }
-            return str.join(" ");
-        }
-        module.exports = {
-            camelize: camelize,
-            addWord: addWord,
-            removeWord: removeWord
-        };
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var INFO = __webpack_require__(2), DOM = __webpack_require__(9), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty, ERROR_OBSERVABLE_NO_SUPPORT = "Invalid [observable] parameter.", ERROR_INVALID_TYPE = "Invalid Event [type] parameter.", ERROR_INVALID_HANDLER = "Invalid Event [handler] parameter.", IE_CUSTOM_TYPE_EVENT = "propertychange", EXPORTS = module.exports = {
+            var INFO = __webpack_require__(2), STRING = __webpack_require__(10), DOM = __webpack_require__(9), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty, ERROR_OBSERVABLE_NO_SUPPORT = STRING.ERROR_OBSERV, ERROR_INVALID_TYPE = STRING.ERROR_EVENTTYPE, ERROR_INVALID_HANDLER = STRING.ERROR_EVENTHNDL, IE_CUSTOM_TYPE_EVENT = "propertychange", EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
@@ -916,7 +1051,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), CSS = __webpack_require__(10), ERROR_INVALID_ELEMENT = "Invalid DOM [element] parameter.", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
+            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(10), DOM = __webpack_require__(9), CSS = __webpack_require__(11), ERROR_INVALID_ELEMENT = STRING.ERROR_ELEMENT, ERROR_INVALID_DOM = STRING.ERROR_DOM, DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
                 offset: offset,
                 size: size,
                 box: box,
@@ -924,7 +1059,7 @@
                 screen: screen,
                 visible: visible
             };
-            var DIMENSION_INFO;
+            var DIMENSION_INFO, IEVERSION;
             function offset(element, x, y) {
                 if (arguments.length > 1) {
                     return box(element, x, y);
@@ -945,8 +1080,8 @@
                 return isViewable(element) === PAGE_VIEW ? pageBox(element).slice(2, 4) : getSize(element);
             }
             function box(element, x, y, width, height) {
-                var is = isFinite, M = Math, css = CSS, toFloat = parseFloat, NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
-                var hasLeft, hasTop, hasWidth, hasHeight, parent, hasPosition, hasSize, diff, diff1, diff2, style, style1, style2, styleAttribute;
+                var css = CSS, toFloat = parseFloat, cssValue = css.unitValue, NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
+                var hasLeft, hasTop, hasWidth, hasHeight, parent, hasPosition, hasSize, diff, style, styleAttribute, applyStyle;
                 if (!setter && viewmode === PAGE_VIEW) {
                     return pageBox(element);
                 }
@@ -954,59 +1089,56 @@
                     throw new Error(ERROR_INVALID_ELEMENT);
                 }
                 if (setter) {
+                    applyStyle = null;
                     if (x instanceof Array) {
                         height = 3 in x ? x[3] : null;
                         width = 2 in x ? x[2] : null;
                         y = 1 in y ? x[1] : null;
                         x = x[0];
                     }
-                    style = css.style(element, "position", "marginLeft", "marginTop", "paddingTop", "paddingLeft", "paddingRight", "paddingBottom");
+                    style = css.computedStyle(element, "position", "marginLeft", "marginTop", "paddingTop", "paddingLeft", "paddingRight", "paddingBottom");
                     hasLeft = hasTop = hasWidth = hasHeight = hasPosition = hasSize = false;
                     switch (style.position) {
                       case "relative":
                       case "absolute":
                       case "fixed":
-                        if (typeof x === NUMBER && is(x)) {
+                        x = cssValue(x);
+                        if (x !== false) {
                             hasLeft = hasPosition = true;
                         }
-                        if (typeof y === NUMBER && is(y)) {
+                        y = cssValue(y);
+                        if (y !== false) {
                             hasTop = hasPosition = true;
                         }
                     }
-                    if (typeof width === NUMBER && is(width)) {
+                    width = cssValue(width);
+                    if (width !== false) {
                         hasWidth = hasSize = true;
                     }
-                    if (typeof height === NUMBER && is(height)) {
+                    height = cssValue(height);
+                    if (height !== false) {
                         hasHeight = hasSize = true;
                     }
                     if (hasPosition || hasSize) {
-                        styleAttribute = element.style;
+                        applyStyle = {};
                         if (hasPosition) {
                             diff = getOffset(element);
-                            diff1 = diff2 = 0;
                             if (hasLeft) {
-                                diff1 = hasLeft ? x - diff[0] : 0;
-                                style1 = element.offsetLeft - (toFloat(style.marginLeft) || 0);
-                                styleAttribute.left = style1 + diff1 + "px";
+                                applyStyle.left = typeof x === NUMBER ? element.offsetLeft - (toFloat(style.marginLeft) || 0) + (x - diff[0]) + "px" : x;
                             }
                             if (hasTop) {
-                                diff2 = hasTop ? x - diff[1] : 0;
-                                style2 = element.offsetTop + (toFloat(style.marginTop) || 0);
-                                styleAttribute.top = style2 + diff2 + "px";
+                                applyStyle.top = typeof y === NUMBER ? element.offsetTop - (toFloat(style.marginTop) || 0) + (y - diff[1]) + "px" : y;
                             }
                         }
                         if (hasSize) {
                             if (hasWidth) {
-                                diff = width - element.offsetWidth;
-                                style1 = element.clientWidth - (toFloat(style.paddingLeft) || 0) - (toFloat(style.paddingRight) || 0);
-                                styleAttribute.width = M.max(style1 + diff, 0) + "px";
+                                applyStyle.width = typeof width === NUMBER ? element.clientWidth - (toFloat(style.paddingLeft) || 0) - (toFloat(style.paddingRight) || 0) + (width - element.offsetWidth) + "px" : width;
                             }
                             if (hasHeight) {
-                                diff = height - element.offsetHeight;
-                                style1 = element.clientHeight - (toFloat(style.paddingTop) || 0) - (toFloat(style.paddingBottom) || 0);
-                                styleAttribute.height = M.max(style1 + diff, 0) + "px";
+                                applyStyle.height = typeof height === NUMBER ? element.clientHeight - (toFloat(style.paddingTop) || 0) - (toFloat(style.paddingBottom) || 0) + (height - element.offsetHeight) + "px" : height;
                             }
                         }
+                        css.style(element, applyStyle);
                     }
                     parent = styleAttribute = null;
                     return EXPORTS.chain;
@@ -1014,13 +1146,13 @@
                 return getBox(element);
             }
             function scroll(dom, x, y) {
-                var setter = arguments.length > 1;
+                var setter = arguments.length > 1, is = isFinite, NUMBER = "number";
                 var current, window;
                 if (setter) {
-                    if (typeof x !== "number" || !isFinite(x)) {
+                    if (typeof x !== NUMBER || !is(x)) {
                         x = false;
                     }
-                    if (typeof y !== "number" || !isFinite(y)) {
+                    if (typeof y !== NUMBER || !is(y)) {
                         y = false;
                     }
                 }
@@ -1045,7 +1177,7 @@
                     break;
 
                   default:
-                    throw new Error("Invalid [dom] Object parameter.");
+                    throw new Error(ERROR_INVALID_DOM);
                 }
             }
             function pageBox(dom) {
@@ -1084,7 +1216,7 @@
                     return EXPORTS.chain;
                 }
                 if (attached) {
-                    style = CSS.style(element, "display", "visibility");
+                    style = CSS.computedStyle(element, "display", "visibility");
                     return style.display !== "none" && style.visibility !== "hidden";
                 }
                 return false;
@@ -1135,12 +1267,12 @@
                 return offset;
             }
             function manualOffset(element) {
-                var root = global.document[IE_PAGE_STAT_ACCESS], css = CSS, offset = [ element.offsetLeft, element.offsetTop ], findStyles = [ "marginLeft", "marginTop" ], parent = element.offsetParent, style = css.style(element, findStyles);
+                var root = global.document[IE_PAGE_STAT_ACCESS], css = CSS, offset = [ element.offsetLeft, element.offsetTop ], findStyles = [ "marginLeft", "marginTop" ], parent = element.offsetParent, style = css.computedStyle(element, findStyles);
                 offset[0] += parseFloat(style.marginLeft) || 0;
                 offset[1] += parseFloat(style.marginTop) || 0;
                 for (;parent; parent = parent.offsetParent) {
                     if (parent.nodeType === 1) {
-                        style = css.style(parent, findStyles);
+                        style = css.computedStyle(parent, findStyles);
                         offset[0] += (parent.offsetLeft || 0) + (parent.clientLeft || 0) + (parseFloat(style.marginLeft) || 0);
                         offset[1] += (parent.offsetTop || 0) + (parent.clientTop || 0) + (parseFloat(style.marginTop) || 0);
                     }
@@ -1202,10 +1334,11 @@
                 }
                 USE_ZOOM_FACTOR = DIMENSION_INFO.zoomfactor;
                 DEFAULTVIEW = DETECTED.dom.defaultView;
+                IEVERSION = DETECTED.browser.ieVersion;
                 getPageScroll = DIMENSION_INFO.pagescroll ? w3cPageScrollOffset : iePageScrollOffset;
                 getScreenSize = DIMENSION_INFO.screensize ? w3cScreenSize : ieScreenSize;
                 boundingRect = DIMENSION_INFO.rectmethod && "getBoundingClientRect";
-                getOffset = boundingRect && !DIMENSION_INFO.ie8 ? rectOffset : manualOffset;
+                getOffset = boundingRect && (!IEVERSION || IEVERSION > 8) ? rectOffset : manualOffset;
                 getSize = boundingRect ? rectSize : manualSize;
                 getBox = boundingRect ? rectBox : manualBox;
             }
@@ -1216,9 +1349,10 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), DETECTED_SELECTION = DETECTED.selection, DOM = __webpack_require__(9), DIMENSION = __webpack_require__(13), SELECT_ELEMENT = null, CLEAR_SELECTION = null, EXPORTS = {
+            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(10), DOM = __webpack_require__(9), DIMENSION = __webpack_require__(13), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING.ERROR_DOM, SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
                 select: select,
-                clear: clear
+                clear: clear,
+                unselectable: unselectable
             };
             function select(element, endElement) {
                 var dimension = DIMENSION;
@@ -1226,13 +1360,13 @@
                     element = element.body;
                 }
                 if (!dimension.visible(element)) {
-                    throw new Error("Invalid DOM [element] parameter.");
+                    throw new Error(STRING.ERROR_ELEMENT);
                 }
                 if (arguments.length < 2) {
                     endElement = null;
                 }
                 if (endElement !== null && !dimension.visible(endElement)) {
-                    throw new Error("Invalid DOM [endElement] parameter.");
+                    throw new Error(ERROR_DOM);
                 }
                 SELECT_ELEMENT(element, endElement);
                 return EXPORTS.chain;
@@ -1240,7 +1374,7 @@
             function clear(document) {
                 if (!DOM.is(document, 9)) {
                     if (arguments.length > 0) {
-                        throw new Error("Invalid DOM [document] parameter.");
+                        throw new Error(STRING.ERROR_DOC);
                     } else {
                         document = global.document;
                     }
@@ -1248,8 +1382,24 @@
                 CLEAR_SELECTION(document);
                 return EXPORTS.chain;
             }
+            function unselectable(element, disableSelect) {
+                if (!DOM.is(element, 1)) {
+                    throw new Error(ERROR_DOM);
+                }
+                UNSELECTABLE(element, disableSelect === false);
+                return EXPORTS.chain;
+            }
+            function webkitUnselectable(element, selectable) {
+                element.style.webkitUserSelect = selectable ? "text" : "none";
+            }
+            function geckoUnselectable(element, selectable) {
+                element.style.MozUserSelect = selectable ? "text" : "none";
+            }
+            function attributeUnselectable(element, selectable) {
+                element.unselectable = selectable ? "off" : "on";
+            }
             function selectionNotSupported() {
-                throw new Error("DOM selection not supported.");
+                throw new Error(STRING.ERROR_NS_MARK);
             }
             function ieSelectElement(startElement, endElement) {
                 var body = startElement.ownerDocument.body, startRange = body.createTextRange();
@@ -1267,7 +1417,7 @@
                 document.selection.empty();
             }
             function w3cSelectElement(startElement, endElement) {
-                var document = startElement.ownerDocument, startRange = document.createRange(), endRange = document.createRange(), selection = document[DETECTED.dom.defaultView].getSelection();
+                var document = startElement.ownerDocument, startRange = document.createRange(), endRange = document.createRange(), selection = document[DETECTED_DOM.defaultView].getSelection();
                 startRange.selectNodeContents(startElement);
                 if (endElement) {
                     endRange.selectNodeContents(endElement);
@@ -1279,7 +1429,7 @@
                 document = selection = startRange = endRange;
             }
             function w3cClearSelection(document) {
-                document[DETECTED.dom.defaultView].getSelection().removeAllRanges();
+                document[DETECTED_DOM.defaultView].getSelection().removeAllRanges();
             }
             if (DETECTED_SELECTION.range) {
                 SELECT_ELEMENT = w3cSelectElement;
@@ -1289,6 +1439,9 @@
                 CLEAR_SELECTION = ieClearSelection;
             } else {
                 SELECT_ELEMENT = CLEAR_SELECTION = selectionNotSupported;
+            }
+            if (CSS_UNSELECT) {
+                UNSELECTABLE = CSS_UNSELECT === "MozUserSelect" ? geckoUnselectable : webkitUnselectable;
             }
             module.exports = EXPORTS.chain = EXPORTS;
         }).call(exports, function() {
