@@ -62,7 +62,7 @@ function computedStyleNotSupported() {
 }
 
 function w3cGetCurrentStyle(element) {
-    var camel = STRING.camelize;
+    var camel = STRING.stylize;
     var style, list, c, l, name, values;
     
     if (!DOM.is(element, 1)) {
@@ -87,7 +87,7 @@ function w3cGetCurrentStyle(element) {
 
 function ieGetCurrentStyle(element) {
     var dimensionRe = DIMENSION_RE,
-        camel = STRING.camelize,
+        camel = STRING.stylize,
         pixelSize = getPixelSize;
         
     var style, list, c, l, name, value, access, fontSize, values;
@@ -163,7 +163,7 @@ function getPixelSize(element, style, property, fontSize) {
 function applyStyle(element, style) {
     var O = Object.prototype,
         is = isFinite,
-        camelize = STRING.camelize,
+        camelize = STRING.stylize,
         parse = parseCSSText;
     var hasOwn, name, value, type, elementStyle;
     

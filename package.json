@@ -1,6 +1,6 @@
 {
   "name": "libdom",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Browser library that normalizes DOM operations",
   "main": "dist/index.js",
   "scripts": {

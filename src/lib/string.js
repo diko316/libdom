@@ -3,8 +3,10 @@
 
 var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
     CAMEL_RE = /[^a-z]+[a-z]/ig,
+    STYLIZE_RE = /^(Moz|webkit|ms)/i,
     EXPORTS = {
         camelize: camelize,
+        stylize: stylize,
         addWord: addWord,
         removeWord: removeWord,
     
@@ -37,6 +39,15 @@ function camelize(str) {
 
 function onCamelizeMatch(all) {
     return all[all.length - 1].toUpperCase();
+}
+
+function onStylizeMatch(all, match) {
+    var found = match.toLowerCase();
+    return found === 'moz' ? 'Moz' : found;
+}
+
+function stylize(str) {
+    return camelize(str).replace(STYLIZE_RE, onStylizeMatch);
 }
 
 function addWord(str, items) {

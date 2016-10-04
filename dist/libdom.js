@@ -24,7 +24,7 @@
         (function(global) {
             "use strict";
             var detect = __webpack_require__(2), EXPORTS = {
-                version: "0.0.5",
+                version: "0.0.6",
                 info: detect
             };
             var css, event, dimension, selection;
@@ -486,8 +486,9 @@
         module.exports = EXPORTS.chain = EXPORTS;
     }, function(module, exports) {
         "use strict";
-        var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/, CAMEL_RE = /[^a-z]+[a-z]/gi, EXPORTS = {
+        var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/, CAMEL_RE = /[^a-z]+[a-z]/gi, STYLIZE_RE = /^(Moz|webkit|ms)/i, EXPORTS = {
             camelize: camelize,
+            stylize: stylize,
             addWord: addWord,
             removeWord: removeWord,
             ERROR_ELEMENT: "Invalid DOM [element] parameter.",
@@ -512,6 +513,13 @@
         }
         function onCamelizeMatch(all) {
             return all[all.length - 1].toUpperCase();
+        }
+        function onStylizeMatch(all, match) {
+            var found = match.toLowerCase();
+            return found === "moz" ? "Moz" : found;
+        }
+        function stylize(str) {
+            return camelize(str).replace(STYLIZE_RE, onStylizeMatch);
         }
         function addWord(str, items) {
             var c = -1, l = items.length;
@@ -576,7 +584,7 @@
                 throw new Error(STRING.ERROR_NS_COMPSTYLE);
             }
             function w3cGetCurrentStyle(element) {
-                var camel = STRING.camelize;
+                var camel = STRING.stylize;
                 var style, list, c, l, name, values;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
@@ -594,7 +602,7 @@
                 return values;
             }
             function ieGetCurrentStyle(element) {
-                var dimensionRe = DIMENSION_RE, camel = STRING.camelize, pixelSize = getPixelSize;
+                var dimensionRe = DIMENSION_RE, camel = STRING.stylize, pixelSize = getPixelSize;
                 var style, list, c, l, name, value, access, fontSize, values;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
@@ -647,7 +655,7 @@
                 }
             }
             function applyStyle(element, style) {
-                var O = Object.prototype, is = isFinite, camelize = STRING.camelize, parse = parseCSSText;
+                var O = Object.prototype, is = isFinite, camelize = STRING.stylize, parse = parseCSSText;
                 var hasOwn, name, value, type, elementStyle;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
