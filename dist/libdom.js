@@ -71,6 +71,9 @@
                 noHighlight: "unselectable",
                 clearHighlight: "clear"
             });
+            applyIf(EXPORTS, __webpack_require__(15), {
+                colorParse: "parse"
+            });
             if (detect) {
                 css.chain = event.chain = dimension.chain = selection.chain = EXPORTS;
             }
@@ -1463,6 +1466,158 @@
         }).call(exports, function() {
             return this;
         }());
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var FORMAT = __webpack_require__(16), HASOWN = Object.prototype.hasOwnProperty, COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^([0-9]+(\.[0-9]+)?)(\%)?$/, FORMAT_INDEX = {
+            1: "rgba",
+            2: "hsla"
+        }, PROCESSOR = {
+            hsla: __webpack_require__(17),
+            rgba: __webpack_require__(18)
+        }, EXPORTS = {
+            parse: itemizeString
+        };
+        var index;
+        for (index in FORMAT_INDEX) {
+            if (HASOWN.call(FORMAT_INDEX, index)) {
+                index = parseInt(index, 10);
+                if (index) {
+                    FORMAT_INDEX[FORMAT_INDEX[index]] = index;
+                }
+            }
+        }
+        function itemizeString(str) {
+            var re = COLOR_RE, F = FORMAT, numberRe = NUMBER_RE;
+            var m, alpha, c, l, item, items, get2, returnItems, itemizer, processor, type;
+            if (re.test(str)) {
+                m = str.match(re);
+                alpha = false;
+                type = m[1];
+                console.log("match! ", m);
+                switch (type) {
+                  case "hsla":
+                    alpha = true;
+
+                  case "hsl":
+                    itemizer = "hsla";
+                    console.log("hasla!!!");
+                    break;
+
+                  case "rgba":
+                    alpha = true;
+
+                  case "rgb":
+                  case "#":
+                  default:
+                    type = "rgba";
+                    itemizer = "rgba";
+                }
+                processor = PROCESSOR[itemizer];
+                itemizer = processor.itemize;
+                c = -1;
+                items = m[3];
+                if (items) {
+                    returnItems = items = items.split(",");
+                    for (l = items.length; l--; ) {
+                        item = items[++c];
+                        if (!numberRe.test(item)) {
+                            return 0;
+                        }
+                        items[c] = itemizer(item, c, item.charAt(item.length - 1) === "%" ? F.PERCENT : F.NUMBER);
+                    }
+                } else {
+                    l = 3;
+                    get2 = l === 6;
+                    returnItems = [];
+                    items = m[2];
+                    for (l = items.length; l--; ) {
+                        ++c;
+                        item = items.charAt(c);
+                        item = get2 ? items.substring(c * 2, c * 2 + 1) : item + item;
+                        returnItems[c] = itemizer(item, c, F.HEX);
+                    }
+                    returnItems[++c] = 1;
+                }
+                returnItems[returnItems.length] = FORMAT_INDEX[type];
+                return itemsToInteger.apply(null, returnItems);
+            }
+            return 0;
+        }
+        function itemsToInteger() {
+            var args = arguments, id = args[args.length - 1], type = FORMAT_INDEX[id], processor = PROCESSOR[type], storage = processor.storage, total = storage.length, value = 0, block = 0;
+            var size, item, l;
+            for (l = total; l--; ) {
+                console.log("storage ", storage[l]);
+                block += (storage[l] + 1) / 32;
+            }
+            console.log("total blocks: ", block);
+            for (l = total; l--; ) {
+                size = storage[l];
+                block -= (size + 1) / 32;
+                item = args[l] & size;
+                value |= block ? item << block : item;
+                console.log("block: ", block, " size ", size, " item ", item);
+            }
+            console.log(value);
+            return value;
+        }
+        module.exports = EXPORTS;
+    }, function(module, exports) {
+        "use strict";
+        module.exports = {
+            NUMBER: 1,
+            HEX: 2,
+            PERCENT: 3
+        };
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var FORMAT = __webpack_require__(16);
+        module.exports = {
+            storage: [ 383, 127, 127, 127, 127 ],
+            itemize: function(value, index, format) {
+                var F = FORMAT, M = Math, parse = parseFloat, min = 0, max = index < 1 ? 360 : index > 2 ? 1 : 100;
+                switch (format) {
+                  case F.HEX:
+                    value = parseInt(value, 16) / 255 * max;
+                    break;
+
+                  case F.NUMBER:
+                    value = parse(value);
+                    break;
+
+                  case F.PERCENT:
+                    value = parse(value) / 100 * max;
+                    break;
+                }
+                return M.max(min, M.min(max, value || 0));
+            }
+        };
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var FORMAT = __webpack_require__(16);
+        module.exports = {
+            storage: [ 255, 255, 255, 127, 127 ],
+            itemize: function(value, index, format) {
+                var F = FORMAT, M = Math, parse = parseFloat, min = 0, max = index > 2 ? 100 : 255;
+                console.log("index: ", index);
+                switch (format) {
+                  case F.HEX:
+                    value = parseInt(value, 16) / 255 * max;
+                    break;
+
+                  case F.NUMBER:
+                    value = parse(value);
+                    console.log("number: ", value);
+                    break;
+
+                  case F.PERCENT:
+                    value = parse(value) / 100 * max;
+                    console.log("percent: ", value);
+                    break;
+                }
+                return M.max(min, M.min(max, value || 0));
+            }
+        };
     } ]);
 });
 

@@ -77,6 +77,12 @@ applyIf(EXPORTS,
             'clearHighlight': 'clear'
         });
 
+applyIf(EXPORTS,
+        require("./lib/color.js"),
+        {
+            'colorParse': 'parse'
+        });
+
 if (detect) {
     css.chain =
         event.chain = 
