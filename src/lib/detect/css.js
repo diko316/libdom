@@ -3,14 +3,30 @@
 
 var WINDOW = global,
     ROOT = WINDOW.document.documentElement,
-    STYLE = ROOT.style;
+    STYLE = ROOT.style,
+    TRANSITION_SUPPORT = ['OTransition',
+                            'webkitTransition',
+                            'MozTransition',
+                            'transition'];
 
-module.exports = {
+var name, l, EXPORTS;
+
+
+module.exports = EXPORTS = {
     w3cStyle: !!WINDOW.getComputedStyle,
     ieStyle: !!ROOT.currentStyle,
     setattribute: !!STYLE.setAttribute,
-    setproperty: !!STYLE.setProperty
-    
+    setproperty: !!STYLE.setProperty,
+    transition: false
 };
+
+// detect transition
+for (l = TRANSITION_SUPPORT.length; l--;) {
+    name = TRANSITION_SUPPORT[l];
+    if (typeof STYLE[name] !== 'undefined') {
+        EXPORTS.transition = name;
+        break;
+    }
+}
 
 WINDOW = ROOT = STYLE = null;

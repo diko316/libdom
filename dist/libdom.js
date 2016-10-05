@@ -147,13 +147,22 @@
     }, function(module, exports) {
         (function(global) {
             "use strict";
-            var WINDOW = global, ROOT = WINDOW.document.documentElement, STYLE = ROOT.style;
-            module.exports = {
+            var WINDOW = global, ROOT = WINDOW.document.documentElement, STYLE = ROOT.style, TRANSITION_SUPPORT = [ "OTransition", "webkitTransition", "MozTransition", "transition" ];
+            var name, l, EXPORTS;
+            module.exports = EXPORTS = {
                 w3cStyle: !!WINDOW.getComputedStyle,
                 ieStyle: !!ROOT.currentStyle,
                 setattribute: !!STYLE.setAttribute,
-                setproperty: !!STYLE.setProperty
+                setproperty: !!STYLE.setProperty,
+                transition: false
             };
+            for (l = TRANSITION_SUPPORT.length; l--; ) {
+                name = TRANSITION_SUPPORT[l];
+                if (typeof STYLE[name] !== "undefined") {
+                    EXPORTS.transition = name;
+                    break;
+                }
+            }
             WINDOW = ROOT = STYLE = null;
         }).call(exports, function() {
             return this;
@@ -483,7 +492,7 @@
         module.exports = EXPORTS.chain = EXPORTS;
     }, function(module, exports) {
         "use strict";
-        var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/, CAMEL_RE = /[^a-z]+[a-z]/gi, STYLIZE_RE = /^(Moz|webkit|ms)/i, EXPORTS = {
+        var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/, CAMEL_RE = /[^a-z]+[a-z]/gi, STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/, EXPORTS = {
             camelize: camelize,
             stylize: stylize,
             addWord: addWord,
@@ -512,8 +521,11 @@
             return all[all.length - 1].toUpperCase();
         }
         function onStylizeMatch(all, match) {
-            var found = match.toLowerCase();
-            return found === "moz" ? "Moz" : found;
+            var found = match.toLowerCase(), len = found.length;
+            if (found === "moz") {
+                found = "Moz";
+            }
+            return found + all.substring(len, all.length);
         }
         function stylize(str) {
             return camelize(str).replace(STYLIZE_RE, onStylizeMatch);
