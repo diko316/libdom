@@ -1,6 +1,7 @@
 'use strict';
 
 var DETECTED = require("./detect.js"),
+    OBJECT = require("./object.js"),
     STRING = require("./string.js"),
     OBJECT_TYPE = '[object Object]',
     
@@ -15,7 +16,6 @@ var DETECTED = require("./detect.js"),
     ERROR_INVALID_ELEMENT_CONFIG = STRING.ERROR_DOM_CONFIG,
     INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 },
     STD_CONTAINS = notSupportedContains,
-    OBJECT_TOSTRING = Object.prototype.toString,
     EXPORTS = {
         contains: contains,
         is: isDom,
@@ -92,7 +92,7 @@ function add(element, config, before) {
     
     toInsert = config;
     
-    if (OBJECT_TOSTRING.call(config) === OBJECT_TYPE) {
+    if (OBJECT.type(config, OBJECT_TYPE)) {
         toInsert = element.ownerDocument.createElement(tagName);
         applyConfigToElement(toInsert, config);
     }
@@ -129,24 +129,26 @@ function find(element, node) {
 }
 
 function getTagNameFromConfig(config) {
-    if (OBJECT_TOSTRING.call(config) === OBJECT_TYPE) {
+    if (OBJECT.type(config, OBJECT_TYPE)) {
         config = config.tagName;
     }
     
-    return config && typeof config === 'string' ?
-                                        config : false;
+    return OBJECT.string(config) ? config : false;
 }
 
 function applyConfigToElement(element, config) {
-    var hasOwn = Object.prototype.hasOwnProperty,
-        toString = OBJECT_TOSTRING,
+    var O = OBJECT,
+        hasOwn = O.contains,
+        assign = O.assign,
+        isType = O.type,
         objectType = OBJECT_TYPE,
         string = 'string';
-    var name, value, item, itemName;
+        
+    var name, value, item;
     
-    if (toString.call(config) === objectType) {
+    if (isType(config, objectType)) {
         main: for (name in config) {
-            if (hasOwn.call(name, config)) {
+            if (hasOwn(name, config)) {
                 value = config[name];
                 
                 switch (name) {
@@ -170,14 +172,12 @@ function applyConfigToElement(element, config) {
                     if (typeof value === string) {
                         item.cssText = value;
                     }
-                    else if (toString.call(value) === objectType) {
-                        for (itemName in value) {
-                            if (hasOwn.call(value, itemName)) {
-                                item[itemName] = value[itemName];
-                            }
-                        }
+                    else if (isType(value, objectType)) {
+                        assign(item, value);
                     }
                     continue main;
+                
+                case 'childNodes':
                 }
                 element[name] = value;
             }
@@ -187,17 +187,16 @@ function applyConfigToElement(element, config) {
 }
 
 function findChild(element, node, nodeType) {
-    var number = 'number',
-        is = isFinite;
+    var isNumber = OBJECT.number;
     var index, counter, any;
     
     if (isDom(node, 1, 3, 4, 7, 8) && node.parentNode === element) {
         return node;
     }
-    else if (typeof node === number && is(node) && node > -1) {
+    else if (isNumber(node) && node > -1) {
         index = node;
         counter = -1;
-        any = typeof nodeType !== number || !is(nodeType);
+        any = !isNumber(nodeType);
         node = element.firstChild;
         for (; node; node = node.nextSibling) {
             if (any || nodeType === node.nodeType) {
@@ -221,7 +220,7 @@ function noArrayQuerySelectorAll(dom, selector) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
     
-    if (!selector || typeof selector !== "string") {
+    if (!OBJECT.string(selector)) {
         throw new Error(ERROR_INVALID_CSS_SELECTOR);
     }
     
@@ -241,7 +240,7 @@ function toArrayQuerySelectorAll(dom, selector) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
     
-    if (!selector || typeof selector !== "string") {
+    if (!OBJECT.string(selector)) {
         throw new Error(ERROR_INVALID_CSS_SELECTOR);
     }
 
@@ -369,24 +368,29 @@ function orderTraverse(element, callback, orderType, context) {
  * is node
  */
 function isDom(node) {
-    var is = isFinite,
-        number = 'number';
+    var isNumber = OBJECT.number;
+    
     var type, c, len, items, match, matched;
     
     if (node && typeof node === 'object') {
+        
         type = node.nodeType;
-        if (typeof type === number && is(type)) {
+        
+        if (isNumber(type)) {
+            
             items = arguments;
             len = Math.max(items.length - 1, 0);
             matched = !len;
+            
             for (c = 0; len--;) {
                 match = items[++c];
-                if (typeof match === number && is(match)) {
+                if (isNumber(match)) {
                     if (type === match) {
                         return true;
                     }
                 }
             }
+            
             return matched;
         }
     }

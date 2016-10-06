@@ -1,11 +1,15 @@
 'use strict';
 
-var FORMAT = require("./color/format.js"),
+var OBJECT = require("./object.js"),
+    STRING = require("./string.js"),
+    FORMAT = require("./color/format.js"),
     COLOR_RE =
     /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/,
     NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/,
     TO_RGBA = {
+        rgb: require("./color/rgb.js"),
         rgba: require("./color/rgba.js"),
+        hsl: require("./color/hsl.js"),
         hsla: require("./color/hsla.js"),
         hex: require("./color/hex.js"),
     },
@@ -18,26 +22,23 @@ function itemizeString(str) {
     var re = COLOR_RE,
         F = FORMAT,
         numberRe = NUMBER_RE;
-    var m, alpha, c, l, item, items, get2, returnItems,
+    var m, c, l, item, items, get2, returnItems,
         itemizer, processor, type;
         
-    if (re.test(str)) {
+    if (OBJECT.string(str) && re.test(str)) {
         
         m = str.match(re);
-        alpha = false;
         type = m[1];
         
         switch (type) {
         // hsla
         case 'hsla':
-            alpha = true;
         /* falls through */
         case 'hsl':
             break;
         
         // rgba
         case 'rgba':
-            alpha = true;
         /* falls through */
         case 'rgb':
             
@@ -96,21 +97,22 @@ function itemizeString(str) {
 
 
 function toColorString(colorValue, type) {
-    var list = TO_RGBA;
+    var list = TO_RGBA,
+        O = OBJECT;
     
     if (arguments.length < 2) {
         type = 'hex';
     }
     
-    if (!Object.prototype.hasOwnProperty.call(list, type)) {
-        throw new Error("Invalid Colorset [type] parameter.");
+    if (!O.contains(list, type)) {
+        throw new Error(STRING.ERROR_COLORSET);
     }
     
-    if (typeof colorValue !== 'number' || !isFinite(colorValue)) {
-        throw new Error("Invalid [colorValue] integer parameter.");
+    if (!O.number(colorValue)) {
+        throw new Error(STRING.ERROR_COLORVALUE);
     }
     
-    return TO_RGBA[type].toString(colorValue);
+    return list[type].toString(colorValue);
 }
 
 

@@ -49,29 +49,29 @@
                 eachNodePostorder: "eachPostorder",
                 eachNodeLevelorder: "eachLevel"
             });
-            applyIf(EXPORTS, css = __webpack_require__(11), {
+            applyIf(EXPORTS, css = __webpack_require__(12), {
                 addClass: "add",
                 removeClass: "remove"
             });
-            applyIf(EXPORTS, event = __webpack_require__(12), {
+            applyIf(EXPORTS, event = __webpack_require__(13), {
                 on: "on",
                 un: "un",
                 purge: "purge",
                 dispatch: "fire"
             });
-            applyIf(EXPORTS, dimension = __webpack_require__(13), {
+            applyIf(EXPORTS, dimension = __webpack_require__(14), {
                 offset: "offset",
                 size: "size",
                 box: "box",
                 scroll: "scroll",
                 screen: "screen"
             });
-            applyIf(EXPORTS, selection = __webpack_require__(14), {
+            applyIf(EXPORTS, selection = __webpack_require__(15), {
                 highlight: "select",
                 noHighlight: "unselectable",
                 clearHighlight: "clear"
             });
-            applyIf(EXPORTS, __webpack_require__(15), {
+            applyIf(EXPORTS, __webpack_require__(16), {
                 parseColor: "parse",
                 formatColor: "stringify"
             });
@@ -201,10 +201,10 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var DETECTED = __webpack_require__(2), STRING = __webpack_require__(10), OBJECT_TYPE = "[object Object]", ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING.ERROR_ELEMENT, ERROR_INVALID_DOM_NODE = STRING.ERROR_NODE, ERROR_INVALID_CSS_SELECTOR = STRING.ERROR_SELECTOR, ERROR_INVALID_CALLBACK = STRING.ERROR_TREE_CALLBACK, ERROR_INVALID_ELEMENT_CONFIG = STRING.ERROR_DOM_CONFIG, INVALID_DESCENDANT_NODE_TYPES = {
+        var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), OBJECT_TYPE = "[object Object]", ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING.ERROR_ELEMENT, ERROR_INVALID_DOM_NODE = STRING.ERROR_NODE, ERROR_INVALID_CSS_SELECTOR = STRING.ERROR_SELECTOR, ERROR_INVALID_CALLBACK = STRING.ERROR_TREE_CALLBACK, ERROR_INVALID_ELEMENT_CONFIG = STRING.ERROR_DOM_CONFIG, INVALID_DESCENDANT_NODE_TYPES = {
             9: 1,
             11: 1
-        }, STD_CONTAINS = notSupportedContains, OBJECT_TOSTRING = Object.prototype.toString, EXPORTS = {
+        }, STD_CONTAINS = notSupportedContains, EXPORTS = {
             contains: contains,
             is: isDom,
             isView: isDefaultView,
@@ -256,7 +256,7 @@
                 throw new Error(ERROR_INVALID_ELEMENT_CONFIG);
             }
             toInsert = config;
-            if (OBJECT_TOSTRING.call(config) === OBJECT_TYPE) {
+            if (OBJECT.type(config, OBJECT_TYPE)) {
                 toInsert = element.ownerDocument.createElement(tagName);
                 applyConfigToElement(toInsert, config);
             }
@@ -285,17 +285,17 @@
             return findChild(element, node, 1);
         }
         function getTagNameFromConfig(config) {
-            if (OBJECT_TOSTRING.call(config) === OBJECT_TYPE) {
+            if (OBJECT.type(config, OBJECT_TYPE)) {
                 config = config.tagName;
             }
-            return config && typeof config === "string" ? config : false;
+            return OBJECT.string(config) ? config : false;
         }
         function applyConfigToElement(element, config) {
-            var hasOwn = Object.prototype.hasOwnProperty, toString = OBJECT_TOSTRING, objectType = OBJECT_TYPE, string = "string";
-            var name, value, item, itemName;
-            if (toString.call(config) === objectType) {
+            var O = OBJECT, hasOwn = O.contains, assign = O.assign, isType = O.type, objectType = OBJECT_TYPE, string = "string";
+            var name, value, item;
+            if (isType(config, objectType)) {
                 main: for (name in config) {
-                    if (hasOwn.call(name, config)) {
+                    if (hasOwn(name, config)) {
                         value = config[name];
                         switch (name) {
                           case "tagName":
@@ -319,15 +319,12 @@
                             item = element.style;
                             if (typeof value === string) {
                                 item.cssText = value;
-                            } else if (toString.call(value) === objectType) {
-                                for (itemName in value) {
-                                    if (hasOwn.call(value, itemName)) {
-                                        item[itemName] = value[itemName];
-                                    }
-                                }
+                            } else if (isType(value, objectType)) {
+                                assign(item, value);
                             }
                             continue main;
-                        }
+
+                          case "childNodes":                        }
                         element[name] = value;
                     }
                 }
@@ -335,14 +332,14 @@
             }
         }
         function findChild(element, node, nodeType) {
-            var number = "number", is = isFinite;
+            var isNumber = OBJECT.number;
             var index, counter, any;
             if (isDom(node, 1, 3, 4, 7, 8) && node.parentNode === element) {
                 return node;
-            } else if (typeof node === number && is(node) && node > -1) {
+            } else if (isNumber(node) && node > -1) {
                 index = node;
                 counter = -1;
-                any = typeof nodeType !== number || !is(nodeType);
+                any = !isNumber(nodeType);
                 node = element.firstChild;
                 for (;node; node = node.nextSibling) {
                     if (any || nodeType === node.nodeType) {
@@ -360,7 +357,7 @@
             if (!isDom(dom, 9, 1)) {
                 throw new Error(ERROR_INVALID_DOM_NODE);
             }
-            if (!selector || typeof selector !== "string") {
+            if (!OBJECT.string(selector)) {
                 throw new Error(ERROR_INVALID_CSS_SELECTOR);
             }
             list = dom.querySelectorAll(selector);
@@ -376,7 +373,7 @@
             if (!isDom(dom, 9, 1)) {
                 throw new Error(ERROR_INVALID_DOM_NODE);
             }
-            if (!selector || typeof selector !== "string") {
+            if (!OBJECT.string(selector)) {
                 throw new Error(ERROR_INVALID_CSS_SELECTOR);
             }
             return Array.prototype.slice.call(dom.querySelectorAll(selector));
@@ -461,17 +458,17 @@
             return EXPORTS.chain;
         }
         function isDom(node) {
-            var is = isFinite, number = "number";
+            var isNumber = OBJECT.number;
             var type, c, len, items, match, matched;
             if (node && typeof node === "object") {
                 type = node.nodeType;
-                if (typeof type === number && is(type)) {
+                if (isNumber(type)) {
                     items = arguments;
                     len = Math.max(items.length - 1, 0);
                     matched = !len;
                     for (c = 0; len--; ) {
                         match = items[++c];
-                        if (typeof match === number && is(match)) {
+                        if (isNumber(match)) {
                             if (type === match) {
                                 return true;
                             }
@@ -496,6 +493,38 @@
         module.exports = EXPORTS.chain = EXPORTS;
     }, function(module, exports) {
         "use strict";
+        var O = Object.prototype, hasOwn = O.hasOwnProperty;
+        function assign(target, source) {
+            var has = hasOwn;
+            var name;
+            for (name in source) {
+                if (has.call(source, name)) {
+                    target[name] = source[name];
+                }
+            }
+            return target;
+        }
+        function contains(obj, name) {
+            return hasOwn.call(obj, name);
+        }
+        function isType(obj, type) {
+            return O.toString.call(obj) === type;
+        }
+        function isNumber(number) {
+            return typeof number === "number" && isFinite(number);
+        }
+        function isString(string) {
+            return typeof string === "string" && !!string;
+        }
+        module.exports = {
+            assign: assign,
+            type: isType,
+            contains: contains,
+            number: isNumber,
+            string: isString
+        };
+    }, function(module, exports) {
+        "use strict";
         var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/, CAMEL_RE = /[^a-z]+[a-z]/gi, STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/, EXPORTS = {
             camelize: camelize,
             stylize: stylize,
@@ -512,6 +541,8 @@
             ERROR_OBSERV: "Invalid [observable] parameter.",
             ERROR_EVENTTYPE: "Invalid Event [type] parameter.",
             ERROR_EVENTHNDL: "Invalid Event [handler] parameter.",
+            ERROR_COLORSET: "Invalid Colorset [type] parameter.",
+            ERROR_COLORVALUE: "Invalid [colorValue] integer parameter.",
             ERROR_NS_ATTRSTYLE: "Style Attribute manipulation is not supported",
             ERROR_NS_COMPSTYLE: "Computed style is not supported in this browser.",
             ERROR_NS_SELQUERY: "CSS Selector query form DOM is not supported.",
@@ -567,7 +598,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var STRING = __webpack_require__(10), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]+(\.[0-9]+)?)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, REMOVE_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING.ERROR_ELEMENT, EXPORTS = {
+            var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]+(\.[0-9]+)?)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, REMOVE_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING.ERROR_ELEMENT, EXPORTS = {
                 add: addClass,
                 remove: removeClass,
                 computedStyle: computedStyleNotSupported,
@@ -597,7 +628,7 @@
                 throw new Error(STRING.ERROR_NS_COMPSTYLE);
             }
             function w3cGetCurrentStyle(element) {
-                var camel = STRING.stylize;
+                var camel = STRING.stylize, isString = OBJECT.string;
                 var style, list, c, l, name, values;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
@@ -607,7 +638,7 @@
                 list = SLICE.call(arguments, 1);
                 for (c = -1, l = list.length; l--; ) {
                     name = list[++c];
-                    if (name && typeof name === "string") {
+                    if (isString(name)) {
                         values[name] = style[camel(name)];
                     }
                 }
@@ -615,7 +646,7 @@
                 return values;
             }
             function ieGetCurrentStyle(element) {
-                var dimensionRe = DIMENSION_RE, camel = STRING.stylize, pixelSize = getPixelSize;
+                var dimensionRe = DIMENSION_RE, isString = OBJECT.string, camel = STRING.stylize, pixelSize = getPixelSize;
                 var style, list, c, l, name, value, access, fontSize, values;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
@@ -626,7 +657,7 @@
                 list = SLICE.call(arguments, 1);
                 for (c = -1, l = list.length; l--; ) {
                     name = list[++c];
-                    if (name && typeof name === "string") {
+                    if (isString(name)) {
                         access = camel(name);
                         if (dimensionRe.test(access) && style[access] !== "auto") {
                             if (fontSize === false) {
@@ -667,29 +698,35 @@
                     return size;
                 }
             }
-            function applyStyle(element, style) {
-                var O = Object.prototype, is = isFinite, camelize = STRING.stylize, parse = parseCSSText;
-                var hasOwn, name, value, type, elementStyle;
+            function applyStyle(element, style, value) {
+                var O = OBJECT, isString = O.string, isNumber = O.number, camelize = STRING.stylize, parse = parseCSSText, len = arguments.length;
+                var hasOwn, name, type, elementStyle, set, remove;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
                 }
-                if (arguments.length > 1) {
-                    if (typeof style === "string") {
-                        style = parse(style);
+                if (len > 1) {
+                    set = SET_STYLE;
+                    if (isString(style)) {
+                        if (len > 2) {
+                            set(element, style, value);
+                        } else {
+                            style = parse(style);
+                        }
                     }
-                    if (O.toString.call(style) !== "[object Object]") {
+                    if (!O.type(style, "[object Object]")) {
                         throw new Error(STRING.ERROR_RULE);
                     }
-                    hasOwn = O.hasOwnProperty;
+                    remove = REMOVE_STYLE;
+                    hasOwn = O.contains;
                     elementStyle = element.style;
                     for (name in style) {
-                        if (hasOwn.call(style, name)) {
+                        if (hasOwn(style, name)) {
                             value = style[name];
                             type = typeof value;
                             if (value === null || type === "undefined") {
-                                REMOVE_STYLE(elementStyle, camelize(name), value);
-                            } else if (value && type === "string" || type === "number" && is(value)) {
-                                SET_STYLE(elementStyle, camelize(name), value);
+                                remove(elementStyle, camelize(name), value);
+                            } else if (isString(value) || isNumber(value)) {
+                                set(elementStyle, camelize(name), value);
                             }
                         }
                     }
@@ -790,7 +827,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var INFO = __webpack_require__(2), STRING = __webpack_require__(10), DOM = __webpack_require__(9), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty, ERROR_OBSERVABLE_NO_SUPPORT = STRING.ERROR_OBSERV, ERROR_INVALID_TYPE = STRING.ERROR_EVENTTYPE, ERROR_INVALID_HANDLER = STRING.ERROR_EVENTHNDL, IE_CUSTOM_TYPE_EVENT = "propertychange", EXPORTS = module.exports = {
+            var INFO = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DOM = __webpack_require__(9), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING.ERROR_OBSERV, ERROR_INVALID_TYPE = STRING.ERROR_EVENTTYPE, ERROR_INVALID_HANDLER = STRING.ERROR_EVENTHNDL, IE_CUSTOM_TYPE_EVENT = "propertychange", EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
@@ -800,7 +837,7 @@
             function listen(observable, type, handler, context) {
                 var last = EVENTS;
                 var current;
-                if (!type || typeof type !== "string") {
+                if (!OBJECT.string(type)) {
                     throw new Error(ERROR_INVALID_TYPE);
                 }
                 if (!(handler instanceof Function)) {
@@ -825,7 +862,7 @@
             }
             function unlisten(observable, type, handler, context) {
                 var found, len;
-                if (!type || typeof type !== "string") {
+                if (!OBJECT.string(type)) {
                     throw new Error(ERROR_INVALID_TYPE);
                 }
                 if (!(handler instanceof Function)) {
@@ -845,7 +882,7 @@
                 return EXPORTS.chain;
             }
             function dispatch(observable, type, defaults) {
-                if (!type || typeof type !== "string") {
+                if (!OBJECT.string(type)) {
                     throw new Error(ERROR_INVALID_TYPE);
                 }
                 observable = RESOLVE(observable);
@@ -921,11 +958,11 @@
                 observable.removeEventListener(type, listener, false);
             }
             function w3cDispatch(observable, type, properties) {
-                var hasOwn = HAS_OWN_PROPERTY, event = global.document.createEvent("Event");
+                var hasOwn = OBJECT.contains, event = global.document.createEvent("Event");
                 var name;
                 event.initEvent(type, properties.bubbles !== false, properties.cancelable !== false);
                 for (name in properties) {
-                    if (hasOwn.call(properties, name) && !(name in event)) {
+                    if (hasOwn(properties, name) && !(name in event)) {
                         event[name] = properties[name];
                     }
                 }
@@ -952,10 +989,10 @@
                 observable.detachEvent("on" + (listener.customType ? IE_CUSTOM_TYPE_EVENT : type), listener);
             }
             function ieDispatch(observable, type, properties) {
-                var hasOwn = HAS_OWN_PROPERTY, event = global.document.createEventObject();
+                var hasOwn = OBJECT.contains, event = global.document.createEventObject();
                 var name, node;
                 for (name in properties) {
-                    if (hasOwn.call(properties, name) && !(name in event)) {
+                    if (hasOwn(properties, name) && !(name in event)) {
                         event[name] = properties[name];
                     }
                 }
@@ -1007,8 +1044,8 @@
                 return onEvent;
             }
             function ieTestCustomEvent(observable, type) {
-                var supported = false, list = IE_CUSTOM_EVENTS, ontype = "on" + type;
-                var element, access;
+                var supported = false, list = IE_CUSTOM_EVENTS;
+                var element, access, ontype;
                 if (observable.nodeType === 9) {
                     observable = observable.documentElement;
                 }
@@ -1072,7 +1109,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(10), DOM = __webpack_require__(9), CSS = __webpack_require__(11), ERROR_INVALID_ELEMENT = STRING.ERROR_ELEMENT, ERROR_INVALID_DOM = STRING.ERROR_DOM, DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
+            var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DOM = __webpack_require__(9), CSS = __webpack_require__(12), ERROR_INVALID_ELEMENT = STRING.ERROR_ELEMENT, ERROR_INVALID_DOM = STRING.ERROR_DOM, OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", PADDING_BOTTOM = "paddingBottom", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
                 offset: offset,
                 size: size,
                 box: box,
@@ -1101,8 +1138,8 @@
                 return isViewable(element) === PAGE_VIEW ? pageBox(element).slice(2, 4) : getSize(element);
             }
             function box(element, x, y, width, height) {
-                var css = CSS, toFloat = parseFloat, cssValue = css.unitValue, NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
-                var hasLeft, hasTop, hasWidth, hasHeight, parent, hasPosition, hasSize, diff, style, styleAttribute, applyStyle;
+                var css = CSS, toFloat = parseFloat, cssValue = css.unitValue, NUMBER = "number", ptop = PADDING_TOP, pleft = PADDING_LEFT, pright = PADDING_RIGHT, pbottom = PADDING_BOTTOM, setter = arguments.length > 1, viewmode = isViewable(element);
+                var hasLeft, hasTop, hasWidth, hasHeight, parent, hasPosition, hasSize, diff, style, applyStyle;
                 if (!setter && viewmode === PAGE_VIEW) {
                     return pageBox(element);
                 }
@@ -1117,7 +1154,7 @@
                         y = 1 in y ? x[1] : null;
                         x = x[0];
                     }
-                    style = css.computedStyle(element, "position", "marginLeft", "marginTop", "paddingTop", "paddingLeft", "paddingRight", "paddingBottom");
+                    style = css.computedStyle(element, "position", MARGIN_LEFT, MARGIN_TOP, ptop, pleft, pright, pbottom);
                     hasLeft = hasTop = hasWidth = hasHeight = hasPosition = hasSize = false;
                     switch (style.position) {
                       case "relative":
@@ -1145,35 +1182,35 @@
                         if (hasPosition) {
                             diff = getOffset(element);
                             if (hasLeft) {
-                                applyStyle.left = typeof x === NUMBER ? element.offsetLeft - (toFloat(style.marginLeft) || 0) + (x - diff[0]) + "px" : x;
+                                applyStyle.left = typeof x === NUMBER ? element[OFFSET_LEFT] - (toFloat(style[MARGIN_LEFT]) || 0) + (x - diff[0]) + "px" : x;
                             }
                             if (hasTop) {
-                                applyStyle.top = typeof y === NUMBER ? element.offsetTop - (toFloat(style.marginTop) || 0) + (y - diff[1]) + "px" : y;
+                                applyStyle.top = typeof y === NUMBER ? element[OFFSET_TOP] - (toFloat(style[MARGIN_TOP]) || 0) + (y - diff[1]) + "px" : y;
                             }
                         }
                         if (hasSize) {
                             if (hasWidth) {
-                                applyStyle.width = typeof width === NUMBER ? element.clientWidth - (toFloat(style.paddingLeft) || 0) - (toFloat(style.paddingRight) || 0) + (width - element.offsetWidth) + "px" : width;
+                                applyStyle.width = typeof width === NUMBER ? element.clientWidth - (toFloat(style[pleft]) || 0) - (toFloat(style[pright]) || 0) + (width - element[OFFSET_WIDTH]) + "px" : width;
                             }
                             if (hasHeight) {
-                                applyStyle.height = typeof height === NUMBER ? element.clientHeight - (toFloat(style.paddingTop) || 0) - (toFloat(style.paddingBottom) || 0) + (height - element.offsetHeight) + "px" : height;
+                                applyStyle.height = typeof height === NUMBER ? element.clientHeight - (toFloat(style[ptop]) || 0) - (toFloat(style[pleft]) || 0) + (height - element[OFFSET_HEIGHT]) + "px" : height;
                             }
                         }
                         css.style(element, applyStyle);
                     }
-                    parent = styleAttribute = null;
+                    parent = null;
                     return EXPORTS.chain;
                 }
                 return getBox(element);
             }
             function scroll(dom, x, y) {
-                var setter = arguments.length > 1, is = isFinite, NUMBER = "number";
+                var setter = arguments.length > 1, isNumber = OBJECT.number, stop = SCROLL_TOP, sleft = SCROLL_LEFT;
                 var current, window;
                 if (setter) {
-                    if (typeof x !== NUMBER || !is(x)) {
+                    if (!isNumber(x)) {
                         x = false;
                     }
-                    if (typeof y !== NUMBER || !is(y)) {
+                    if (!isNumber(y)) {
                         y = false;
                     }
                 }
@@ -1190,10 +1227,10 @@
 
                   case ELEMENT_VIEW:
                     if (setter) {
-                        dom.scrollLeft = x === false ? dom.scrollLeft : x;
-                        dom.scrollTop = y === false ? dom.scrollTop : y;
+                        dom[sleft] = x === false ? dom[sleft] : x;
+                        dom[stop] = y === false ? dom[stop] : y;
                     } else {
-                        return [ dom.scrollLeft, dom.scrollTop ];
+                        return [ dom[sleft], dom[stop] ];
                     }
                     break;
 
@@ -1215,25 +1252,21 @@
                 return box;
             }
             function visible(element, visibility, displayed) {
-                var style = null, len = arguments.length, string = "string", attached = isViewable(element) === ELEMENT_VIEW;
-                var styleAttribute;
+                var style = null, css = CSS, isString = OBJECT.string, len = arguments.length, attached = isViewable(element) === ELEMENT_VIEW;
                 if (len > 1) {
-                    styleAttribute = element.style;
-                    switch (typeof visibility) {
-                      case string:
-                        styleAttribute.style.visibility = visibility;
-                        break;
-
-                      case "boolean":
-                        styleAttribute.style.visibility = "visible";
+                    style = {};
+                    if (isString(visibility)) {
+                        style.visibility = visibility;
+                    } else if (typeof visiblity === "boolean") {
+                        style.visibility = visibility ? "visible" : "hidden";
                     }
                     if (displayed === false) {
                         displayed = "none";
                     }
-                    if (displayed && typeof displayed === string) {
-                        styleAttribute.style.display = displayed;
+                    if (isString(displayed)) {
+                        style.display = displayed;
                     }
-                    styleAttribute = null;
+                    css.style(element, style);
                     return EXPORTS.chain;
                 }
                 if (attached) {
@@ -1280,7 +1313,7 @@
             }
             function manualSize(element) {
                 var M = Math;
-                return [ M.max(0, element.offsetWidth || 0), M.max(0, element.offsetHeight || 0) ];
+                return [ M.max(0, element[OFFSET_WIDTH] || 0), M.max(0, element[OFFSET_HEIGHT] || 0) ];
             }
             function rectOffset(element, boundingRect) {
                 var scrolled = getPageScroll(element.ownerDocument[DEFAULTVIEW]), rect = boundingRect || element.getBoundingClientRect(), factor = DIMENSION_INFO.zoomfactor ? getZoomFactor(global.window.document[IE_PAGE_STAT_ACCESS]) : 1, offset = [ rect.left * factor + scrolled[0], rect.top * factor + scrolled[1] ];
@@ -1288,20 +1321,20 @@
                 return offset;
             }
             function manualOffset(element) {
-                var root = global.document[IE_PAGE_STAT_ACCESS], css = CSS, offset = [ element.offsetLeft, element.offsetTop ], findStyles = [ "marginLeft", "marginTop" ], parent = element.offsetParent, style = css.computedStyle(element, findStyles);
-                offset[0] += parseFloat(style.marginLeft) || 0;
-                offset[1] += parseFloat(style.marginTop) || 0;
+                var root = global.document[IE_PAGE_STAT_ACCESS], css = CSS, top = OFFSET_TOP, left = OFFSET_LEFT, mtop = MARGIN_TOP, mleft = MARGIN_LEFT, stop = SCROLL_TOP, sleft = SCROLL_LEFT, offset = [ element[left], element[top] ], findStyles = [ mleft, mtop ], parent = element.offsetParent, style = css.computedStyle(element, findStyles);
+                offset[0] += parseFloat(style[mleft]) || 0;
+                offset[1] += parseFloat(style[mtop]) || 0;
                 for (;parent; parent = parent.offsetParent) {
                     if (parent.nodeType === 1) {
                         style = css.computedStyle(parent, findStyles);
-                        offset[0] += (parent.offsetLeft || 0) + (parent.clientLeft || 0) + (parseFloat(style.marginLeft) || 0);
-                        offset[1] += (parent.offsetTop || 0) + (parent.clientTop || 0) + (parseFloat(style.marginTop) || 0);
+                        offset[0] += (parent[left] || 0) + (parent.clientLeft || 0) + (parseFloat(style[mleft]) || 0);
+                        offset[1] += (parent[top] || 0) + (parent.clientTop || 0) + (parseFloat(style[mtop]) || 0);
                     }
                 }
                 for (parent = element.parentNode; parent; parent = parent.parentNode) {
                     if (parent.nodeType === 1 && parent !== root) {
-                        offset[0] += parent.scrollLeft || 0;
-                        offset[1] += parent.scrollTop || 0;
+                        offset[0] += parent[sleft] || 0;
+                        offset[1] += parent[stop] || 0;
                     }
                 }
                 root = parent = null;
@@ -1316,7 +1349,7 @@
                 return offset;
             }
             function iePageScrollOffset(window) {
-                var M = Math, subject = window.document[IE_PAGE_STAT_ACCESS], factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1, offset = [ M.round(subject.scrollLeft / factor), M.round(subject.scrollTop / factor) ];
+                var M = Math, subject = window.document[IE_PAGE_STAT_ACCESS], factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1, offset = [ M.round(subject[SCROLL_LEFT] / factor), M.round(subject[SCROLL_TOP] / factor) ];
                 subject = null;
                 return offset;
             }
@@ -1326,7 +1359,7 @@
                 if (boundingRect) {
                     body = window.document.body;
                     rect = body.getBoundingClientRect();
-                    factor = Math.round((rect.right - rect.left / body.offsetWidth) * 100) / 100;
+                    factor = Math.round((rect.right - rect.left / body[OFFSET_WIDTH]) * 100) / 100;
                 }
                 body = null;
                 return factor;
@@ -1369,7 +1402,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(10), DOM = __webpack_require__(9), DIMENSION = __webpack_require__(13), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING.ERROR_DOM, SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
+            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(11), DOM = __webpack_require__(9), DIMENSION = __webpack_require__(14), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING.ERROR_DOM, SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
                 select: select,
                 clear: clear,
                 unselectable: unselectable
@@ -1469,31 +1502,28 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var FORMAT = __webpack_require__(16), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, TO_RGBA = {
-            rgba: __webpack_require__(17),
-            hsla: __webpack_require__(18),
-            hex: __webpack_require__(19)
+        var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), FORMAT = __webpack_require__(17), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, TO_RGBA = {
+            rgb: __webpack_require__(18),
+            rgba: __webpack_require__(19),
+            hsl: __webpack_require__(20),
+            hsla: __webpack_require__(21),
+            hex: __webpack_require__(22)
         }, EXPORTS = {
             parse: itemizeString,
             stringify: toColorString
         };
         function itemizeString(str) {
             var re = COLOR_RE, F = FORMAT, numberRe = NUMBER_RE;
-            var m, alpha, c, l, item, items, get2, returnItems, itemizer, processor, type;
-            if (re.test(str)) {
+            var m, c, l, item, items, get2, returnItems, itemizer, processor, type;
+            if (OBJECT.string(str) && re.test(str)) {
                 m = str.match(re);
-                alpha = false;
                 type = m[1];
                 switch (type) {
                   case "hsla":
-                    alpha = true;
-
                   case "hsl":
                     break;
 
                   case "rgba":
-                    alpha = true;
-
                   case "rgb":
                   case "#":
                   default:
@@ -1530,17 +1560,17 @@
             return 0;
         }
         function toColorString(colorValue, type) {
-            var list = TO_RGBA;
+            var list = TO_RGBA, O = OBJECT;
             if (arguments.length < 2) {
                 type = "hex";
             }
-            if (!Object.prototype.hasOwnProperty.call(list, type)) {
-                throw new Error("Invalid Colorset [type] parameter.");
+            if (!O.contains(list, type)) {
+                throw new Error(STRING.ERROR_COLORSET);
             }
-            if (typeof colorValue !== "number" || !isFinite(colorValue)) {
-                throw new Error("Invalid [colorValue] integer parameter.");
+            if (!O.number(colorValue)) {
+                throw new Error(STRING.ERROR_COLORVALUE);
             }
-            return TO_RGBA[type].toString(colorValue);
+            return list[type].toString(colorValue);
         }
         module.exports = EXPORTS;
     }, function(module, exports) {
@@ -1552,47 +1582,69 @@
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var FORMAT = __webpack_require__(16), PIGMENT_SIZE = 255;
-        var EXPORTS;
-        module.exports = EXPORTS = {
-            itemize: function(value, index, format) {
-                var F = FORMAT, M = Math, parse = parseFloat, alpha = index > 2, min = 0, max = alpha ? 100 : PIGMENT_SIZE;
-                switch (format) {
-                  case F.HEX:
-                    value = parseInt(value, 16);
-                    break;
+        var RGBA = __webpack_require__(19), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA), toArray = EXPORTS.toArray;
+        function toString(integer) {
+            var values = toArray(integer);
+            values.splice(3, 1);
+            return "rgb(" + values.join(",") + ")";
+        }
+        EXPORTS.toString = toString;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var FORMAT = __webpack_require__(17), PIGMENT_SIZE = 255;
+        function toArray(integer) {
+            var size = PIGMENT_SIZE;
+            return [ integer & size, integer >> 8 & size, integer >> 16 & size, integer >> 24 & size ];
+        }
+        function itemize(value, index, format) {
+            var F = FORMAT, M = Math, parse = parseFloat, alpha = index > 2, min = 0, max = alpha ? 100 : PIGMENT_SIZE;
+            switch (format) {
+              case F.HEX:
+                value = parseInt(value, 16);
+                break;
 
-                  case F.NUMBER:
-                    value = parse(value);
-                    if (alpha) {
-                        value *= 100;
-                    }
-                    break;
-
-                  case F.PERCENT:
-                    value = parse(value);
-                    break;
+              case F.NUMBER:
+                value = parse(value);
+                if (alpha) {
+                    value *= 100;
                 }
-                return M.max(min, M.min(max, M.round(value) || 0));
-            },
-            toInteger: function(r, g, b, a) {
-                var size = PIGMENT_SIZE;
-                return (a & size) << 24 | (b & size) << 16 | (g & size) << 8 | r & size;
-            },
-            toArray: function(integer) {
-                var size = PIGMENT_SIZE;
-                return [ integer & size, integer >> 8 & size, integer >> 16 & size, integer >> 24 & size ];
-            },
-            toString: function(integer) {
-                var values = EXPORTS.toArray(integer);
-                values[3] = (values[3] / 100).toFixed(2);
-                return "rgba(" + values.join(",") + ")";
+                break;
+
+              case F.PERCENT:
+                value = parse(value);
+                break;
             }
+            return M.max(min, M.min(max, M.round(value) || 0));
+        }
+        function toInteger(r, g, b, a) {
+            var size = PIGMENT_SIZE;
+            return (a & size) << 24 | (b & size) << 16 | (g & size) << 8 | r & size;
+        }
+        function toString(integer) {
+            var values = toArray(integer);
+            values[3] = (values[3] / 100).toFixed(2);
+            return "rgba(" + values.join(",") + ")";
+        }
+        module.exports = {
+            itemize: itemize,
+            toArray: toArray,
+            toInteger: toInteger,
+            toString: toString
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var FORMAT = __webpack_require__(16), RGBA = __webpack_require__(17);
-        var EXPORTS;
+        var HSLA = __webpack_require__(20), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, HSLA), toArray = EXPORTS.toArray;
+        function toString(integer) {
+            var values = toArray(integer);
+            values[1] += "%";
+            values[2] += "%";
+            values.splice(3, 1);
+            return "hsl(" + values.join(",") + ")";
+        }
+        EXPORTS.toString = toString;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var FORMAT = __webpack_require__(17), RGBA = __webpack_require__(19);
         function hue2rgb(p, q, t) {
             t = (t + 1) % 1;
             switch (true) {
@@ -1607,89 +1659,89 @@
             }
             return p;
         }
-        module.exports = EXPORTS = {
-            itemize: function(value, index, format) {
-                var F = FORMAT, M = Math, parse = parseFloat, min = 0, max = index < 1 ? 360 : 100;
-                switch (format) {
-                  case F.HEX:
-                    value = parseInt(value, 16) / 255 * max;
-                    break;
+        function itemize(value, index, format) {
+            var F = FORMAT, M = Math, parse = parseFloat, min = 0, max = index < 1 ? 360 : 100;
+            switch (format) {
+              case F.HEX:
+                value = parseInt(value, 16) / 255 * max;
+                break;
 
-                  case F.NUMBER:
-                    value = parse(value);
-                    if (index > 2) {
-                        value *= 100;
-                    }
-                    break;
-
-                  case F.PERCENT:
-                    value = parse(value);
-                    break;
+              case F.NUMBER:
+                value = parse(value);
+                if (index > 2) {
+                    value *= 100;
                 }
-                return M.max(min, M.min(max, value || 0));
-            },
-            toInteger: function(h, s, l, a) {
-                var M = Math, h2r = hue2rgb, rgba = RGBA, size = 255;
-                var q, p;
-                l /= 100;
-                if (s === 0) {
-                    return rgba.toInteger(l, l, l, a);
-                }
-                h /= 360;
-                s /= 100;
-                q = l < .5 ? l * (1 + s) : l + s - l * s;
-                p = 2 * l - q;
-                return rgba.toInteger(M.round(h2r(p, q, h + 1 / 3) * size), M.round(h2r(p, q, h) * size), M.round(h2r(p, q, h - 1 / 3) * size), a);
-            },
-            toArray: function(integer) {
-                var M = Math, rgba = RGBA.toArray(integer), size = 255, r = rgba[0] / size, g = rgba[1] / size, b = rgba[2] / size, a = rgba[3], max = M.max(r, g, b), min = M.min(r, g, b), l = (max + min) / 2;
-                var d, h, s;
-                if (max === min) {
-                    h = s = 0;
-                } else {
-                    d = max - min;
-                    s = l > .5 ? d / (2 - max - min) : d / (max + min);
-                    switch (max) {
-                      case r:
-                        h = (g - b) / d + (g < b ? 6 : 0);
-                        break;
+                break;
 
-                      case g:
-                        h = (b - r) / d + 2;
-                        break;
-
-                      case b:
-                        h = (r - g) / d + 4;
-                        break;
-                    }
-                    h /= 6;
-                }
-                return [ M.round(h * 360), M.round(s * 100), M.round(l * 100), a ];
-            },
-            toString: function(integer) {
-                var values = EXPORTS.toArray(integer);
-                values[1] += "%";
-                values[2] += "%";
-                values[3] = (values[3] / 100).toFixed(2);
-                return "hsla(" + values.join(",") + ")";
+              case F.PERCENT:
+                value = parse(value);
+                break;
             }
+            return M.max(min, M.min(max, value || 0));
+        }
+        function toInteger(h, s, l, a) {
+            var M = Math, h2r = hue2rgb, rgba2integer = RGBA.toInteger, size = 255;
+            var q, p;
+            l /= 100;
+            if (s === 0) {
+                return rgba2integer(l, l, l, a);
+            }
+            h /= 360;
+            s /= 100;
+            q = l < .5 ? l * (1 + s) : l + s - l * s;
+            p = 2 * l - q;
+            return rgba2integer(M.round(h2r(p, q, h + 1 / 3) * size), M.round(h2r(p, q, h) * size), M.round(h2r(p, q, h - 1 / 3) * size), a);
+        }
+        function toArray(integer) {
+            var M = Math, rgba = RGBA.toArray(integer), size = 255, r = rgba[0] / size, g = rgba[1] / size, b = rgba[2] / size, a = rgba[3], max = M.max(r, g, b), min = M.min(r, g, b), l = (max + min) / 2;
+            var d, h, s;
+            if (max === min) {
+                h = s = 0;
+            } else {
+                d = max - min;
+                s = l > .5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                  case r:
+                    h = (g - b) / d + (g < b ? 6 : 0);
+                    break;
+
+                  case g:
+                    h = (b - r) / d + 2;
+                    break;
+
+                  case b:
+                    h = (r - g) / d + 4;
+                    break;
+                }
+                h /= 6;
+            }
+            return [ M.round(h * 360), M.round(s * 100), M.round(l * 100), a ];
+        }
+        function toString(integer) {
+            var values = toArray(integer);
+            values[1] += "%";
+            values[2] += "%";
+            values[3] = (values[3] / 100).toFixed(2);
+            return "hsla(" + values.join(",") + ")";
+        }
+        module.exports = {
+            itemize: itemize,
+            toInteger: toInteger,
+            toArray: toArray,
+            toString: toString
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var RGBA = __webpack_require__(17);
+        var RGBA = __webpack_require__(19), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA);
         function toHex(integer) {
             var hex = integer.toString(16);
             return hex.length < 1 ? "0" + hex : hex;
         }
-        module.exports = {
-            itemize: RGBA.itemize,
-            toInteger: RGBA.toInteger,
-            toArray: RGBA.toArray,
-            toString: function(integer) {
-                var size = 255, convert = toHex, values = [ convert(integer & size), convert(integer >> 8 & size), convert(integer >> 16 & size) ];
-                return "#" + values.join("");
-            }
-        };
+        function toString(integer) {
+            var size = 255, convert = toHex, values = [ convert(integer & size), convert(integer >> 8 & size), convert(integer >> 16 & size) ];
+            return "#" + values.join("");
+        }
+        EXPORTS.toString = toString;
     } ]);
 });
 

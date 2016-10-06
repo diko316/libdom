@@ -1,12 +1,12 @@
 'use strict';
 
 var INFO = require("./detect.js"),
+    OBJECT = require("./object.js"),
     STRING = require("./string.js"),
     DOM = require("./dom.js"),
     EVENTS = null,
     PAGE_UNLOADED = false,
     IE_CUSTOM_EVENTS = {},
-    HAS_OWN_PROPERTY = Object.prototype.hasOwnProperty,
     ERROR_OBSERVABLE_NO_SUPPORT = STRING.ERROR_OBSERV,
     ERROR_INVALID_TYPE = STRING.ERROR_EVENTTYPE,
     ERROR_INVALID_HANDLER = STRING.ERROR_EVENTHNDL,
@@ -23,7 +23,7 @@ function listen(observable, type, handler, context) {
     var last = EVENTS;
     var current;
     
-    if (!type || typeof type !== 'string') {
+    if (!OBJECT.string(type)) {
         throw new Error(ERROR_INVALID_TYPE);
     }
     
@@ -58,7 +58,7 @@ function listen(observable, type, handler, context) {
 function unlisten(observable, type, handler, context) {
     var found, len;
     
-    if (!type || typeof type !== 'string') {
+    if (!OBJECT.string(type)) {
         throw new Error(ERROR_INVALID_TYPE);
     }
     
@@ -87,7 +87,7 @@ function unlisten(observable, type, handler, context) {
 
 function dispatch(observable, type, defaults) {
     
-    if (!type || typeof type !== 'string') {
+    if (!OBJECT.string(type)) {
         throw new Error(ERROR_INVALID_TYPE);
     }
     
@@ -198,7 +198,7 @@ function w3cUnlisten(observable, type, listener) {
 }
 
 function w3cDispatch(observable, type, properties) {
-    var hasOwn = HAS_OWN_PROPERTY,
+    var hasOwn = OBJECT.contains,
         event = global.document.createEvent("Event");
     var name;
     
@@ -207,7 +207,7 @@ function w3cDispatch(observable, type, properties) {
             properties.cancelable !== false);
     
     for (name in properties) {
-        if (hasOwn.call(properties, name) && !(name in event)) {
+        if (hasOwn(properties, name) && !(name in event)) {
             event[name] = properties[name];
         }
     }
@@ -259,12 +259,12 @@ function ieUnlisten(observable, type, listener) {
 }
 
 function ieDispatch(observable, type, properties) {
-    var hasOwn = HAS_OWN_PROPERTY,
+    var hasOwn = OBJECT.contains,
         event = global.document.createEventObject();
     var name, node;
     
     for (name in properties) {
-        if (hasOwn.call(properties, name) && !(name in event)) {
+        if (hasOwn(properties, name) && !(name in event)) {
             event[name] = properties[name];
         }
     }
@@ -340,9 +340,8 @@ function ieCreateCustomHandler(type, handler, context) {
 
 function ieTestCustomEvent(observable, type) {
     var supported = false,
-        list = IE_CUSTOM_EVENTS,
-        ontype = 'on' + type;
-    var element, access;
+        list = IE_CUSTOM_EVENTS;
+    var element, access, ontype;
     
     if (observable.nodeType === 9) {
         observable = observable.documentElement;

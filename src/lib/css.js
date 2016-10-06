@@ -1,6 +1,7 @@
 'use strict';
 
-var STRING = require("./string.js"),
+var OBJECT = require("./object.js"),
+    STRING = require("./string.js"),
     DETECTED = require("./detect.js"),
     DOM = require("./dom.js"),
     DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/,
@@ -62,7 +63,8 @@ function computedStyleNotSupported() {
 }
 
 function w3cGetCurrentStyle(element) {
-    var camel = STRING.stylize;
+    var camel = STRING.stylize,
+        isString = OBJECT.string;
     var style, list, c, l, name, values;
     
     if (!DOM.is(element, 1)) {
@@ -75,7 +77,7 @@ function w3cGetCurrentStyle(element) {
     list = SLICE.call(arguments, 1);
     for (c = -1, l = list.length; l--;) {
         name = list[++c];
-        if (name && typeof name === 'string') {
+        if (isString(name)) {
             values[name] = style[camel(name)];
         }
     }
@@ -87,6 +89,7 @@ function w3cGetCurrentStyle(element) {
 
 function ieGetCurrentStyle(element) {
     var dimensionRe = DIMENSION_RE,
+        isString = OBJECT.string,
         camel = STRING.stylize,
         pixelSize = getPixelSize;
         
@@ -103,7 +106,7 @@ function ieGetCurrentStyle(element) {
     
     for (c = -1, l = list.length; l--;) {
         name = list[++c];
-        if (name && typeof name === 'string') {
+        if (isString(name)) {
             access = camel(name);
             
             if (dimensionRe.test(access) && style[access] !== 'auto') {
@@ -160,45 +163,59 @@ function getPixelSize(element, style, property, fontSize) {
     }
 }
 
-function applyStyle(element, style) {
-    var O = Object.prototype,
-        is = isFinite,
+function applyStyle(element, style, value) {
+    var O = OBJECT,
+        isString = O.string,
+        isNumber = O.number,
         camelize = STRING.stylize,
-        parse = parseCSSText;
-    var hasOwn, name, value, type, elementStyle;
+        parse = parseCSSText,
+        len = arguments.length;
+    var hasOwn, name, type, elementStyle, set, remove;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
     
     // setter
-    if (arguments.length > 1) {
-        if (typeof style === 'string') {
-            style = parse(style);
+    if (len > 1) {
+        
+        set = SET_STYLE;
+        
+        if (isString(style)) {
+            if (len > 2) {
+                set(element, style, value);
+            }
+            else {
+                style = parse(style);
+            }
         }
         
-        if (O.toString.call(style) !== '[object Object]') {
+        if (!O.type(style, '[object Object]')) {
             throw new Error(STRING.ERROR_RULE);
         }
         
-        hasOwn = O.hasOwnProperty;
+        
+        
+        remove = REMOVE_STYLE;
+        hasOwn = O.contains;
         elementStyle = element.style;
+        
         for (name in style) {
-            if (hasOwn.call(style, name)) {
+            if (hasOwn(style, name)) {
                 value = style[name];
                 type = typeof value;
                 // remove
                 if (value === null || type === 'undefined')  {
-                    REMOVE_STYLE(elementStyle, camelize(name), value);
+                    remove(elementStyle, camelize(name), value);
                 }
-                else if ((value && type === 'string') ||
-                        (type === 'number' && is(value))) {
+                else if (isString(value) || isNumber(value)) {
                     
-                    SET_STYLE(elementStyle, camelize(name), value);
+                    set(elementStyle, camelize(name), value);
                 }
             }
         }
         elementStyle = null;
+        
         return EXPORTS.chain;
     }
     

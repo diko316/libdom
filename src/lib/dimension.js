@@ -1,11 +1,30 @@
 'use strict';
 
 var DETECTED = require("./detect.js"),
+    OBJECT = require("./object.js"),
     STRING = require("./string.js"),
     DOM = require("./dom.js"),
     CSS = require("./css.js"),
+    
     ERROR_INVALID_ELEMENT = STRING.ERROR_ELEMENT,
     ERROR_INVALID_DOM = STRING.ERROR_DOM,
+    
+    OFFSET_TOP = 'offsetTop',
+    OFFSET_LEFT = 'offsetLeft',
+    OFFSET_WIDTH = 'offsetWidth',
+    OFFSET_HEIGHT = 'offsetHeight',
+    
+    MARGIN_TOP = 'marginTop',
+    MARGIN_LEFT = 'marginLeft',
+    
+    SCROLL_TOP = 'scrollTop',
+    SCROLL_LEFT = 'scrollLeft',
+    
+    PADDING_TOP = 'paddingTop',
+    PADDING_LEFT = 'paddingLeft',
+    PADDING_RIGHT = 'paddingRight',
+    PADDING_BOTTOM = 'paddingBottom',
+    
     DEFAULTVIEW = null,
     ELEMENT_VIEW = 1,
     PAGE_VIEW = 2,
@@ -68,12 +87,16 @@ function box(element, x, y, width, height) {
         toFloat = parseFloat,
         cssValue = css.unitValue,
         NUMBER = 'number',
+        ptop = PADDING_TOP,
+        pleft = PADDING_LEFT,
+        pright = PADDING_RIGHT,
+        pbottom = PADDING_BOTTOM,
         setter = arguments.length > 1,
         viewmode = isViewable(element);
         
     var hasLeft, hasTop, hasWidth, hasHeight, parent,
         hasPosition, hasSize,
-        diff, style, styleAttribute,
+        diff, style,
         applyStyle;
     
     // try page box
@@ -99,12 +122,12 @@ function box(element, x, y, width, height) {
         
         style = css.computedStyle(element,
                         'position',
-                        'marginLeft',
-                        'marginTop',
-                        'paddingTop',
-                        'paddingLeft',
-                        'paddingRight',
-                        'paddingBottom');
+                        MARGIN_LEFT,
+                        MARGIN_TOP,
+                        ptop,
+                        pleft,
+                        pright,
+                        pbottom);
         
         hasLeft = hasTop = hasWidth = hasHeight = hasPosition = hasSize = false;
         switch (style.position) {
@@ -138,8 +161,8 @@ function box(element, x, y, width, height) {
                 
                 if (hasLeft) {
                     applyStyle.left = typeof x === NUMBER ? (
-                                        element.offsetLeft -
-                                        (toFloat(style.marginLeft) || 0) +
+                                        element[OFFSET_LEFT] -
+                                        (toFloat(style[MARGIN_LEFT]) || 0) +
                                         (x - diff[0])
                                     ) + 'px' :
                                     x;
@@ -148,8 +171,8 @@ function box(element, x, y, width, height) {
                 
                 if (hasTop) {
                     applyStyle.top = typeof y === NUMBER ? (
-                                        element.offsetTop -
-                                        (toFloat(style.marginTop) || 0) +
+                                        element[OFFSET_TOP] -
+                                        (toFloat(style[MARGIN_TOP]) || 0) +
                                         (y - diff[1])
                                     ) + 'px' :
                                     y;
@@ -163,9 +186,9 @@ function box(element, x, y, width, height) {
                 if (hasWidth) {
                     applyStyle.width = typeof width === NUMBER ? (
                                         element.clientWidth -
-                                        (toFloat(style.paddingLeft) || 0) -
-                                        (toFloat(style.paddingRight) || 0) +
-                                        (width - element.offsetWidth)
+                                        (toFloat(style[pleft]) || 0) -
+                                        (toFloat(style[pright]) || 0) +
+                                        (width - element[OFFSET_WIDTH])
                                     ) + 'px' :
                                     width;
                 }
@@ -173,9 +196,9 @@ function box(element, x, y, width, height) {
                 if (hasHeight) {
                     applyStyle.height = typeof height === NUMBER ? (
                                         element.clientHeight -
-                                        (toFloat(style.paddingTop) || 0) -
-                                        (toFloat(style.paddingBottom) || 0) +
-                                        (height - element.offsetHeight)
+                                        (toFloat(style[ptop]) || 0) -
+                                        (toFloat(style[pleft]) || 0) +
+                                        (height - element[OFFSET_HEIGHT])
                                     ) + 'px' :
                                     height;
                 }
@@ -186,7 +209,7 @@ function box(element, x, y, width, height) {
             
         }
         
-        parent = styleAttribute = null;
+        parent = null;
         return EXPORTS.chain;
     }
     
@@ -197,16 +220,17 @@ function box(element, x, y, width, height) {
 
 function scroll(dom, x, y) {
     var setter = arguments.length > 1,
-        is = isFinite,
-        NUMBER = 'number';
+        isNumber = OBJECT.number,
+        stop = SCROLL_TOP,
+        sleft = SCROLL_LEFT;
     var current, window;
     
     // validate x and y
     if (setter) {
-        if (typeof x !== NUMBER || !is(x)) {
+        if (!isNumber(x)) {
             x = false;
         }
-        if (typeof y !== NUMBER || !is(y)) {
+        if (!isNumber(y)) {
             y = false;
         }
     }
@@ -231,11 +255,11 @@ function scroll(dom, x, y) {
     
     case ELEMENT_VIEW:
         if (setter) {
-            dom.scrollLeft = x === false ? dom.scrollLeft : x;
-            dom.scrollTop = y === false ? dom.scrollTop : y;
+            dom[sleft] = x === false ? dom[sleft] : x;
+            dom[stop] = y === false ? dom[stop] : y;
         }
         else {
-            return [dom.scrollLeft, dom.scrollTop];
+            return [dom[sleft], dom[stop]];
         }
         break;
     
@@ -271,33 +295,32 @@ function pageBox(dom) {
  */
 function visible(element, visibility, displayed) {
     var style = null,
+        css = CSS,
+        isString = OBJECT.string,
         len = arguments.length,
-        string = 'string',
         attached = isViewable(element) === ELEMENT_VIEW;
-        
-    var styleAttribute;
     
     // setter
     if (len > 1) {
-        styleAttribute = element.style;
+        style = {};
         
-        switch (typeof visibility) {
-        case string:
-            styleAttribute.style.visibility = visibility;
-            break;
-        case 'boolean':
-            styleAttribute.style.visibility = 'visible';
+        if (isString(visibility)) {
+            style.visibility = visibility;
         }
+        else if (typeof visiblity === 'boolean') {
+            style.visibility = visibility ? 'visible' : 'hidden';
+        }
+        
         
         if (displayed === false) {
             displayed = 'none';
         }
         
-        if (displayed && typeof displayed === string) {
-            styleAttribute.style.display = displayed;
+        if (isString(displayed)) {
+            style.display = displayed;
         }
         
-        styleAttribute = null;
+        css.style(element, style);
         
         return EXPORTS.chain;
         
@@ -393,8 +416,8 @@ function rectSize(element, boundingRect) {
 function manualSize(element) {
     var M = Math;
     return [
-        M.max(0, element.offsetWidth || 0),
-        M.max(0, element.offsetHeight || 0)];
+        M.max(0, element[OFFSET_WIDTH] || 0),
+        M.max(0, element[OFFSET_HEIGHT] || 0)];
 }
 
 /**
@@ -415,31 +438,44 @@ function rectOffset(element, boundingRect) {
 function manualOffset(element) {
     var root = global.document[IE_PAGE_STAT_ACCESS],
         css = CSS,
-        offset = [element.offsetLeft, element.offsetTop],
-        findStyles = ['marginLeft', 'marginTop'],
+        
+        top = OFFSET_TOP,
+        left = OFFSET_LEFT,
+        mtop = MARGIN_TOP,
+        mleft = MARGIN_LEFT,
+        
+        stop = SCROLL_TOP,
+        sleft = SCROLL_LEFT,
+        
+        offset = [element[left], element[top]],
+        findStyles = [mleft, mtop],
         parent = element.offsetParent,
         style = css.computedStyle(element, findStyles);
     
-    offset[0] += parseFloat(style.marginLeft) || 0;
-    offset[1] += parseFloat(style.marginTop) || 0;
+    offset[0] += parseFloat(style[mleft]) || 0;
+    offset[1] += parseFloat(style[mtop]) || 0;
     
     for (; parent; parent = parent.offsetParent) {
+        
         if (parent.nodeType === 1) {
+            
             style = css.computedStyle(parent, findStyles);
-            offset[0] += (parent.offsetLeft || 0) +
+            
+            offset[0] += (parent[left] || 0) +
                             (parent.clientLeft || 0) +
-                            (parseFloat(style.marginLeft) || 0);
+                            (parseFloat(style[mleft]) || 0);
                             
-            offset[1] += (parent.offsetTop || 0) +
+            offset[1] += (parent[top] || 0) +
                             (parent.clientTop || 0) +
-                            (parseFloat(style.marginTop) || 0);
+                            (parseFloat(style[mtop]) || 0);
+                            
         }
     }
 
     for (parent = element.parentNode; parent; parent = parent.parentNode) {
         if (parent.nodeType === 1 && parent !== root) {
-            offset[0] += parent.scrollLeft || 0;
-            offset[1] += parent.scrollTop || 0;
+            offset[0] += parent[sleft] || 0;
+            offset[1] += parent[stop] || 0;
         }
     }
 
@@ -465,8 +501,8 @@ function iePageScrollOffset(window) {
     var M = Math,
         subject = window.document[IE_PAGE_STAT_ACCESS],
         factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1,
-        offset = [M.round(subject.scrollLeft / factor),
-                    M.round(subject.scrollTop / factor)];
+        offset = [M.round(subject[SCROLL_LEFT] / factor),
+                    M.round(subject[SCROLL_TOP] / factor)];
     
     subject = null;
     
@@ -485,7 +521,7 @@ function getZoomFactor(window) {
 
         // the zoom level is always an integer percent value
         factor = Math.round(
-                    (rect.right - rect.left / body.offsetWidth) * 100) / 100;
+                    (rect.right - rect.left / body[OFFSET_WIDTH]) * 100) / 100;
     }
     
     body = null;

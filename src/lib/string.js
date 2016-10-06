@@ -23,6 +23,8 @@ var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
         ERROR_EVENTTYPE: "Invalid Event [type] parameter.",
         ERROR_EVENTHNDL: "Invalid Event [handler] parameter.",
         
+        ERROR_COLORSET: "Invalid Colorset [type] parameter.",
+        ERROR_COLORVALUE: "Invalid [colorValue] integer parameter.",
         
         ERROR_NS_ATTRSTYLE: "Style Attribute manipulation is not supported",
         ERROR_NS_COMPSTYLE: "Computed style is not supported in this browser.",
