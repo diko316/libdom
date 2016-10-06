@@ -6,10 +6,12 @@ var FORMAT = require("./color/format.js"),
     NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/,
     TO_RGBA = {
         rgba: require("./color/rgba.js"),
-        hsla: require("./color/hsla.js")
+        hsla: require("./color/hsla.js"),
+        hex: require("./color/hex.js"),
     },
     EXPORTS = {
-        parse: itemizeString
+        parse: itemizeString,
+        stringify: toColorString
     };
 
 function itemizeString(str) {
@@ -92,6 +94,24 @@ function itemizeString(str) {
     return 0;
 }
 
+
+function toColorString(colorValue, type) {
+    var list = TO_RGBA;
+    
+    if (arguments.length < 2) {
+        type = 'hex';
+    }
+    
+    if (!Object.prototype.hasOwnProperty.call(list, type)) {
+        throw new Error("Invalid Colorset [type] parameter.");
+    }
+    
+    if (typeof colorValue !== 'number' || !isFinite(colorValue)) {
+        throw new Error("Invalid [colorValue] integer parameter.");
+    }
+    
+    return TO_RGBA[type].toString(colorValue);
+}
 
 
 module.exports = EXPORTS;

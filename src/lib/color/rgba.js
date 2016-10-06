@@ -1,16 +1,18 @@
 'use strict';
 
-var FORMAT = require("./format.js");
+var FORMAT = require("./format.js"),
+    PIGMENT_SIZE = 0xff;
+var EXPORTS;
 
 
-module.exports = {
+module.exports = EXPORTS = {
     itemize: function (value, index, format) {
         var F = FORMAT,
             M = Math,
             parse = parseFloat,
             alpha = index > 2,
             min = 0,
-            max = alpha ? 100 : 255;
+            max = alpha ? 100 : PIGMENT_SIZE;
             
         switch (format) {
         case F.HEX:
@@ -33,6 +35,25 @@ module.exports = {
     },
     
     toInteger: function (r, g, b, a) {
-        return (a << 24) | (b << 16) | (g << 8) | r;
+        var size = PIGMENT_SIZE;
+        return ((a & size) << 24) |
+                ((b & size) << 16) |
+                ((g & size) << 8) |
+                (r & size);
+    },
+    
+    toArray: function (integer) {
+        var size = PIGMENT_SIZE;
+        return [
+            integer & size,
+            (integer >> 8) & size,
+            (integer >> 16) & size,
+            (integer >> 24) & size];
+    },
+    
+    toString: function (integer) {
+        var values = EXPORTS.toArray(integer);
+        values[3] = (values[3] / 100).toFixed(2);
+        return 'rgba(' + values.join(',') + ')';
     }
 };

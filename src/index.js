@@ -80,7 +80,8 @@ applyIf(EXPORTS,
 applyIf(EXPORTS,
         require("./lib/color.js"),
         {
-            'colorParse': 'parse'
+            'parseColor': 'parse',
+            'formatColor': 'stringify'
         });
 
 if (detect) {
