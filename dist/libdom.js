@@ -75,6 +75,9 @@
                 parseColor: "parse",
                 formatColor: "stringify"
             });
+            applyIf(EXPORTS, __webpack_require__(23), {
+                eachDisplacement: "each"
+            });
             if (detect) {
                 css.chain = event.chain = dimension.chain = selection.chain = EXPORTS;
             }
@@ -543,6 +546,8 @@
             ERROR_EVENTHNDL: "Invalid Event [handler] parameter.",
             ERROR_COLORSET: "Invalid Colorset [type] parameter.",
             ERROR_COLORVALUE: "Invalid [colorValue] integer parameter.",
+            ERROR_ANIMHNDL: "Invalid Animation [handler] parameter.",
+            ERROR_ANIMDISPL: "Invalid Animation [displacements] parameter.",
             ERROR_NS_ATTRSTYLE: "Style Attribute manipulation is not supported",
             ERROR_NS_COMPSTYLE: "Computed style is not supported in this browser.",
             ERROR_NS_SELQUERY: "CSS Selector query form DOM is not supported.",
@@ -1742,6 +1747,221 @@
             return "#" + values.join("");
         }
         EXPORTS.toString = toString;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), EASING = __webpack_require__(24), EXPORTS = {
+            interval: 10,
+            each: animate
+        };
+        function animate(handler, displacements, type, duration) {
+            var M = Math, string = STRING, easing = EASING, O = OBJECT, defaultInterval = EXPORTS.interval, interval = null, frame = 0;
+            var frames;
+            function stop() {
+                if (interval) {
+                    clearInterval(interval);
+                    interval = null;
+                }
+            }
+            function callback() {
+                var specs = displacements, names = specs[0], from = specs[1], to = specs[2], total = frames, current = ++frame, len = names.length, result = {}, eased = type(current, 0, 1, total);
+                var start;
+                for (;len--; ) {
+                    start = from[len];
+                    result[names[len]] = (to[len] - start) * eased + start;
+                }
+                handler(result, current, total);
+                if (current === total) {
+                    stop();
+                }
+            }
+            if (!(handler instanceof Function)) {
+                throw new Error(string.ERROR_ANIMHNDL);
+            }
+            if (!O.type(displacements, "[object Object]")) {
+                throw new Error(string.ERROR_ANIMDISPL);
+            }
+            type = O.contains(easing, type) ? easing[type] : easing.linear;
+            duration = (O.number(duration) && duration > 0 ? duration : 1) * 1e3;
+            frames = M.max(10, M.round(duration / defaultInterval));
+            displacements = prepareDisplacements(displacements);
+            interval = setInterval(callback, defaultInterval);
+            return stop;
+        }
+        function prepareDisplacements(displacements) {
+            var O = OBJECT, hasOwn = O.contains, string = O.string, number = O.number, parse = parseFloat, names = [], from = [], to = [], len = 0;
+            var name, value, itemFrom, itemTo;
+            for (name in displacements) {
+                if (hasOwn(displacements, name)) {
+                    value = displacements[name];
+                    if (value instanceof Array && value.length > 1) {
+                        itemFrom = value[0];
+                        if (string(itemFrom)) {
+                            itemFrom = parse(itemFrom);
+                        }
+                        if (!number(itemFrom)) {
+                            continue;
+                        }
+                        itemTo = value[1];
+                        if (string(itemTo)) {
+                            itemTo = parse(itemTo);
+                        }
+                        if (!number(itemTo)) {
+                            continue;
+                        }
+                        names[len] = name;
+                        from[len] = itemFrom;
+                        to[len++] = itemTo;
+                    }
+                }
+            }
+            return [ names, from, to ];
+        }
+        module.exports = EXPORTS;
+    }, function(module, exports) {
+        "use strict";
+        var EXPORTS = {
+            linear: linearTween,
+            easeIn: easeInQuad,
+            easeInQuad: easeInQuad,
+            easeOut: easeOutQuad,
+            easeOutQuad: easeOutQuad,
+            easeInOut: easeInOutQuad,
+            easeInOutQuad: easeInOutQuad,
+            easeInCubic: easeInCubic,
+            easeOutCubic: easeOutCubic,
+            easeInOutCubic: easeInOutCubic,
+            easeInQuart: easeInQuart,
+            easeOutQuart: easeOutQuart,
+            easeInOutQuart: easeInOutQuart,
+            easeInQuint: easeInQuint,
+            easeOutQuint: easeOutQuint,
+            easeInOutQuint: easeInOutQuint,
+            easeInSine: easeInSine,
+            easeOutSine: easeOutSine,
+            easeInOutSine: easeInOutSine,
+            easeInExpo: easeInExpo,
+            easeOutExpo: easeOutExpo,
+            easeInOutExpo: easeInOutExpo,
+            easeInCirc: easeInCirc,
+            easeOutCirc: easeOutCirc,
+            easeInOutCirc: easeInOutCirc
+        };
+        function linearTween(currentFrame, startValue, endValue, totalFrames) {
+            return endValue * currentFrame / totalFrames + startValue;
+        }
+        function easeInQuad(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            return endValue * currentFrame * currentFrame + startValue;
+        }
+        function easeOutQuad(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            return -endValue * currentFrame * (currentFrame - 2) + startValue;
+        }
+        function easeInOutQuad(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames / 2;
+            if (currentFrame < 1) {
+                return endValue / 2 * currentFrame * currentFrame + startValue;
+            }
+            currentFrame--;
+            return -endValue / 2 * (currentFrame * (currentFrame - 2) - 1) + startValue;
+        }
+        function easeInCubic(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            return endValue * currentFrame * currentFrame * currentFrame + startValue;
+        }
+        function easeOutCubic(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            currentFrame--;
+            return endValue * (currentFrame * currentFrame * currentFrame + 1) + startValue;
+        }
+        function easeInOutCubic(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames / 2;
+            if (currentFrame < 1) {
+                return endValue / 2 * currentFrame * currentFrame * currentFrame + startValue;
+            }
+            currentFrame -= 2;
+            return endValue / 2 * (currentFrame * currentFrame * currentFrame + 2) + startValue;
+        }
+        function easeInQuart(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            return endValue * currentFrame * currentFrame * currentFrame * currentFrame + startValue;
+        }
+        function easeOutQuart(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            currentFrame--;
+            return -endValue * (currentFrame * currentFrame * currentFrame * currentFrame - 1) + startValue;
+        }
+        function easeInOutQuart(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames / 2;
+            if (currentFrame < 1) {
+                return endValue / 2 * currentFrame * currentFrame * currentFrame * currentFrame + startValue;
+            }
+            currentFrame -= 2;
+            return -endValue / 2 * (currentFrame * currentFrame * currentFrame * currentFrame - 2) + startValue;
+        }
+        function easeInQuint(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            return endValue * currentFrame * currentFrame * currentFrame * currentFrame * currentFrame + startValue;
+        }
+        function easeOutQuint(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            currentFrame--;
+            return endValue * (currentFrame * currentFrame * currentFrame * currentFrame * currentFrame + 1) + startValue;
+        }
+        function easeInOutQuint(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames / 2;
+            if (currentFrame < 1) {
+                return endValue / 2 * currentFrame * currentFrame * currentFrame * currentFrame * currentFrame + startValue;
+            }
+            currentFrame -= 2;
+            return endValue / 2 * (currentFrame * currentFrame * currentFrame * currentFrame * currentFrame + 2) + startValue;
+        }
+        function easeInSine(currentFrame, startValue, endValue, totalFrames) {
+            var M = Math;
+            return -endValue * M.cos(currentFrame / totalFrames * (M.PI / 2)) + endValue + startValue;
+        }
+        function easeOutSine(currentFrame, startValue, endValue, totalFrames) {
+            var M = Math;
+            return endValue * M.sin(currentFrame / totalFrames * (M.PI / 2)) + startValue;
+        }
+        function easeInOutSine(currentFrame, startValue, endValue, totalFrames) {
+            var M = Math;
+            return -endValue / 2 * (M.cos(M.PI * currentFrame / totalFrames) - 1) + startValue;
+        }
+        function easeInExpo(currentFrame, startValue, endValue, totalFrames) {
+            return endValue * Math.pow(2, 10 * (currentFrame / totalFrames - 1)) + startValue;
+        }
+        function easeOutExpo(currentFrame, startValue, endValue, totalFrames) {
+            return endValue * (-Math.pow(2, -10 * currentFrame / totalFrames) + 1) + startValue;
+        }
+        function easeInOutExpo(currentFrame, startValue, endValue, totalFrames) {
+            var M = Math;
+            currentFrame /= totalFrames / 2;
+            if (currentFrame < 1) {
+                return endValue / 2 * M.pow(2, 10 * (currentFrame - 1)) + startValue;
+            }
+            currentFrame--;
+            return endValue / 2 * (-M.pow(2, -10 * currentFrame) + 2) + startValue;
+        }
+        function easeInCirc(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            return -endValue * (Math.sqrt(1 - currentFrame * currentFrame) - 1) + startValue;
+        }
+        function easeOutCirc(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            currentFrame--;
+            return endValue * Math.sqrt(1 - currentFrame * currentFrame) + startValue;
+        }
+        function easeInOutCirc(currentFrame, startValue, endValue, totalFrames) {
+            var M = Math;
+            currentFrame /= totalFrames / 2;
+            if (currentFrame < 1) {
+                return -endValue / 2 * (M.sqrt(1 - currentFrame * currentFrame) - 1) + startValue;
+            }
+            currentFrame -= 2;
+            return endValue / 2 * (M.sqrt(1 - currentFrame * currentFrame) + 1) + startValue;
+        }
+        module.exports = EXPORTS;
     } ]);
 });
 

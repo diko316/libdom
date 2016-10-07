@@ -84,6 +84,12 @@ applyIf(EXPORTS,
             'formatColor': 'stringify'
         });
 
+applyIf(EXPORTS,
+        require("./lib/animation.js"),
+        {
+            'eachDisplacement': 'each'
+        });
+
 if (detect) {
     css.chain =
         event.chain = 

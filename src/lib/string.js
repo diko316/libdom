@@ -26,11 +26,16 @@ var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
         ERROR_COLORSET: "Invalid Colorset [type] parameter.",
         ERROR_COLORVALUE: "Invalid [colorValue] integer parameter.",
         
+        ERROR_ANIMHNDL: "Invalid Animation [handler] parameter.",
+        ERROR_ANIMDISPL: "Invalid Animation [displacements] parameter.",
+        
         ERROR_NS_ATTRSTYLE: "Style Attribute manipulation is not supported",
         ERROR_NS_COMPSTYLE: "Computed style is not supported in this browser.",
         ERROR_NS_SELQUERY : "CSS Selector query form DOM is not supported.",
         ERROR_NS_POSITION: "DOM position comparison is not supported.",
         ERROR_NS_MARK: "DOM selection not supported."
+        
+        
         
     };
 

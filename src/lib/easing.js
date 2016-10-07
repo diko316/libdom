@@ -17,13 +17,16 @@ var EXPORTS = {
         linear: linearTween,
         
         //  quadratic easing in - accelerating from zero velocity
+        easeIn: easeInQuad,
         easeInQuad: easeInQuad,
 
         // quadratic easing out - decelerating to zero velocity
+        easeOut: easeOutQuad,
         easeOutQuad: easeOutQuad,
         
         // quadratic easing in/out - acceleration until halfway,
         //                                  then deceleration
+        easeInOut: easeInOutQuad,
         easeInOutQuad: easeInOutQuad,
         
         // cubic easing in - accelerating from zero velocity
