@@ -6,8 +6,8 @@ var DETECTED = require("./detect.js"),
     DOM = require("./dom.js"),
     CSS = require("./css.js"),
     
-    ERROR_INVALID_ELEMENT = STRING.ERROR_ELEMENT,
-    ERROR_INVALID_DOM = STRING.ERROR_DOM,
+    ERROR_INVALID_ELEMENT = STRING[1101],
+    ERROR_INVALID_DOM = STRING[1102],
     
     OFFSET_TOP = 'offsetTop',
     OFFSET_LEFT = 'offsetLeft',

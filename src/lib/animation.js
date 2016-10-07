@@ -43,7 +43,8 @@ function animate(handler, displacements, type, duration) {
             current = ++frame,
             len = names.length,
             result = {},
-            eased = type(current, 0, 1, total);
+            eased = type(current, 0, 1, total),
+            last = current === total;
             
         var start;
         
@@ -52,20 +53,20 @@ function animate(handler, displacements, type, duration) {
             result[names[len]] = (to[len] - start) * eased + start;
         }
         
-        handler(result, current, total);
+        handler(result, last);
         
-        if (current === total) {
+        if (last) {
             stop();
         }
         
     }
     
     if (!(handler instanceof Function)) {
-        throw new Error(string.ERROR_ANIMHNDL);
+        throw new Error(string[1151]);
     }
     
     if (!O.type(displacements, '[object Object]')) {
-        throw new Error(string.ERROR_ANIMDISPL);
+        throw new Error(string[1152]);
     }
     
     // prepare displacements

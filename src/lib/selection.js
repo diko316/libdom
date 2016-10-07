@@ -6,7 +6,7 @@ var DETECTED = require("./detect.js"),
     DIMENSION = require("./dimension.js"),
     DETECTED_DOM = DETECTED.dom,
     DETECTED_SELECTION = DETECTED.selection,
-    ERROR_DOM = STRING.ERROR_DOM,
+    ERROR_DOM = STRING[1102],
     SELECT_ELEMENT = null,
     CLEAR_SELECTION = null,
     UNSELECTABLE = attributeUnselectable,
@@ -25,7 +25,7 @@ function select(element, endElement) {
     }
     
     if (!dimension.visible(element)) {
-        throw new Error(STRING.ERROR_ELEMENT);
+        throw new Error(STRING[1101]);
     }
     
     if (arguments.length < 2) {
@@ -45,7 +45,7 @@ function select(element, endElement) {
 function clear(document) {
     if (!DOM.is(document, 9)) {
         if (arguments.length > 0) {
-            throw new Error(STRING.ERROR_DOC);
+            throw new Error(STRING[1104]);
         }
         else {
             document = global.document;
@@ -83,7 +83,7 @@ function attributeUnselectable(element, selectable) {
 
 
 function selectionNotSupported() {
-    throw new Error(STRING.ERROR_NS_MARK);
+    throw new Error(STRING[2005]);
 }
 
 /**

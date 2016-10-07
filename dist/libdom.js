@@ -204,7 +204,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), OBJECT_TYPE = "[object Object]", ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING.ERROR_ELEMENT, ERROR_INVALID_DOM_NODE = STRING.ERROR_NODE, ERROR_INVALID_CSS_SELECTOR = STRING.ERROR_SELECTOR, ERROR_INVALID_CALLBACK = STRING.ERROR_TREE_CALLBACK, ERROR_INVALID_ELEMENT_CONFIG = STRING.ERROR_DOM_CONFIG, INVALID_DESCENDANT_NODE_TYPES = {
+        var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), OBJECT_TYPE = "[object Object]", ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING[1101], ERROR_INVALID_DOM_NODE = STRING[1103], ERROR_INVALID_CSS_SELECTOR = STRING[1111], ERROR_INVALID_CALLBACK = STRING[1112], ERROR_INVALID_ELEMENT_CONFIG = STRING[1121], INVALID_DESCENDANT_NODE_TYPES = {
             9: 1,
             11: 1
         }, STD_CONTAINS = notSupportedContains, EXPORTS = {
@@ -222,12 +222,12 @@
         };
         var DOM_INFO;
         function contains(ancestor, descendant) {
-            var str = STRING, is = isDom;
+            var elementErrorString = STRING[1102], is = isDom;
             if (!is(ancestor, 1, 9, 11)) {
-                throw new Error(str.ERROR_DOM);
+                throw new Error(elementErrorString);
             }
             if (!is(descendant) || descendant.nodeType in INVALID_DESCENDANT_NODE_TYPES) {
-                throw new Error(str.ERROR_DOM);
+                throw new Error(elementErrorString);
             }
             switch (ancestor.nodeType) {
               case 9:
@@ -241,7 +241,7 @@
             return STD_CONTAINS(ancestor, descendant);
         }
         function notSupportedContains() {
-            throw new Error(STRING.ERROR_NS_POSITION);
+            throw new Error(STRING[2004]);
         }
         function w3cContains(ancestor, descendant) {
             return (ancestor.compareDocumentPosition(descendant) & 16) > 0;
@@ -382,7 +382,7 @@
             return Array.prototype.slice.call(dom.querySelectorAll(selector));
         }
         function notSupportedQuerySelector() {
-            throw new Error(STRING.ERROR_NS_SELQUERY);
+            throw new Error(STRING[2003]);
         }
         function preOrderTraverse(element, callback, context) {
             return orderTraverse(element, callback, ORDER_TYPE_PREORDER, context);
@@ -533,26 +533,26 @@
             stylize: stylize,
             addWord: addWord,
             removeWord: removeWord,
-            ERROR_ELEMENT: "Invalid DOM [element] parameter.",
-            ERROR_DOM: "Invalid [dom] Object parameter.",
-            ERROR_NODE: "Invalid DOM [node] parameter.",
-            ERROR_DOC: "Invalid DOM [document] parameter.",
-            ERROR_SELECTOR: "Invalid CSS [selector] parameter.",
-            ERROR_TREE_CALLBACK: "Invalid tree traverse [callback] parameter.",
-            ERROR_DOM_CONFIG: "Invalid DOM Element [config] parameter.",
-            ERROR_RULE: "Invalid [style] Rule parameter.",
-            ERROR_OBSERV: "Invalid [observable] parameter.",
-            ERROR_EVENTTYPE: "Invalid Event [type] parameter.",
-            ERROR_EVENTHNDL: "Invalid Event [handler] parameter.",
-            ERROR_COLORSET: "Invalid Colorset [type] parameter.",
-            ERROR_COLORVALUE: "Invalid [colorValue] integer parameter.",
-            ERROR_ANIMHNDL: "Invalid Animation [handler] parameter.",
-            ERROR_ANIMDISPL: "Invalid Animation [displacements] parameter.",
-            ERROR_NS_ATTRSTYLE: "Style Attribute manipulation is not supported",
-            ERROR_NS_COMPSTYLE: "Computed style is not supported in this browser.",
-            ERROR_NS_SELQUERY: "CSS Selector query form DOM is not supported.",
-            ERROR_NS_POSITION: "DOM position comparison is not supported.",
-            ERROR_NS_MARK: "DOM selection not supported."
+            1101: "Invalid DOM [element] parameter.",
+            1102: "Invalid [dom] Object parameter.",
+            1103: "Invalid DOM [node] parameter.",
+            1104: "Invalid DOM [document] parameter.",
+            1111: "Invalid CSS [selector] parameter.",
+            1112: "Invalid tree traverse [callback] parameter.",
+            1121: "Invalid DOM Element [config] parameter.",
+            1131: "Invalid [observable] parameter.",
+            1132: "Invalid Event [type] parameter.",
+            1133: "Invalid Event [handler] parameter.",
+            1141: "Invalid [style] Rule parameter.",
+            1142: "Invalid Colorset [type] parameter.",
+            1143: "Invalid [colorValue] integer parameter.",
+            1151: "Invalid Animation [handler] parameter.",
+            1152: "Invalid Animation [displacements] parameter.",
+            2001: "Style Attribute manipulation is not supported",
+            2002: "Computed style is not supported in this browser.",
+            2003: "CSS Selector query form DOM is not supported.",
+            2004: "DOM position comparison is not supported.",
+            2005: "DOM selection not supported."
         };
         function camelize(str) {
             return str.replace(CAMEL_RE, onCamelizeMatch);
@@ -603,7 +603,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]+(\.[0-9]+)?)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, REMOVE_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING.ERROR_ELEMENT, EXPORTS = {
+            var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]+(\.[0-9]+)?)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, REMOVE_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
                 add: addClass,
                 remove: removeClass,
                 computedStyle: computedStyleNotSupported,
@@ -630,7 +630,7 @@
                 return EXPORTS.chain;
             }
             function computedStyleNotSupported() {
-                throw new Error(STRING.ERROR_NS_COMPSTYLE);
+                throw new Error(STRING[2002]);
             }
             function w3cGetCurrentStyle(element) {
                 var camel = STRING.stylize, isString = OBJECT.string;
@@ -719,7 +719,7 @@
                         }
                     }
                     if (!O.type(style, "[object Object]")) {
-                        throw new Error(STRING.ERROR_RULE);
+                        throw new Error(STRING[1141]);
                     }
                     remove = REMOVE_STYLE;
                     hasOwn = O.contains;
@@ -792,7 +792,7 @@
                 return false;
             }
             function styleManipulationNotSupported() {
-                throw new Error(STRING.ERROR_NS_ATTRSTYLE);
+                throw new Error(STRING[2001]);
             }
             function w3cSetStyleValue(style, name, value) {
                 style.setProperty(name, value, style.getPropertyPriority(name) || "");
@@ -832,7 +832,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var INFO = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DOM = __webpack_require__(9), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING.ERROR_OBSERV, ERROR_INVALID_TYPE = STRING.ERROR_EVENTTYPE, ERROR_INVALID_HANDLER = STRING.ERROR_EVENTHNDL, IE_CUSTOM_TYPE_EVENT = "propertychange", EXPORTS = module.exports = {
+            var INFO = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DOM = __webpack_require__(9), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_CUSTOM_TYPE_EVENT = "propertychange", EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
@@ -1114,7 +1114,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DOM = __webpack_require__(9), CSS = __webpack_require__(12), ERROR_INVALID_ELEMENT = STRING.ERROR_ELEMENT, ERROR_INVALID_DOM = STRING.ERROR_DOM, OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", PADDING_BOTTOM = "paddingBottom", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
+            var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DOM = __webpack_require__(9), CSS = __webpack_require__(12), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", PADDING_BOTTOM = "paddingBottom", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
                 offset: offset,
                 size: size,
                 box: box,
@@ -1407,7 +1407,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(11), DOM = __webpack_require__(9), DIMENSION = __webpack_require__(14), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING.ERROR_DOM, SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
+            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(11), DOM = __webpack_require__(9), DIMENSION = __webpack_require__(14), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
                 select: select,
                 clear: clear,
                 unselectable: unselectable
@@ -1418,7 +1418,7 @@
                     element = element.body;
                 }
                 if (!dimension.visible(element)) {
-                    throw new Error(STRING.ERROR_ELEMENT);
+                    throw new Error(STRING[1101]);
                 }
                 if (arguments.length < 2) {
                     endElement = null;
@@ -1432,7 +1432,7 @@
             function clear(document) {
                 if (!DOM.is(document, 9)) {
                     if (arguments.length > 0) {
-                        throw new Error(STRING.ERROR_DOC);
+                        throw new Error(STRING[1104]);
                     } else {
                         document = global.document;
                     }
@@ -1457,7 +1457,7 @@
                 element.unselectable = selectable ? "off" : "on";
             }
             function selectionNotSupported() {
-                throw new Error(STRING.ERROR_NS_MARK);
+                throw new Error(STRING[2005]);
             }
             function ieSelectElement(startElement, endElement) {
                 var body = startElement.ownerDocument.body, startRange = body.createTextRange();
@@ -1570,10 +1570,10 @@
                 type = "hex";
             }
             if (!O.contains(list, type)) {
-                throw new Error(STRING.ERROR_COLORSET);
+                throw new Error(STRING[1142]);
             }
             if (!O.number(colorValue)) {
-                throw new Error(STRING.ERROR_COLORVALUE);
+                throw new Error(STRING[1143]);
             }
             return list[type].toString(colorValue);
         }
@@ -1763,22 +1763,22 @@
                 }
             }
             function callback() {
-                var specs = displacements, names = specs[0], from = specs[1], to = specs[2], total = frames, current = ++frame, len = names.length, result = {}, eased = type(current, 0, 1, total);
+                var specs = displacements, names = specs[0], from = specs[1], to = specs[2], total = frames, current = ++frame, len = names.length, result = {}, eased = type(current, 0, 1, total), last = current === total;
                 var start;
                 for (;len--; ) {
                     start = from[len];
                     result[names[len]] = (to[len] - start) * eased + start;
                 }
-                handler(result, current, total);
-                if (current === total) {
+                handler(result, last);
+                if (last) {
                     stop();
                 }
             }
             if (!(handler instanceof Function)) {
-                throw new Error(string.ERROR_ANIMHNDL);
+                throw new Error(string[1151]);
             }
             if (!O.type(displacements, "[object Object]")) {
-                throw new Error(string.ERROR_ANIMDISPL);
+                throw new Error(string[1152]);
             }
             type = O.contains(easing, type) ? easing[type] : easing.linear;
             duration = (O.number(duration) && duration > 0 ? duration : 1) * 1e3;

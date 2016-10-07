@@ -10,30 +10,33 @@ var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
         addWord: addWord,
         removeWord: removeWord,
     
-        ERROR_ELEMENT: "Invalid DOM [element] parameter.",
-        ERROR_DOM: "Invalid [dom] Object parameter.",
-        ERROR_NODE: "Invalid DOM [node] parameter.",
-        ERROR_DOC: "Invalid DOM [document] parameter.",
-        ERROR_SELECTOR: "Invalid CSS [selector] parameter.",
-        ERROR_TREE_CALLBACK: "Invalid tree traverse [callback] parameter.",
-        ERROR_DOM_CONFIG: "Invalid DOM Element [config] parameter.",
-        ERROR_RULE: "Invalid [style] Rule parameter.",
+        1101: "Invalid DOM [element] parameter.",
+        1102: "Invalid [dom] Object parameter.",
+        1103: "Invalid DOM [node] parameter.",
+        1104: "Invalid DOM [document] parameter.",
         
-        ERROR_OBSERV: "Invalid [observable] parameter.",
-        ERROR_EVENTTYPE: "Invalid Event [type] parameter.",
-        ERROR_EVENTHNDL: "Invalid Event [handler] parameter.",
+        1111: "Invalid CSS [selector] parameter.",
+        1112: "Invalid tree traverse [callback] parameter.",
         
-        ERROR_COLORSET: "Invalid Colorset [type] parameter.",
-        ERROR_COLORVALUE: "Invalid [colorValue] integer parameter.",
+        1121: "Invalid DOM Element [config] parameter.",
         
-        ERROR_ANIMHNDL: "Invalid Animation [handler] parameter.",
-        ERROR_ANIMDISPL: "Invalid Animation [displacements] parameter.",
+        1131: "Invalid [observable] parameter.",
+        1132: "Invalid Event [type] parameter.",
+        1133: "Invalid Event [handler] parameter.",
         
-        ERROR_NS_ATTRSTYLE: "Style Attribute manipulation is not supported",
-        ERROR_NS_COMPSTYLE: "Computed style is not supported in this browser.",
-        ERROR_NS_SELQUERY : "CSS Selector query form DOM is not supported.",
-        ERROR_NS_POSITION: "DOM position comparison is not supported.",
-        ERROR_NS_MARK: "DOM selection not supported."
+        
+        1141: "Invalid [style] Rule parameter.",
+        1142: "Invalid Colorset [type] parameter.",
+        1143: "Invalid [colorValue] integer parameter.",
+        
+        1151: "Invalid Animation [handler] parameter.",
+        1152: "Invalid Animation [displacements] parameter.",
+        
+        2001: "Style Attribute manipulation is not supported",
+        2002: "Computed style is not supported in this browser.",
+        2003 : "CSS Selector query form DOM is not supported.",
+        2004: "DOM position comparison is not supported.",
+        2005: "DOM selection not supported."
         
         
         

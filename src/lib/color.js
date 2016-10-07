@@ -105,11 +105,11 @@ function toColorString(colorValue, type) {
     }
     
     if (!O.contains(list, type)) {
-        throw new Error(STRING.ERROR_COLORSET);
+        throw new Error(STRING[1142]);
     }
     
     if (!O.number(colorValue)) {
-        throw new Error(STRING.ERROR_COLORVALUE);
+        throw new Error(STRING[1143]);
     }
     
     return list[type].toString(colorValue);

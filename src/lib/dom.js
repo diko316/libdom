@@ -9,11 +9,11 @@ var DETECTED = require("./detect.js"),
     ORDER_TYPE_POSTORDER = 2,
     ORDER_TYPE_LEVELORDER = 3,
     
-    ERROR_INVALID_DOM = STRING.ERROR_ELEMENT,
-    ERROR_INVALID_DOM_NODE = STRING.ERROR_NODE,
-    ERROR_INVALID_CSS_SELECTOR = STRING.ERROR_SELECTOR,
-    ERROR_INVALID_CALLBACK = STRING.ERROR_TREE_CALLBACK,
-    ERROR_INVALID_ELEMENT_CONFIG = STRING.ERROR_DOM_CONFIG,
+    ERROR_INVALID_DOM = STRING[1101],
+    ERROR_INVALID_DOM_NODE = STRING[1103],
+    ERROR_INVALID_CSS_SELECTOR = STRING[1111],
+    ERROR_INVALID_CALLBACK = STRING[1112],
+    ERROR_INVALID_ELEMENT_CONFIG = STRING[1121],
     INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 },
     STD_CONTAINS = notSupportedContains,
     EXPORTS = {
@@ -37,16 +37,16 @@ var DOM_INFO;
  * node contains...
  */
 function contains(ancestor, descendant) {
-    var str = STRING,
+    var elementErrorString = STRING[1102],
         is = isDom;
     
     if (!is(ancestor, 1, 9, 11)) {
-        throw new Error(str.ERROR_DOM);
+        throw new Error(elementErrorString);
     }
     
     if (!is(descendant) ||
         (descendant.nodeType in INVALID_DESCENDANT_NODE_TYPES)) {
-        throw new Error(str.ERROR_DOM);
+        throw new Error(elementErrorString);
     }
     
     switch (ancestor.nodeType) {
@@ -63,7 +63,7 @@ function contains(ancestor, descendant) {
 }
 
 function notSupportedContains() {
-    throw new Error(STRING.ERROR_NS_POSITION);
+    throw new Error(STRING[2004]);
 }
 
 function w3cContains(ancestor, descendant) {
@@ -248,7 +248,7 @@ function toArrayQuerySelectorAll(dom, selector) {
 }
 
 function notSupportedQuerySelector() {
-    throw new Error(STRING.ERROR_NS_SELQUERY);
+    throw new Error(STRING[2003]);
 }
 
 function preOrderTraverse(element, callback, context) {

@@ -15,7 +15,7 @@ var OBJECT = require("./object.js"),
     GET_STYLE = styleManipulationNotSupported,
     REMOVE_STYLE = styleManipulationNotSupported,
     
-    ERROR_INVALID_DOM = STRING.ERROR_ELEMENT,
+    ERROR_INVALID_DOM = STRING[1101],
     
     EXPORTS = {
         add: addClass,
@@ -59,7 +59,7 @@ function removeClass(element) {
 }
 
 function computedStyleNotSupported() {
-    throw new Error(STRING.ERROR_NS_COMPSTYLE);
+    throw new Error(STRING[2002]);
 }
 
 function w3cGetCurrentStyle(element) {
@@ -191,7 +191,7 @@ function applyStyle(element, style, value) {
         }
         
         if (!O.type(style, '[object Object]')) {
-            throw new Error(STRING.ERROR_RULE);
+            throw new Error(STRING[1141]);
         }
         
         
@@ -295,7 +295,7 @@ function getCSSUnitValue(value) {
 }
 
 function styleManipulationNotSupported() {
-    throw new Error(STRING.ERROR_NS_ATTRSTYLE);
+    throw new Error(STRING[2001]);
 }
 
 
