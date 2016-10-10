@@ -3,9 +3,11 @@
 var STRING =  require("./string.js"),
     OBJECT = require("./object.js"),
     EASING = require("./easing.js"),
+    SESSIONS = {},
     EXPORTS = {
         interval: 10,
-        each: animate
+        each: animate,
+        has: hasAnimationType
     };
 
 /**
@@ -21,6 +23,7 @@ function animate(handler, displacements, type, duration) {
         string = STRING,
         easing = EASING,
         O = OBJECT,
+        list = SESSIONS,
         defaultInterval = EXPORTS.interval,
         interval = null,
         frame = 0;
@@ -30,6 +33,8 @@ function animate(handler, displacements, type, duration) {
     function stop() {
         if (interval) {
             clearInterval(interval);
+            delete list[interval];
+            delete stop.interval;
             interval = null;
         }
     }
@@ -73,57 +78,98 @@ function animate(handler, displacements, type, duration) {
     type = O.contains(easing, type) ? easing[type] : easing.linear;
     duration = (O.number(duration) && duration > 0 ? duration : 1) * 1000;
     frames = M.max(10, M.round(duration / defaultInterval));
-    displacements = prepareDisplacements(displacements);
+    
     interval = setInterval(callback, defaultInterval);
+    stop.interval = interval;
+    list[interval] = [[],[],[]];
+    displacements = applyDisplacements(interval, displacements);
     
     return stop;
     
 }
 
-
-function prepareDisplacements(displacements) {
-    var O = OBJECT,
+function applyDisplacements(sessionId, displacements) {
+    var list = SESSIONS,
+        O = OBJECT,
         hasOwn = O.contains,
         string = O.string,
         number = O.number,
-        parse = parseFloat,
-        names = [],
-        from = [],
-        to = [],
-        len = 0;
-        
-    var name, value, itemFrom, itemTo;
+        parse = parseFloat;
+    var config, name, value, names, len, from, to, index, itemFrom, itemTo;
     
-    for (name in displacements) {
-        if (hasOwn(displacements, name)) {
-            value = displacements[name];
-            if (value instanceof Array && value.length > 1) {
-                itemFrom = value[0];
-                if (string(itemFrom)) {
-                    itemFrom = parse(itemFrom);
-                }
-                if (!number(itemFrom)) {
-                    continue;
+    if (sessionId in list) {
+        config = list[sessionId];
+        //displacements = config[1];
+        names = config[0];
+        from = config[1];
+        to = config[2];
+        len = names.length - 1;
+        
+        for (name in displacements) {
+            if (hasOwn(displacements, name)) {
+                value = displacements[name];
+                if (value instanceof Array && value.length > 1) {
+                    index = names.indexOf(name);
+                    
+                    // finalize value
+                    itemFrom = value[0];
+                    if (string(itemFrom)) {
+                        itemFrom = parse(itemFrom);
+                    }
+                    if (!number(itemFrom)) {
+                        continue;
+                    }
+                    
+                    itemTo = value[1];
+                    if (string(itemTo)) {
+                        itemTo = parse(itemTo);
+                    }
+                    if (!number(itemTo)) {
+                        continue;
+                    }
+                    
+                    // create
+                    if (index === -1) {
+                        index = ++len;
+                        names[index] = name;
+                    }
+                    
+                    // update
+                    from[index] = itemFrom;
+                    to[index] = itemTo;
                 }
                 
-                itemTo = value[1];
-                if (string(itemTo)) {
-                    itemTo = parse(itemTo);
+                value = displacements[name];
+                if (value instanceof Array && value.length > 1) {
+                    itemFrom = value[0];
+                    if (string(itemFrom)) {
+                        itemFrom = parse(itemFrom);
+                    }
+                    if (!number(itemFrom)) {
+                        continue;
+                    }
+                    
+                    itemTo = value[1];
+                    if (string(itemTo)) {
+                        itemTo = parse(itemTo);
+                    }
+                    if (!number(itemTo)) {
+                        continue;
+                    }
+                    names[len] = name;
+                    from[len] = itemFrom;
+                    to[len++] = itemTo;
                 }
-                if (!number(itemTo)) {
-                    continue;
-                }
-                names[len] = name;
-                from[len] = itemFrom;
-                to[len++] = itemTo;
             }
         }
+        return config;
     }
-    return [names, from, to];
+    return void(0);
 }
 
-
-
+function hasAnimationType(type) {
+    return OBJECT.contains(EASING, type);
+}
 
 module.exports = EXPORTS;
 

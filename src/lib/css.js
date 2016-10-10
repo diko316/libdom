@@ -3,6 +3,7 @@
 var OBJECT = require("./object.js"),
     STRING = require("./string.js"),
     DETECTED = require("./detect.js"),
+    ANIMATION = require("./animation.js"),
     DOM = require("./dom.js"),
     DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/,
     EM_OR_PERCENT_RE = /%|em/,
@@ -10,6 +11,8 @@ var OBJECT = require("./object.js"),
         /^([0-9]+(\.[0-9]+)?)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/,
     WIDTH_RE = /width/i,
     NUMBER_RE = /\d/,
+    CSS_ANIMATE_VALUES_RE =
+        /([wW]idth|[hH]eight|[tT]op|[lL]eft|[rR]ight|[bB]ottom)$/,
     
     SET_STYLE = styleManipulationNotSupported,
     GET_STYLE = styleManipulationNotSupported,
@@ -163,14 +166,14 @@ function getPixelSize(element, style, property, fontSize) {
     }
 }
 
-function applyStyle(element, style, value) {
+function applyStyle(element, style, value, animate) {
     var O = OBJECT,
         isString = O.string,
         isNumber = O.number,
         camelize = STRING.stylize,
         parse = parseCSSText,
         len = arguments.length;
-    var hasOwn, name, type, elementStyle, set, remove;
+    var hasOwn, name, type, elementStyle, set, remove, animateSession;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
@@ -180,10 +183,11 @@ function applyStyle(element, style, value) {
     if (len > 1) {
         
         set = SET_STYLE;
-        
         if (isString(style)) {
             if (len > 2) {
-                set(element, style, value);
+                elementStyle = {};
+                elementStyle[parse(style)] = value;
+                style = elementStyle;
             }
             else {
                 style = parse(style);
@@ -195,10 +199,19 @@ function applyStyle(element, style, value) {
         }
         
         
+        animate = ANIMATION.has(animate);
+        animateSession = element.__animate_session;
+        if (animate || animateSession) {
+            
+            
+            
+            
+        }
         
         remove = REMOVE_STYLE;
         hasOwn = O.contains;
         elementStyle = element.style;
+        
         
         for (name in style) {
             if (hasOwn(style, name)) {
@@ -223,6 +236,16 @@ function applyStyle(element, style, value) {
     return parse(element.style.cssText);
     
 }
+
+// get animate values
+function createAnimateValues(element, values) {
+    var animateStyleRe = CSS_ANIMATE_VALUES_RE,
+        staticValues = [],
+        animateValues = [],
+        units = [];
+    //for ()
+}
+
 
 function parseCSSText(str) {
     var STATE_NAME = 1,
