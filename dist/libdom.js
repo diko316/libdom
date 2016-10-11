@@ -53,29 +53,29 @@
                 addClass: "add",
                 removeClass: "remove"
             });
-            applyIf(EXPORTS, event = __webpack_require__(15), {
+            applyIf(EXPORTS, event = __webpack_require__(13), {
                 on: "on",
                 un: "un",
                 purge: "purge",
                 dispatch: "fire"
             });
-            applyIf(EXPORTS, dimension = __webpack_require__(16), {
+            applyIf(EXPORTS, dimension = __webpack_require__(14), {
                 offset: "offset",
                 size: "size",
                 box: "box",
                 scroll: "scroll",
                 screen: "screen"
             });
-            applyIf(EXPORTS, selection = __webpack_require__(17), {
+            applyIf(EXPORTS, selection = __webpack_require__(15), {
                 highlight: "select",
                 noHighlight: "unselectable",
                 clearHighlight: "clear"
             });
-            applyIf(EXPORTS, __webpack_require__(18), {
+            applyIf(EXPORTS, __webpack_require__(16), {
                 parseColor: "parse",
                 formatColor: "stringify"
             });
-            applyIf(EXPORTS, __webpack_require__(13), {
+            applyIf(EXPORTS, __webpack_require__(23), {
                 eachDisplacement: "each"
             });
             if (detect) {
@@ -603,12 +603,13 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), ANIMATION = __webpack_require__(13), DOM = __webpack_require__(9), DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]+(\.[0-9]+)?)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, CSS_ANIMATE_VALUES_RE = /([wW]idth|[hH]eight|[tT]op|[lL]eft|[rR]ight|[bB]ottom)$/, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, REMOVE_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
+            var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", MARGIN_LEFT = "marginLeft", MARGIN_TOP = "marginTop", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, REMOVE_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
                 add: addClass,
                 remove: removeClass,
                 computedStyle: computedStyleNotSupported,
                 style: applyStyle,
-                unitValue: getCSSUnitValue
+                unitValue: getCSSUnitValue,
+                dimension: getPixelDimensionStyle
             }, SLICE = Array.prototype.slice;
             var CSS_INFO;
             function addClass(element) {
@@ -629,83 +630,9 @@
                 element.className = STRING.removeWord(className, SLICE.call(arguments, 1));
                 return EXPORTS.chain;
             }
-            function computedStyleNotSupported() {
-                throw new Error(STRING[2002]);
-            }
-            function w3cGetCurrentStyle(element) {
-                var camel = STRING.stylize, isString = OBJECT.string;
-                var style, list, c, l, name, values;
-                if (!DOM.is(element, 1)) {
-                    throw new Error(ERROR_INVALID_DOM);
-                }
-                style = global.getComputedStyle(element);
-                values = {};
-                list = SLICE.call(arguments, 1);
-                for (c = -1, l = list.length; l--; ) {
-                    name = list[++c];
-                    if (isString(name)) {
-                        values[name] = style[camel(name)];
-                    }
-                }
-                style = null;
-                return values;
-            }
-            function ieGetCurrentStyle(element) {
-                var dimensionRe = DIMENSION_RE, isString = OBJECT.string, camel = STRING.stylize, pixelSize = getPixelSize;
-                var style, list, c, l, name, value, access, fontSize, values;
-                if (!DOM.is(element, 1)) {
-                    throw new Error(ERROR_INVALID_DOM);
-                }
-                style = element.currentStyle;
-                fontSize = false;
-                values = {};
-                list = SLICE.call(arguments, 1);
-                for (c = -1, l = list.length; l--; ) {
-                    name = list[++c];
-                    if (isString(name)) {
-                        access = camel(name);
-                        if (dimensionRe.test(access) && style[access] !== "auto") {
-                            if (fontSize === false) {
-                                fontSize = pixelSize(element, style, "fontSize", null);
-                            }
-                            value = pixelSize(element, style, access, fontSize) + "px";
-                        } else if (access === "float") {
-                            value = style.styleFloat;
-                        } else {
-                            value = style[access];
-                        }
-                        values[name] = value;
-                    }
-                }
-                style = value = null;
-                return values;
-            }
-            function getPixelSize(element, style, property, fontSize) {
-                var sizeWithSuffix = style[property], size = parseFloat(sizeWithSuffix), suffix = sizeWithSuffix.split(NUMBER_RE)[0];
-                var parent;
-                switch (suffix) {
-                  case "in":
-                    return size * 96;
-
-                  case "pt":
-                    return size * 96 / 72;
-
-                  case "em":
-                  case "%":
-                    if (!fontSize) {
-                        parent = element.parentElement;
-                        fontSize = EM_OR_PERCENT_RE.test(suffix) && parent ? getPixelSize(parent, parent.currentStyle, "fontSize", null) : 16;
-                        parent = null;
-                    }
-                    return suffix === "em" ? size * fontSize : size / 100 * (property == "fontSize" ? fontSize : WIDTH_RE.test(property) ? element.clientWidth : element.clientHeight);
-
-                  default:
-                    return size;
-                }
-            }
-            function applyStyle(element, style, value, animate) {
-                var O = OBJECT, isString = O.string, isNumber = O.number, camelize = STRING.stylize, parse = parseCSSText, len = arguments.length;
-                var hasOwn, name, type, elementStyle, set, remove, animateSession;
+            function applyStyle(element, style, value) {
+                var O = OBJECT, isString = O.string, isNumber = O.number, parse = parseCSSText, camelize = STRING.stylize, len = arguments.length;
+                var hasOwn, name, type, elementStyle, set, remove;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
                 }
@@ -714,7 +641,7 @@
                     if (isString(style)) {
                         if (len > 2) {
                             elementStyle = {};
-                            elementStyle[parse(style)] = value;
+                            elementStyle[style] = value;
                             style = elementStyle;
                         } else {
                             style = parse(style);
@@ -723,9 +650,6 @@
                     if (!O.type(style, "[object Object]")) {
                         throw new Error(STRING[1141]);
                     }
-                    animate = ANIMATION.has(animate);
-                    animateSession = element.__animate_session;
-                    if (animate || animateSession) {}
                     remove = REMOVE_STYLE;
                     hasOwn = O.contains;
                     elementStyle = element.style;
@@ -745,8 +669,18 @@
                 }
                 return parse(element.style.cssText);
             }
-            function createAnimateValues(element, values) {
-                var animateStyleRe = CSS_ANIMATE_VALUES_RE, staticValues = [], animateValues = [], units = [];
+            function getPixelDimensionStyle(element, style) {
+                var toFloat = parseFloat, ptop = PADDING_TOP, pbottom = PADDING_BOTTOM, pleft = PADDING_LEFT, pright = PADDING_RIGHT, mleft = MARGIN_LEFT, mtop = MARGIN_TOP, position = "position", fontSize = "fontSize";
+                if (!style) {
+                    style = EXPORTS.computedStyle(element, fontSize, position, mleft, mtop, ptop, pbottom, pleft, pright);
+                }
+                return {
+                    position: style[position],
+                    left: element[OFFSET_LEFT] - (toFloat(style[mleft]) || 0),
+                    top: element[OFFSET_TOP] - (toFloat(style[mtop]) || 0),
+                    width: element.clientWidth - (toFloat(style[pleft]) || 0) - (toFloat(style[pright]) || 0),
+                    height: element.clientHeight - (toFloat(style[pleft]) || 0) - (toFloat(style[pright]) || 0)
+                };
             }
             function parseCSSText(str) {
                 var STATE_NAME = 1, STATE_VALUE = 2, state = STATE_NAME, c = -1, l = str.length, il = 0, name = [], result = {};
@@ -802,6 +736,116 @@
             function styleManipulationNotSupported() {
                 throw new Error(STRING[2001]);
             }
+            function ieGetPixelSize(element, style, property, fontSize) {
+                var sizeWithSuffix = style[property], size = parseFloat(sizeWithSuffix), suffix = sizeWithSuffix.split(NUMBER_RE)[0];
+                var parent;
+                switch (suffix) {
+                  case "in":
+                    return size * 96;
+
+                  case "pt":
+                    return size * 96 / 72;
+
+                  case "em":
+                  case "%":
+                    if (!fontSize) {
+                        parent = element.parentElement;
+                        fontSize = EM_OR_PERCENT_RE.test(suffix) && parent ? ieGetPixelSize(parent, parent.currentStyle, "fontSize", null) : 16;
+                        parent = null;
+                    }
+                    return suffix === "em" ? size * fontSize : size / 100 * (property == "fontSize" ? fontSize : WIDTH_RE.test(property) ? element.clientWidth : element.clientHeight);
+
+                  default:
+                    return size;
+                }
+            }
+            function computedStyleNotSupported() {
+                throw new Error(STRING[2002]);
+            }
+            function w3cGetCurrentStyle(element) {
+                var camel = STRING.stylize, isString = OBJECT.string;
+                var style, list, c, l, name, values;
+                if (!DOM.is(element, 1)) {
+                    throw new Error(ERROR_INVALID_DOM);
+                }
+                style = global.getComputedStyle(element);
+                values = {};
+                list = SLICE.call(arguments, 1);
+                for (c = -1, l = list.length; l--; ) {
+                    name = list[++c];
+                    if (isString(name)) {
+                        values[name] = style[camel(name)];
+                    }
+                }
+                style = null;
+                return values;
+            }
+            function ieGetCurrentStyle(element) {
+                var dimensionRe = DIMENSION_RE, isString = OBJECT.string, camel = STRING.stylize, toFloat = parseFloat, pixelSize = ieGetPixelSize, ptop = PADDING_TOP, pleft = PADDING_LEFT, pbottom = PADDING_BOTTOM, pright = PADDING_RIGHT;
+                var style, list, c, l, name, value, access, fontSize, values, dimension, parent, parentStyle, parentFontSize, parentWidth, parentHeight, isDimension, top, left, width, height, elementStyle;
+                if (!DOM.is(element, 1)) {
+                    throw new Error(ERROR_INVALID_DOM);
+                }
+                style = element.currentStyle;
+                fontSize = false;
+                dimension = false;
+                values = {};
+                list = SLICE.call(arguments, 1);
+                for (c = -1, l = list.length; l--; ) {
+                    name = list[++c];
+                    if (isString(name)) {
+                        access = camel(name);
+                        isDimension = false;
+                        switch (access) {
+                          case "width":
+                          case "height":
+                          case "top":
+                          case "left":
+                          case "bottom":
+                          case "right":
+                            isDimension = true;
+                            if (fontSize === false) {
+                                fontSize = pixelSize(element, style, "fontSize", null);
+                            }
+                            if (!dimension) {
+                                parent = element.offsetParent;
+                                parentStyle = parent.style;
+                                parentFontSize = pixelSize(parent, parentStyle, "fontSize", null);
+                                parentWidth = parent.clientWidth - (toFloat(pixelSize(parent, parentStyle, pleft, parentFontSize)) || 0) - (toFloat(pixelSize(parent, parentStyle, pright, parentFontSize)) || 0);
+                                parentHeight = parent.clientHeight - (toFloat(pixelSize(parent, parentStyle, ptop, parentFontSize)) || 0) - (toFloat(pixelSize(parent, parentStyle, pbottom, parentFontSize)) || 0);
+                                left = element[OFFSET_LEFT] - (toFloat(pixelSize(element, style, MARGIN_LEFT, fontSize)) || 0);
+                                top = element[OFFSET_TOP] - (toFloat(pixelSize(element, style, MARGIN_TOP, fontSize)) || 0);
+                                width = element.clientWidth - (toFloat(pixelSize(element, style, pleft, fontSize)) || 0) - (toFloat(pixelSize(element, style, pright, fontSize)) || 0);
+                                height = element.clientHeight - (toFloat(pixelSize(element, style, ptop, fontSize)) || 0) - (toFloat(pixelSize(element, style, pbottom, fontSize)) || 0);
+                                elementStyle = element.style;
+                                dimension = {
+                                    left: left,
+                                    right: parentWidth - left - width,
+                                    top: top,
+                                    bottom: parentHeight - top - height,
+                                    width: width,
+                                    height: height
+                                };
+                            }
+                        }
+                        if (isDimension) {
+                            value = dimension[access];
+                        } else if (dimensionRe.test(access) && style[access] !== "auto") {
+                            if (fontSize === false) {
+                                fontSize = pixelSize(element, style, "fontSize", null);
+                            }
+                            value = pixelSize(element, style, access, fontSize) + "px";
+                        } else if (access === "float") {
+                            value = style.styleFloat;
+                        } else {
+                            value = style[access];
+                        }
+                        values[name] = value;
+                    }
+                }
+                style = value = null;
+                return values;
+            }
             function w3cSetStyleValue(style, name, value) {
                 style.setProperty(name, value, style.getPropertyPriority(name) || "");
             }
@@ -837,261 +881,6 @@
         }).call(exports, function() {
             return this;
         }());
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), EASING = __webpack_require__(14), SESSIONS = {}, EXPORTS = {
-            interval: 10,
-            each: animate,
-            has: hasAnimationType
-        };
-        function animate(handler, displacements, type, duration) {
-            var M = Math, string = STRING, easing = EASING, O = OBJECT, list = SESSIONS, defaultInterval = EXPORTS.interval, interval = null, frame = 0;
-            var frames;
-            function stop() {
-                if (interval) {
-                    clearInterval(interval);
-                    delete list[interval];
-                    delete stop.interval;
-                    interval = null;
-                }
-            }
-            function callback() {
-                var specs = displacements, names = specs[0], from = specs[1], to = specs[2], total = frames, current = ++frame, len = names.length, result = {}, eased = type(current, 0, 1, total), last = current === total;
-                var start;
-                for (;len--; ) {
-                    start = from[len];
-                    result[names[len]] = (to[len] - start) * eased + start;
-                }
-                handler(result, last);
-                if (last) {
-                    stop();
-                }
-            }
-            if (!(handler instanceof Function)) {
-                throw new Error(string[1151]);
-            }
-            if (!O.type(displacements, "[object Object]")) {
-                throw new Error(string[1152]);
-            }
-            type = O.contains(easing, type) ? easing[type] : easing.linear;
-            duration = (O.number(duration) && duration > 0 ? duration : 1) * 1e3;
-            frames = M.max(10, M.round(duration / defaultInterval));
-            interval = setInterval(callback, defaultInterval);
-            stop.interval = interval;
-            list[interval] = [ [], [], [] ];
-            displacements = applyDisplacements(interval, displacements);
-            return stop;
-        }
-        function applyDisplacements(sessionId, displacements) {
-            var list = SESSIONS, O = OBJECT, hasOwn = O.contains, string = O.string, number = O.number, parse = parseFloat;
-            var config, name, value, names, len, from, to, index, itemFrom, itemTo;
-            if (sessionId in list) {
-                config = list[sessionId];
-                names = config[0];
-                from = config[1];
-                to = config[2];
-                len = names.length - 1;
-                for (name in displacements) {
-                    if (hasOwn(displacements, name)) {
-                        value = displacements[name];
-                        if (value instanceof Array && value.length > 1) {
-                            index = names.indexOf(name);
-                            itemFrom = value[0];
-                            if (string(itemFrom)) {
-                                itemFrom = parse(itemFrom);
-                            }
-                            if (!number(itemFrom)) {
-                                continue;
-                            }
-                            itemTo = value[1];
-                            if (string(itemTo)) {
-                                itemTo = parse(itemTo);
-                            }
-                            if (!number(itemTo)) {
-                                continue;
-                            }
-                            if (index === -1) {
-                                index = ++len;
-                                names[index] = name;
-                            }
-                            from[index] = itemFrom;
-                            to[index] = itemTo;
-                        }
-                        value = displacements[name];
-                        if (value instanceof Array && value.length > 1) {
-                            itemFrom = value[0];
-                            if (string(itemFrom)) {
-                                itemFrom = parse(itemFrom);
-                            }
-                            if (!number(itemFrom)) {
-                                continue;
-                            }
-                            itemTo = value[1];
-                            if (string(itemTo)) {
-                                itemTo = parse(itemTo);
-                            }
-                            if (!number(itemTo)) {
-                                continue;
-                            }
-                            names[len] = name;
-                            from[len] = itemFrom;
-                            to[len++] = itemTo;
-                        }
-                    }
-                }
-                return config;
-            }
-            return void 0;
-        }
-        function hasAnimationType(type) {
-            return OBJECT.contains(EASING, type);
-        }
-        module.exports = EXPORTS;
-    }, function(module, exports) {
-        "use strict";
-        var EXPORTS = {
-            linear: linearTween,
-            easeIn: easeInQuad,
-            easeInQuad: easeInQuad,
-            easeOut: easeOutQuad,
-            easeOutQuad: easeOutQuad,
-            easeInOut: easeInOutQuad,
-            easeInOutQuad: easeInOutQuad,
-            easeInCubic: easeInCubic,
-            easeOutCubic: easeOutCubic,
-            easeInOutCubic: easeInOutCubic,
-            easeInQuart: easeInQuart,
-            easeOutQuart: easeOutQuart,
-            easeInOutQuart: easeInOutQuart,
-            easeInQuint: easeInQuint,
-            easeOutQuint: easeOutQuint,
-            easeInOutQuint: easeInOutQuint,
-            easeInSine: easeInSine,
-            easeOutSine: easeOutSine,
-            easeInOutSine: easeInOutSine,
-            easeInExpo: easeInExpo,
-            easeOutExpo: easeOutExpo,
-            easeInOutExpo: easeInOutExpo,
-            easeInCirc: easeInCirc,
-            easeOutCirc: easeOutCirc,
-            easeInOutCirc: easeInOutCirc
-        };
-        function linearTween(currentFrame, startValue, endValue, totalFrames) {
-            return endValue * currentFrame / totalFrames + startValue;
-        }
-        function easeInQuad(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames;
-            return endValue * currentFrame * currentFrame + startValue;
-        }
-        function easeOutQuad(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames;
-            return -endValue * currentFrame * (currentFrame - 2) + startValue;
-        }
-        function easeInOutQuad(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames / 2;
-            if (currentFrame < 1) {
-                return endValue / 2 * currentFrame * currentFrame + startValue;
-            }
-            currentFrame--;
-            return -endValue / 2 * (currentFrame * (currentFrame - 2) - 1) + startValue;
-        }
-        function easeInCubic(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames;
-            return endValue * currentFrame * currentFrame * currentFrame + startValue;
-        }
-        function easeOutCubic(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames;
-            currentFrame--;
-            return endValue * (currentFrame * currentFrame * currentFrame + 1) + startValue;
-        }
-        function easeInOutCubic(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames / 2;
-            if (currentFrame < 1) {
-                return endValue / 2 * currentFrame * currentFrame * currentFrame + startValue;
-            }
-            currentFrame -= 2;
-            return endValue / 2 * (currentFrame * currentFrame * currentFrame + 2) + startValue;
-        }
-        function easeInQuart(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames;
-            return endValue * currentFrame * currentFrame * currentFrame * currentFrame + startValue;
-        }
-        function easeOutQuart(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames;
-            currentFrame--;
-            return -endValue * (currentFrame * currentFrame * currentFrame * currentFrame - 1) + startValue;
-        }
-        function easeInOutQuart(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames / 2;
-            if (currentFrame < 1) {
-                return endValue / 2 * currentFrame * currentFrame * currentFrame * currentFrame + startValue;
-            }
-            currentFrame -= 2;
-            return -endValue / 2 * (currentFrame * currentFrame * currentFrame * currentFrame - 2) + startValue;
-        }
-        function easeInQuint(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames;
-            return endValue * currentFrame * currentFrame * currentFrame * currentFrame * currentFrame + startValue;
-        }
-        function easeOutQuint(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames;
-            currentFrame--;
-            return endValue * (currentFrame * currentFrame * currentFrame * currentFrame * currentFrame + 1) + startValue;
-        }
-        function easeInOutQuint(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames / 2;
-            if (currentFrame < 1) {
-                return endValue / 2 * currentFrame * currentFrame * currentFrame * currentFrame * currentFrame + startValue;
-            }
-            currentFrame -= 2;
-            return endValue / 2 * (currentFrame * currentFrame * currentFrame * currentFrame * currentFrame + 2) + startValue;
-        }
-        function easeInSine(currentFrame, startValue, endValue, totalFrames) {
-            var M = Math;
-            return -endValue * M.cos(currentFrame / totalFrames * (M.PI / 2)) + endValue + startValue;
-        }
-        function easeOutSine(currentFrame, startValue, endValue, totalFrames) {
-            var M = Math;
-            return endValue * M.sin(currentFrame / totalFrames * (M.PI / 2)) + startValue;
-        }
-        function easeInOutSine(currentFrame, startValue, endValue, totalFrames) {
-            var M = Math;
-            return -endValue / 2 * (M.cos(M.PI * currentFrame / totalFrames) - 1) + startValue;
-        }
-        function easeInExpo(currentFrame, startValue, endValue, totalFrames) {
-            return endValue * Math.pow(2, 10 * (currentFrame / totalFrames - 1)) + startValue;
-        }
-        function easeOutExpo(currentFrame, startValue, endValue, totalFrames) {
-            return endValue * (-Math.pow(2, -10 * currentFrame / totalFrames) + 1) + startValue;
-        }
-        function easeInOutExpo(currentFrame, startValue, endValue, totalFrames) {
-            var M = Math;
-            currentFrame /= totalFrames / 2;
-            if (currentFrame < 1) {
-                return endValue / 2 * M.pow(2, 10 * (currentFrame - 1)) + startValue;
-            }
-            currentFrame--;
-            return endValue / 2 * (-M.pow(2, -10 * currentFrame) + 2) + startValue;
-        }
-        function easeInCirc(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames;
-            return -endValue * (Math.sqrt(1 - currentFrame * currentFrame) - 1) + startValue;
-        }
-        function easeOutCirc(currentFrame, startValue, endValue, totalFrames) {
-            currentFrame /= totalFrames;
-            currentFrame--;
-            return endValue * Math.sqrt(1 - currentFrame * currentFrame) + startValue;
-        }
-        function easeInOutCirc(currentFrame, startValue, endValue, totalFrames) {
-            var M = Math;
-            currentFrame /= totalFrames / 2;
-            if (currentFrame < 1) {
-                return -endValue / 2 * (M.sqrt(1 - currentFrame * currentFrame) - 1) + startValue;
-            }
-            currentFrame -= 2;
-            return endValue / 2 * (M.sqrt(1 - currentFrame * currentFrame) + 1) + startValue;
-        }
-        module.exports = EXPORTS;
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
@@ -1377,7 +1166,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DOM = __webpack_require__(9), CSS = __webpack_require__(12), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", PADDING_BOTTOM = "paddingBottom", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
+            var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DOM = __webpack_require__(9), CSS = __webpack_require__(12), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
                 offset: offset,
                 size: size,
                 box: box,
@@ -1406,8 +1195,8 @@
                 return isViewable(element) === PAGE_VIEW ? pageBox(element).slice(2, 4) : getSize(element);
             }
             function box(element, x, y, width, height) {
-                var css = CSS, toFloat = parseFloat, cssValue = css.unitValue, NUMBER = "number", ptop = PADDING_TOP, pleft = PADDING_LEFT, pright = PADDING_RIGHT, pbottom = PADDING_BOTTOM, setter = arguments.length > 1, viewmode = isViewable(element);
-                var hasLeft, hasTop, hasWidth, hasHeight, parent, hasPosition, hasSize, diff, style, applyStyle;
+                var css = CSS, cssValue = css.unitValue, NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
+                var hasLeft, hasTop, hasWidth, hasHeight, parent, hasPosition, hasSize, diff, applyStyle, currentDimension;
                 if (!setter && viewmode === PAGE_VIEW) {
                     return pageBox(element);
                 }
@@ -1422,9 +1211,9 @@
                         y = 1 in y ? x[1] : null;
                         x = x[0];
                     }
-                    style = css.computedStyle(element, "position", MARGIN_LEFT, MARGIN_TOP, ptop, pleft, pright, pbottom);
+                    currentDimension = css.dimension(element);
                     hasLeft = hasTop = hasWidth = hasHeight = hasPosition = hasSize = false;
-                    switch (style.position) {
+                    switch (currentDimension.position) {
                       case "relative":
                       case "absolute":
                       case "fixed":
@@ -1450,18 +1239,18 @@
                         if (hasPosition) {
                             diff = getOffset(element);
                             if (hasLeft) {
-                                applyStyle.left = typeof x === NUMBER ? element[OFFSET_LEFT] - (toFloat(style[MARGIN_LEFT]) || 0) + (x - diff[0]) + "px" : x;
+                                applyStyle.left = typeof x === NUMBER ? currentDimension.left + (x - diff[0]) + "px" : x;
                             }
                             if (hasTop) {
-                                applyStyle.top = typeof y === NUMBER ? element[OFFSET_TOP] - (toFloat(style[MARGIN_TOP]) || 0) + (y - diff[1]) + "px" : y;
+                                applyStyle.top = typeof y === NUMBER ? currentDimension.top + (y - diff[1]) + "px" : y;
                             }
                         }
                         if (hasSize) {
                             if (hasWidth) {
-                                applyStyle.width = typeof width === NUMBER ? element.clientWidth - (toFloat(style[pleft]) || 0) - (toFloat(style[pright]) || 0) + (width - element[OFFSET_WIDTH]) + "px" : width;
+                                applyStyle.width = typeof width === NUMBER ? currentDimension.width + (width - element[OFFSET_WIDTH]) + "px" : width;
                             }
                             if (hasHeight) {
-                                applyStyle.height = typeof height === NUMBER ? element.clientHeight - (toFloat(style[ptop]) || 0) - (toFloat(style[pleft]) || 0) + (height - element[OFFSET_HEIGHT]) + "px" : height;
+                                applyStyle.height = typeof height === NUMBER ? currentDimension.height + (height - element[OFFSET_HEIGHT]) + "px" : height;
                             }
                         }
                         css.style(element, applyStyle);
@@ -1670,7 +1459,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(11), DOM = __webpack_require__(9), DIMENSION = __webpack_require__(16), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
+            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(11), DOM = __webpack_require__(9), DIMENSION = __webpack_require__(14), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
                 select: select,
                 clear: clear,
                 unselectable: unselectable
@@ -1770,12 +1559,12 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), FORMAT = __webpack_require__(19), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, TO_RGBA = {
-            rgb: __webpack_require__(20),
-            rgba: __webpack_require__(21),
-            hsl: __webpack_require__(22),
-            hsla: __webpack_require__(23),
-            hex: __webpack_require__(24)
+        var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), FORMAT = __webpack_require__(17), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, TO_RGBA = {
+            rgb: __webpack_require__(18),
+            rgba: __webpack_require__(19),
+            hsl: __webpack_require__(20),
+            hsla: __webpack_require__(21),
+            hex: __webpack_require__(22)
         }, EXPORTS = {
             parse: itemizeString,
             stringify: toColorString
@@ -1825,7 +1614,7 @@
                 }
                 return processor.toInteger.apply(processor, returnItems);
             }
-            return 0;
+            return null;
         }
         function toColorString(colorValue, type) {
             var list = TO_RGBA, O = OBJECT;
@@ -1850,7 +1639,7 @@
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var RGBA = __webpack_require__(21), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA), toArray = EXPORTS.toArray;
+        var RGBA = __webpack_require__(19), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA), toArray = EXPORTS.toArray;
         function toString(integer) {
             var values = toArray(integer);
             values.splice(3, 1);
@@ -1859,7 +1648,7 @@
         EXPORTS.toString = toString;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var FORMAT = __webpack_require__(19), PIGMENT_SIZE = 255;
+        var FORMAT = __webpack_require__(17), PIGMENT_SIZE = 255;
         function toArray(integer) {
             var size = PIGMENT_SIZE;
             return [ integer & size, integer >> 8 & size, integer >> 16 & size, integer >> 24 & size ];
@@ -1901,7 +1690,7 @@
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var HSLA = __webpack_require__(22), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, HSLA), toArray = EXPORTS.toArray;
+        var HSLA = __webpack_require__(20), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, HSLA), toArray = EXPORTS.toArray;
         function toString(integer) {
             var values = toArray(integer);
             values[1] += "%";
@@ -1912,7 +1701,7 @@
         EXPORTS.toString = toString;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var FORMAT = __webpack_require__(19), RGBA = __webpack_require__(21);
+        var FORMAT = __webpack_require__(17), RGBA = __webpack_require__(19);
         function hue2rgb(p, q, t) {
             t = (t + 1) % 1;
             switch (true) {
@@ -2000,7 +1789,7 @@
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var RGBA = __webpack_require__(21), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA);
+        var RGBA = __webpack_require__(19), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA);
         function toHex(integer) {
             var hex = integer.toString(16);
             return hex.length < 1 ? "0" + hex : hex;
@@ -2010,6 +1799,261 @@
             return "#" + values.join("");
         }
         EXPORTS.toString = toString;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), EASING = __webpack_require__(24), SESSIONS = {}, EXPORTS = {
+            interval: 10,
+            each: animate,
+            has: hasAnimationType
+        };
+        function animate(handler, displacements, type, duration) {
+            var M = Math, string = STRING, easing = EASING, O = OBJECT, list = SESSIONS, defaultInterval = EXPORTS.interval, interval = null, frame = 0;
+            var frames;
+            function stop() {
+                if (interval) {
+                    clearInterval(interval);
+                    delete list[interval];
+                    delete stop.interval;
+                    interval = null;
+                }
+            }
+            function callback() {
+                var specs = displacements, names = specs[0], from = specs[1], to = specs[2], total = frames, current = ++frame, len = names.length, result = {}, eased = type(current, 0, 1, total), last = current === total;
+                var start;
+                for (;len--; ) {
+                    start = from[len];
+                    result[names[len]] = (to[len] - start) * eased + start;
+                }
+                handler(result, last);
+                if (last) {
+                    stop();
+                }
+            }
+            if (!(handler instanceof Function)) {
+                throw new Error(string[1151]);
+            }
+            if (!O.type(displacements, "[object Object]")) {
+                throw new Error(string[1152]);
+            }
+            type = O.contains(easing, type) ? easing[type] : easing.linear;
+            duration = (O.number(duration) && duration > 0 ? duration : 1) * 1e3;
+            frames = M.max(10, M.round(duration / defaultInterval));
+            interval = setInterval(callback, defaultInterval);
+            stop.interval = interval;
+            list[interval] = [ [], [], [] ];
+            displacements = applyDisplacements(interval, displacements);
+            return stop;
+        }
+        function applyDisplacements(sessionId, displacements) {
+            var list = SESSIONS, O = OBJECT, hasOwn = O.contains, string = O.string, number = O.number, parse = parseFloat;
+            var config, name, value, names, len, from, to, index, itemFrom, itemTo;
+            if (sessionId in list) {
+                config = list[sessionId];
+                names = config[0];
+                from = config[1];
+                to = config[2];
+                len = names.length - 1;
+                for (name in displacements) {
+                    if (hasOwn(displacements, name)) {
+                        value = displacements[name];
+                        if (value instanceof Array && value.length > 1) {
+                            index = names.indexOf(name);
+                            itemFrom = value[0];
+                            if (string(itemFrom)) {
+                                itemFrom = parse(itemFrom);
+                            }
+                            if (!number(itemFrom)) {
+                                continue;
+                            }
+                            itemTo = value[1];
+                            if (string(itemTo)) {
+                                itemTo = parse(itemTo);
+                            }
+                            if (!number(itemTo)) {
+                                continue;
+                            }
+                            if (index === -1) {
+                                index = ++len;
+                                names[index] = name;
+                            }
+                            from[index] = itemFrom;
+                            to[index] = itemTo;
+                        }
+                        value = displacements[name];
+                        if (value instanceof Array && value.length > 1) {
+                            itemFrom = value[0];
+                            if (string(itemFrom)) {
+                                itemFrom = parse(itemFrom);
+                            }
+                            if (!number(itemFrom)) {
+                                continue;
+                            }
+                            itemTo = value[1];
+                            if (string(itemTo)) {
+                                itemTo = parse(itemTo);
+                            }
+                            if (!number(itemTo)) {
+                                continue;
+                            }
+                            names[len] = name;
+                            from[len] = itemFrom;
+                            to[len++] = itemTo;
+                        }
+                    }
+                }
+                return config;
+            }
+            return void 0;
+        }
+        function hasAnimationType(type) {
+            return OBJECT.contains(EASING, type);
+        }
+        module.exports = EXPORTS;
+    }, function(module, exports) {
+        "use strict";
+        var EXPORTS = {
+            linear: linearTween,
+            easeIn: easeInQuad,
+            easeInQuad: easeInQuad,
+            easeOut: easeOutQuad,
+            easeOutQuad: easeOutQuad,
+            easeInOut: easeInOutQuad,
+            easeInOutQuad: easeInOutQuad,
+            easeInCubic: easeInCubic,
+            easeOutCubic: easeOutCubic,
+            easeInOutCubic: easeInOutCubic,
+            easeInQuart: easeInQuart,
+            easeOutQuart: easeOutQuart,
+            easeInOutQuart: easeInOutQuart,
+            easeInQuint: easeInQuint,
+            easeOutQuint: easeOutQuint,
+            easeInOutQuint: easeInOutQuint,
+            easeInSine: easeInSine,
+            easeOutSine: easeOutSine,
+            easeInOutSine: easeInOutSine,
+            easeInExpo: easeInExpo,
+            easeOutExpo: easeOutExpo,
+            easeInOutExpo: easeInOutExpo,
+            easeInCirc: easeInCirc,
+            easeOutCirc: easeOutCirc,
+            easeInOutCirc: easeInOutCirc
+        };
+        function linearTween(currentFrame, startValue, endValue, totalFrames) {
+            return endValue * currentFrame / totalFrames + startValue;
+        }
+        function easeInQuad(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            return endValue * currentFrame * currentFrame + startValue;
+        }
+        function easeOutQuad(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            return -endValue * currentFrame * (currentFrame - 2) + startValue;
+        }
+        function easeInOutQuad(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames / 2;
+            if (currentFrame < 1) {
+                return endValue / 2 * currentFrame * currentFrame + startValue;
+            }
+            currentFrame--;
+            return -endValue / 2 * (currentFrame * (currentFrame - 2) - 1) + startValue;
+        }
+        function easeInCubic(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            return endValue * currentFrame * currentFrame * currentFrame + startValue;
+        }
+        function easeOutCubic(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            currentFrame--;
+            return endValue * (currentFrame * currentFrame * currentFrame + 1) + startValue;
+        }
+        function easeInOutCubic(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames / 2;
+            if (currentFrame < 1) {
+                return endValue / 2 * currentFrame * currentFrame * currentFrame + startValue;
+            }
+            currentFrame -= 2;
+            return endValue / 2 * (currentFrame * currentFrame * currentFrame + 2) + startValue;
+        }
+        function easeInQuart(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            return endValue * currentFrame * currentFrame * currentFrame * currentFrame + startValue;
+        }
+        function easeOutQuart(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            currentFrame--;
+            return -endValue * (currentFrame * currentFrame * currentFrame * currentFrame - 1) + startValue;
+        }
+        function easeInOutQuart(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames / 2;
+            if (currentFrame < 1) {
+                return endValue / 2 * currentFrame * currentFrame * currentFrame * currentFrame + startValue;
+            }
+            currentFrame -= 2;
+            return -endValue / 2 * (currentFrame * currentFrame * currentFrame * currentFrame - 2) + startValue;
+        }
+        function easeInQuint(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            return endValue * currentFrame * currentFrame * currentFrame * currentFrame * currentFrame + startValue;
+        }
+        function easeOutQuint(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            currentFrame--;
+            return endValue * (currentFrame * currentFrame * currentFrame * currentFrame * currentFrame + 1) + startValue;
+        }
+        function easeInOutQuint(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames / 2;
+            if (currentFrame < 1) {
+                return endValue / 2 * currentFrame * currentFrame * currentFrame * currentFrame * currentFrame + startValue;
+            }
+            currentFrame -= 2;
+            return endValue / 2 * (currentFrame * currentFrame * currentFrame * currentFrame * currentFrame + 2) + startValue;
+        }
+        function easeInSine(currentFrame, startValue, endValue, totalFrames) {
+            var M = Math;
+            return -endValue * M.cos(currentFrame / totalFrames * (M.PI / 2)) + endValue + startValue;
+        }
+        function easeOutSine(currentFrame, startValue, endValue, totalFrames) {
+            var M = Math;
+            return endValue * M.sin(currentFrame / totalFrames * (M.PI / 2)) + startValue;
+        }
+        function easeInOutSine(currentFrame, startValue, endValue, totalFrames) {
+            var M = Math;
+            return -endValue / 2 * (M.cos(M.PI * currentFrame / totalFrames) - 1) + startValue;
+        }
+        function easeInExpo(currentFrame, startValue, endValue, totalFrames) {
+            return endValue * Math.pow(2, 10 * (currentFrame / totalFrames - 1)) + startValue;
+        }
+        function easeOutExpo(currentFrame, startValue, endValue, totalFrames) {
+            return endValue * (-Math.pow(2, -10 * currentFrame / totalFrames) + 1) + startValue;
+        }
+        function easeInOutExpo(currentFrame, startValue, endValue, totalFrames) {
+            var M = Math;
+            currentFrame /= totalFrames / 2;
+            if (currentFrame < 1) {
+                return endValue / 2 * M.pow(2, 10 * (currentFrame - 1)) + startValue;
+            }
+            currentFrame--;
+            return endValue / 2 * (-M.pow(2, -10 * currentFrame) + 2) + startValue;
+        }
+        function easeInCirc(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            return -endValue * (Math.sqrt(1 - currentFrame * currentFrame) - 1) + startValue;
+        }
+        function easeOutCirc(currentFrame, startValue, endValue, totalFrames) {
+            currentFrame /= totalFrames;
+            currentFrame--;
+            return endValue * Math.sqrt(1 - currentFrame * currentFrame) + startValue;
+        }
+        function easeInOutCirc(currentFrame, startValue, endValue, totalFrames) {
+            var M = Math;
+            currentFrame /= totalFrames / 2;
+            if (currentFrame < 1) {
+                return -endValue / 2 * (M.sqrt(1 - currentFrame * currentFrame) - 1) + startValue;
+            }
+            currentFrame -= 2;
+            return endValue / 2 * (M.sqrt(1 - currentFrame * currentFrame) + 1) + startValue;
+        }
+        module.exports = EXPORTS;
     } ]);
 });
 

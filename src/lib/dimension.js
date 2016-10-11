@@ -20,10 +20,10 @@ var DETECTED = require("./detect.js"),
     SCROLL_TOP = 'scrollTop',
     SCROLL_LEFT = 'scrollLeft',
     
-    PADDING_TOP = 'paddingTop',
-    PADDING_LEFT = 'paddingLeft',
-    PADDING_RIGHT = 'paddingRight',
-    PADDING_BOTTOM = 'paddingBottom',
+    //PADDING_TOP = 'paddingTop',
+    //PADDING_LEFT = 'paddingLeft',
+    //PADDING_RIGHT = 'paddingRight',
+    //PADDING_BOTTOM = 'paddingBottom',
     
     DEFAULTVIEW = null,
     ELEMENT_VIEW = 1,
@@ -84,20 +84,14 @@ function size(element, width, height) {
 
 function box(element, x, y, width, height) {
     var css = CSS,
-        toFloat = parseFloat,
         cssValue = css.unitValue,
         NUMBER = 'number',
-        ptop = PADDING_TOP,
-        pleft = PADDING_LEFT,
-        pright = PADDING_RIGHT,
-        pbottom = PADDING_BOTTOM,
         setter = arguments.length > 1,
         viewmode = isViewable(element);
         
     var hasLeft, hasTop, hasWidth, hasHeight, parent,
         hasPosition, hasSize,
-        diff, style,
-        applyStyle;
+        diff, applyStyle, currentDimension;
     
     // try page box
     if (!setter && viewmode === PAGE_VIEW) {
@@ -120,17 +114,10 @@ function box(element, x, y, width, height) {
             x = x[0];
         }
         
-        style = css.computedStyle(element,
-                        'position',
-                        MARGIN_LEFT,
-                        MARGIN_TOP,
-                        ptop,
-                        pleft,
-                        pright,
-                        pbottom);
+        currentDimension = css.dimension(element);
         
         hasLeft = hasTop = hasWidth = hasHeight = hasPosition = hasSize = false;
-        switch (style.position) {
+        switch (currentDimension.position) {
         case 'relative':
         case 'absolute':
         case 'fixed':
@@ -161,8 +148,7 @@ function box(element, x, y, width, height) {
                 
                 if (hasLeft) {
                     applyStyle.left = typeof x === NUMBER ? (
-                                        element[OFFSET_LEFT] -
-                                        (toFloat(style[MARGIN_LEFT]) || 0) +
+                                        currentDimension.left +
                                         (x - diff[0])
                                     ) + 'px' :
                                     x;
@@ -171,8 +157,7 @@ function box(element, x, y, width, height) {
                 
                 if (hasTop) {
                     applyStyle.top = typeof y === NUMBER ? (
-                                        element[OFFSET_TOP] -
-                                        (toFloat(style[MARGIN_TOP]) || 0) +
+                                        currentDimension.top +
                                         (y - diff[1])
                                     ) + 'px' :
                                     y;
@@ -185,9 +170,7 @@ function box(element, x, y, width, height) {
                 
                 if (hasWidth) {
                     applyStyle.width = typeof width === NUMBER ? (
-                                        element.clientWidth -
-                                        (toFloat(style[pleft]) || 0) -
-                                        (toFloat(style[pright]) || 0) +
+                                        currentDimension.width +
                                         (width - element[OFFSET_WIDTH])
                                     ) + 'px' :
                                     width;
@@ -195,9 +178,7 @@ function box(element, x, y, width, height) {
                 
                 if (hasHeight) {
                     applyStyle.height = typeof height === NUMBER ? (
-                                        element.clientHeight -
-                                        (toFloat(style[ptop]) || 0) -
-                                        (toFloat(style[pleft]) || 0) +
+                                        currentDimension.height +
                                         (height - element[OFFSET_HEIGHT])
                                     ) + 'px' :
                                     height;

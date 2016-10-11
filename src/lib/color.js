@@ -92,7 +92,7 @@ function itemizeString(str) {
         // add type
         return processor.toInteger.apply(processor, returnItems);
     }
-    return 0;
+    return null;
 }
 
 
