@@ -20,6 +20,8 @@ var DETECTED = require("./detect.js"),
     SCROLL_TOP = 'scrollTop',
     SCROLL_LEFT = 'scrollLeft',
     
+    BOUNDING_RECT = 'getBoundingClientRect',
+    
     //PADDING_TOP = 'paddingTop',
     //PADDING_LEFT = 'paddingLeft',
     //PADDING_RIGHT = 'paddingRight',
@@ -85,6 +87,7 @@ function size(element, width, height) {
 function box(element, x, y, width, height) {
     var css = CSS,
         cssValue = css.unitValue,
+        parse = parseFloat,
         NUMBER = 'number',
         setter = arguments.length > 1,
         viewmode = isViewable(element);
@@ -114,7 +117,12 @@ function box(element, x, y, width, height) {
             x = x[0];
         }
         
-        currentDimension = css.dimension(element);
+        currentDimension = css.computedStyle(element,
+                                        'position',
+                                        'top',
+                                        'left',
+                                        'width',
+                                        'height');
         
         hasLeft = hasTop = hasWidth = hasHeight = hasPosition = hasSize = false;
         switch (currentDimension.position) {
@@ -148,7 +156,7 @@ function box(element, x, y, width, height) {
                 
                 if (hasLeft) {
                     applyStyle.left = typeof x === NUMBER ? (
-                                        currentDimension.left +
+                                        parse(currentDimension.left || 0) +
                                         (x - diff[0])
                                     ) + 'px' :
                                     x;
@@ -157,7 +165,7 @@ function box(element, x, y, width, height) {
                 
                 if (hasTop) {
                     applyStyle.top = typeof y === NUMBER ? (
-                                        currentDimension.top +
+                                        parse(currentDimension.top || 0) +
                                         (y - diff[1])
                                     ) + 'px' :
                                     y;
@@ -170,7 +178,7 @@ function box(element, x, y, width, height) {
                 
                 if (hasWidth) {
                     applyStyle.width = typeof width === NUMBER ? (
-                                        currentDimension.width +
+                                        parse(currentDimension.width || 0) +
                                         (width - element[OFFSET_WIDTH])
                                     ) + 'px' :
                                     width;
@@ -178,7 +186,7 @@ function box(element, x, y, width, height) {
                 
                 if (hasHeight) {
                     applyStyle.height = typeof height === NUMBER ? (
-                                        currentDimension.height +
+                                        parse(currentDimension.height || 0) +
                                         (height - element[OFFSET_HEIGHT])
                                     ) + 'px' :
                                     height;
@@ -354,7 +362,7 @@ function ieScreenSize(window) {
  * Element Box
  */
 function rectBox(element) {
-    var rect = element.getBoundingClientRect(),
+    var rect = element[BOUNDING_RECT](),
         box = rectOffset(element, rect),
         size = rectSize(element, rect);
     
@@ -386,7 +394,7 @@ function manualBox(element) {
  */
 function rectSize(element, boundingRect) {
     var M = Math,
-        rect = boundingRect || element.getBoundingClientRect(),
+        rect = boundingRect || element[BOUNDING_RECT](),
         size = [
             M.max(0, rect.width || 0),
             M.max(0, rect.height || 0)];
@@ -406,7 +414,7 @@ function manualSize(element) {
  */
 function rectOffset(element, boundingRect) {
     var scrolled = getPageScroll(element.ownerDocument[DEFAULTVIEW]),
-        rect = boundingRect || element.getBoundingClientRect(),
+        rect = boundingRect || element[BOUNDING_RECT](),
         factor = DIMENSION_INFO.zoomfactor ?
                     getZoomFactor(global.window.document[IE_PAGE_STAT_ACCESS]) :
                     1,
@@ -498,7 +506,7 @@ function getZoomFactor(window) {
         body = window.document.body;
         
         // rect is only in physical pixel size in IE before version 8 
-        rect = body.getBoundingClientRect();
+        rect = body[BOUNDING_RECT]();
 
         // the zoom level is always an integer percent value
         factor = Math.round(
@@ -557,9 +565,9 @@ if (DIMENSION_INFO) {
                         w3cScreenSize :
                         ieScreenSize;
 
-    boundingRect = DIMENSION_INFO.rectmethod && 'getBoundingClientRect';
-    getOffset = boundingRect && (!IEVERSION || IEVERSION > 8) ?
-                        rectOffset : manualOffset;
+    boundingRect = DIMENSION_INFO.rectmethod && BOUNDING_RECT;
+
+    getOffset = boundingRect ? rectOffset : manualOffset;
                         
     getSize = boundingRect ? rectSize : manualSize;
     getBox = boundingRect ? rectBox : manualBox;

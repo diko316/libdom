@@ -51,7 +51,9 @@
             });
             applyIf(EXPORTS, css = __webpack_require__(12), {
                 addClass: "add",
-                removeClass: "remove"
+                removeClass: "remove",
+                computedStyle: "computedStyle",
+                stylize: "style"
             });
             applyIf(EXPORTS, event = __webpack_require__(13), {
                 on: "on",
@@ -161,7 +163,9 @@
                 ieStyle: !!ROOT.currentStyle,
                 setattribute: !!STYLE.setAttribute,
                 setproperty: !!STYLE.setProperty,
-                transition: false
+                transition: false,
+                opacity: typeof STYLE.opacity !== "undefined",
+                filterOpacity: typeof STYLE.filter !== "undefined"
             };
             for (l = TRANSITION_SUPPORT.length; l--; ) {
                 name = TRANSITION_SUPPORT[l];
@@ -549,10 +553,11 @@
             1151: "Invalid Animation [handler] parameter.",
             1152: "Invalid Animation [displacements] parameter.",
             2001: "Style Attribute manipulation is not supported",
-            2002: "Computed style is not supported in this browser.",
+            2002: "Computed style is not supported by this browser.",
             2003: "CSS Selector query form DOM is not supported.",
             2004: "DOM position comparison is not supported.",
-            2005: "DOM selection not supported."
+            2005: "DOM selection not supported.",
+            2006: "CSS Opacity is not supported by this browser"
         };
         function camelize(str) {
             return str.replace(CAMEL_RE, onCamelizeMatch);
@@ -603,13 +608,13 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", MARGIN_LEFT = "marginLeft", MARGIN_TOP = "marginTop", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, REMOVE_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
+            var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", CLIENT_WIDTH = "clientWidth", CLIENT_HEIGHT = "clientHeight", DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i, IE_ALPHA_OPACITY_TEMPLATE = "alpha(opacity=$opacity)", IE_ALPHA_OPACITY_TEMPLATE_RE = /\$opacity/, GET_OPACITY = opacityNotSupported, SET_OPACITY = opacityNotSupported, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, REMOVE_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
                 add: addClass,
                 remove: removeClass,
                 computedStyle: computedStyleNotSupported,
                 style: applyStyle,
                 unitValue: getCSSUnitValue,
-                dimension: getPixelDimensionStyle
+                styleOpacity: opacityNotSupported
             }, SLICE = Array.prototype.slice;
             var CSS_INFO;
             function addClass(element) {
@@ -669,19 +674,6 @@
                 }
                 return parse(element.style.cssText);
             }
-            function getPixelDimensionStyle(element, style) {
-                var toFloat = parseFloat, ptop = PADDING_TOP, pbottom = PADDING_BOTTOM, pleft = PADDING_LEFT, pright = PADDING_RIGHT, mleft = MARGIN_LEFT, mtop = MARGIN_TOP, position = "position", fontSize = "fontSize";
-                if (!style) {
-                    style = EXPORTS.computedStyle(element, fontSize, position, mleft, mtop, ptop, pbottom, pleft, pright);
-                }
-                return {
-                    position: style[position],
-                    left: element[OFFSET_LEFT] - (toFloat(style[mleft]) || 0),
-                    top: element[OFFSET_TOP] - (toFloat(style[mtop]) || 0),
-                    width: element.clientWidth - (toFloat(style[pleft]) || 0) - (toFloat(style[pright]) || 0),
-                    height: element.clientHeight - (toFloat(style[pleft]) || 0) - (toFloat(style[pright]) || 0)
-                };
-            }
             function parseCSSText(str) {
                 var STATE_NAME = 1, STATE_VALUE = 2, state = STATE_NAME, c = -1, l = str.length, il = 0, name = [], result = {};
                 var chr, value;
@@ -736,6 +728,86 @@
             function styleManipulationNotSupported() {
                 throw new Error(STRING[2001]);
             }
+            function computedStyleNotSupported() {
+                throw new Error(STRING[2002]);
+            }
+            function w3cGetCurrentStyle(element) {
+                var camel = STRING.stylize, isString = OBJECT.string;
+                var style, list, c, l, name, value, values, access;
+                if (!DOM.is(element, 1)) {
+                    throw new Error(ERROR_INVALID_DOM);
+                }
+                style = global.getComputedStyle(element);
+                values = {};
+                list = SLICE.call(arguments, 1);
+                for (c = -1, l = list.length; l--; ) {
+                    name = list[++c];
+                    if (isString(name)) {
+                        access = camel(name);
+                        switch (access) {
+                          case "opacity":
+                            value = GET_OPACITY(style);
+                            break;
+
+                          default:
+                            value = style[access];
+                        }
+                        values[name] = value;
+                    }
+                }
+                style = null;
+                return values;
+            }
+            function ieGetCurrentStyle(element) {
+                var dimensionRe = DIMENSION_RE, isString = OBJECT.string, camel = STRING.stylize, pixelSize = ieGetPixelSize;
+                var style, list, c, l, name, value, access, fontSize, values, dimension;
+                if (!DOM.is(element, 1)) {
+                    throw new Error(ERROR_INVALID_DOM);
+                }
+                style = element.currentStyle;
+                fontSize = false;
+                dimension = false;
+                values = {};
+                list = SLICE.call(arguments, 1);
+                for (c = -1, l = list.length; l--; ) {
+                    name = list[++c];
+                    if (isString(name)) {
+                        access = camel(name);
+                        switch (access) {
+                          case "opacity":
+                            value = GET_OPACITY(style);
+                            break;
+
+                          case "width":
+                          case "height":
+                          case "top":
+                          case "left":
+                          case "bottom":
+                          case "right":
+                            if (!dimension) {
+                                dimension = ieGetPositionStyle(element, style);
+                            }
+                            value = dimension[access] + "px";
+                            break;
+
+                          default:
+                            if (dimensionRe.test(access) && style[access] !== "auto") {
+                                if (fontSize === false) {
+                                    fontSize = pixelSize(element, style, "fontSize", null);
+                                }
+                                value = pixelSize(element, style, access, fontSize) + "px";
+                            } else if (access === "float") {
+                                value = style.styleFloat;
+                            } else {
+                                value = style[access];
+                            }
+                        }
+                        values[name] = value;
+                    }
+                }
+                style = value = null;
+                return values;
+            }
             function ieGetPixelSize(element, style, property, fontSize) {
                 var sizeWithSuffix = style[property], size = parseFloat(sizeWithSuffix), suffix = sizeWithSuffix.split(NUMBER_RE)[0];
                 var parent;
@@ -753,101 +825,82 @@
                         fontSize = EM_OR_PERCENT_RE.test(suffix) && parent ? ieGetPixelSize(parent, parent.currentStyle, "fontSize", null) : 16;
                         parent = null;
                     }
-                    return suffix === "em" ? size * fontSize : size / 100 * (property == "fontSize" ? fontSize : WIDTH_RE.test(property) ? element.clientWidth : element.clientHeight);
+                    return suffix === "em" ? size * fontSize : size / 100 * (property == "fontSize" ? fontSize : WIDTH_RE.test(property) ? element[CLIENT_WIDTH] : element[CLIENT_HEIGHT]);
 
                   default:
                     return size;
                 }
             }
-            function computedStyleNotSupported() {
-                throw new Error(STRING[2002]);
+            function ieGetPositionStyle(element, style) {
+                var parent = element.offsetParent, parentStyle = parent.currentStyle, parse = parseFloat, ptop = PADDING_TOP, pleft = PADDING_LEFT, pbottom = PADDING_BOTTOM, pright = PADDING_RIGHT, cwidth = CLIENT_WIDTH, cheight = CLIENT_HEIGHT, left = element[OFFSET_LEFT], top = element[OFFSET_TOP], right = parent[cwidth] - element[OFFSET_WIDTH], bottom = parent[cheight] - element[OFFSET_HEIGHT], width = element[cwidth], height = element[cheight];
+                switch (style.position) {
+                  case "relative":
+                    left -= parse(parentStyle[pleft]) || 0;
+                    top -= parse(parentStyle[ptop]) || 0;
+
+                  case "absolute":
+                  case "fixed":
+                    left -= parse(parentStyle.borderLeftWidth) || 0;
+                    top -= parse(parentStyle.borderTopWidth) || 0;
+                }
+                right -= left;
+                bottom -= top;
+                width -= (parse(style[pleft]) || 0) + (parse(style[pright]) || 0);
+                height -= (parse(style[ptop]) || 0) + (parse(style[pbottom]) || 0);
+                parent = parentStyle = style = null;
+                return {
+                    left: left,
+                    top: top,
+                    right: right,
+                    bottom: bottom,
+                    width: width,
+                    height: height
+                };
             }
-            function w3cGetCurrentStyle(element) {
-                var camel = STRING.stylize, isString = OBJECT.string;
-                var style, list, c, l, name, values;
-                if (!DOM.is(element, 1)) {
-                    throw new Error(ERROR_INVALID_DOM);
-                }
-                style = global.getComputedStyle(element);
-                values = {};
-                list = SLICE.call(arguments, 1);
-                for (c = -1, l = list.length; l--; ) {
-                    name = list[++c];
-                    if (isString(name)) {
-                        values[name] = style[camel(name)];
-                    }
-                }
-                style = null;
-                return values;
+            function opacityNotSupported() {
+                throw new Error(STRING[2006]);
             }
-            function ieGetCurrentStyle(element) {
-                var dimensionRe = DIMENSION_RE, isString = OBJECT.string, camel = STRING.stylize, toFloat = parseFloat, pixelSize = ieGetPixelSize, ptop = PADDING_TOP, pleft = PADDING_LEFT, pbottom = PADDING_BOTTOM, pright = PADDING_RIGHT;
-                var style, list, c, l, name, value, access, fontSize, values, dimension, parent, parentStyle, parentFontSize, parentWidth, parentHeight, isDimension, top, left, width, height, elementStyle;
-                if (!DOM.is(element, 1)) {
-                    throw new Error(ERROR_INVALID_DOM);
+            function ieGetOpacity(style) {
+                var M = Math, O = OBJECT, opacityRe = IE_ALPHA_OPACITY_RE, filter = style.filter;
+                var m;
+                if (O.string(filter) && opacityRe.test(filter)) {
+                    m = filter.match(opacityRe);
+                    m = parseFloat(m[1]);
+                    return M.max(1, M.min(100, O.number(m) ? m : 100)) / 100;
                 }
-                style = element.currentStyle;
-                fontSize = false;
-                dimension = false;
-                values = {};
-                list = SLICE.call(arguments, 1);
-                for (c = -1, l = list.length; l--; ) {
-                    name = list[++c];
-                    if (isString(name)) {
-                        access = camel(name);
-                        isDimension = false;
-                        switch (access) {
-                          case "width":
-                          case "height":
-                          case "top":
-                          case "left":
-                          case "bottom":
-                          case "right":
-                            isDimension = true;
-                            if (fontSize === false) {
-                                fontSize = pixelSize(element, style, "fontSize", null);
-                            }
-                            if (!dimension) {
-                                parent = element.offsetParent;
-                                parentStyle = parent.style;
-                                parentFontSize = pixelSize(parent, parentStyle, "fontSize", null);
-                                parentWidth = parent.clientWidth - (toFloat(pixelSize(parent, parentStyle, pleft, parentFontSize)) || 0) - (toFloat(pixelSize(parent, parentStyle, pright, parentFontSize)) || 0);
-                                parentHeight = parent.clientHeight - (toFloat(pixelSize(parent, parentStyle, ptop, parentFontSize)) || 0) - (toFloat(pixelSize(parent, parentStyle, pbottom, parentFontSize)) || 0);
-                                left = element[OFFSET_LEFT] - (toFloat(pixelSize(element, style, MARGIN_LEFT, fontSize)) || 0);
-                                top = element[OFFSET_TOP] - (toFloat(pixelSize(element, style, MARGIN_TOP, fontSize)) || 0);
-                                width = element.clientWidth - (toFloat(pixelSize(element, style, pleft, fontSize)) || 0) - (toFloat(pixelSize(element, style, pright, fontSize)) || 0);
-                                height = element.clientHeight - (toFloat(pixelSize(element, style, ptop, fontSize)) || 0) - (toFloat(pixelSize(element, style, pbottom, fontSize)) || 0);
-                                elementStyle = element.style;
-                                dimension = {
-                                    left: left,
-                                    right: parentWidth - left - width,
-                                    top: top,
-                                    bottom: parentHeight - top - height,
-                                    width: width,
-                                    height: height
-                                };
-                            }
-                        }
-                        if (isDimension) {
-                            value = dimension[access];
-                        } else if (dimensionRe.test(access) && style[access] !== "auto") {
-                            if (fontSize === false) {
-                                fontSize = pixelSize(element, style, "fontSize", null);
-                            }
-                            value = pixelSize(element, style, access, fontSize) + "px";
-                        } else if (access === "float") {
-                            value = style.styleFloat;
-                        } else {
-                            value = style[access];
-                        }
-                        values[name] = value;
-                    }
+                return 1;
+            }
+            function ieSetOpacity(style, opacity) {
+                var M = Math, O = OBJECT;
+                if (O.string(opacity)) {
+                    opacity = parseFloat(opacity);
                 }
-                style = value = null;
-                return values;
+                if (O.number(opacity)) {
+                    style.filter = IE_ALPHA_OPACITY_TEMPLATE.replace(IE_ALPHA_OPACITY_TEMPLATE_RE, M.min(100, M.max(0, M.round(opacity * 100))).toString(10));
+                }
+            }
+            function w3cGetOpacity(style) {
+                var opacity = parseFloat(style.opacity);
+                return OBJECT.number(opacity) ? opacity : 1;
+            }
+            function w3cSetOpacity(style, opacity) {
+                var M = Math, O = OBJECT;
+                if (O.string(opacity)) {
+                    opacity = parseFloat(opacity);
+                }
+                if (O.number(opacity)) {
+                    style.opacity = M.min(1, M.max(0, opacity)).toFixed(2);
+                }
             }
             function w3cSetStyleValue(style, name, value) {
-                style.setProperty(name, value, style.getPropertyPriority(name) || "");
+                switch (name) {
+                  case "opacity":
+                    SET_OPACITY(style, value);
+                    break;
+
+                  default:
+                    style.setProperty(name, value, style.getPropertyPriority(name) || "");
+                }
             }
             function w3cGetStyleValue(style, name) {
                 return style.getPropertyValue(name);
@@ -856,7 +909,14 @@
                 style.removeProperty(name);
             }
             function ieSetStyleValue(style, name, value) {
-                style.setAttribute(name, value);
+                switch (name) {
+                  case "opacity":
+                    SET_OPACITY(style, value);
+                    break;
+
+                  default:
+                    style.setAttribute(name, value);
+                }
             }
             function ieGetStyleValue(style, name) {
                 return style.getAttribute(name);
@@ -875,6 +935,15 @@
                     SET_STYLE = w3cSetStyleValue;
                     GET_STYLE = w3cGetStyleValue;
                     REMOVE_STYLE = w3cRemoveStyleValue;
+                }
+                console.log("opacity? ", CSS_INFO.opacity);
+                console.log("filter opacity? ", CSS_INFO.filterOpacity);
+                if (CSS_INFO.opacity) {
+                    GET_OPACITY = w3cGetOpacity;
+                    SET_OPACITY = w3cSetOpacity;
+                } else if (CSS_INFO.filterOpacity) {
+                    GET_OPACITY = ieGetOpacity;
+                    SET_OPACITY = ieSetOpacity;
                 }
             }
             module.exports = EXPORTS.chain = EXPORTS;
@@ -1166,7 +1235,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DOM = __webpack_require__(9), CSS = __webpack_require__(12), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
+            var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DOM = __webpack_require__(9), CSS = __webpack_require__(12), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", BOUNDING_RECT = "getBoundingClientRect", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
                 offset: offset,
                 size: size,
                 box: box,
@@ -1195,7 +1264,7 @@
                 return isViewable(element) === PAGE_VIEW ? pageBox(element).slice(2, 4) : getSize(element);
             }
             function box(element, x, y, width, height) {
-                var css = CSS, cssValue = css.unitValue, NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
+                var css = CSS, cssValue = css.unitValue, parse = parseFloat, NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
                 var hasLeft, hasTop, hasWidth, hasHeight, parent, hasPosition, hasSize, diff, applyStyle, currentDimension;
                 if (!setter && viewmode === PAGE_VIEW) {
                     return pageBox(element);
@@ -1211,7 +1280,7 @@
                         y = 1 in y ? x[1] : null;
                         x = x[0];
                     }
-                    currentDimension = css.dimension(element);
+                    currentDimension = css.computedStyle(element, "position", "top", "left", "width", "height");
                     hasLeft = hasTop = hasWidth = hasHeight = hasPosition = hasSize = false;
                     switch (currentDimension.position) {
                       case "relative":
@@ -1239,18 +1308,18 @@
                         if (hasPosition) {
                             diff = getOffset(element);
                             if (hasLeft) {
-                                applyStyle.left = typeof x === NUMBER ? currentDimension.left + (x - diff[0]) + "px" : x;
+                                applyStyle.left = typeof x === NUMBER ? parse(currentDimension.left || 0) + (x - diff[0]) + "px" : x;
                             }
                             if (hasTop) {
-                                applyStyle.top = typeof y === NUMBER ? currentDimension.top + (y - diff[1]) + "px" : y;
+                                applyStyle.top = typeof y === NUMBER ? parse(currentDimension.top || 0) + (y - diff[1]) + "px" : y;
                             }
                         }
                         if (hasSize) {
                             if (hasWidth) {
-                                applyStyle.width = typeof width === NUMBER ? currentDimension.width + (width - element[OFFSET_WIDTH]) + "px" : width;
+                                applyStyle.width = typeof width === NUMBER ? parse(currentDimension.width || 0) + (width - element[OFFSET_WIDTH]) + "px" : width;
                             }
                             if (hasHeight) {
-                                applyStyle.height = typeof height === NUMBER ? currentDimension.height + (height - element[OFFSET_HEIGHT]) + "px" : height;
+                                applyStyle.height = typeof height === NUMBER ? parse(currentDimension.height || 0) + (height - element[OFFSET_HEIGHT]) + "px" : height;
                             }
                         }
                         css.style(element, applyStyle);
@@ -1347,7 +1416,7 @@
                 return size;
             }
             function rectBox(element) {
-                var rect = element.getBoundingClientRect(), box = rectOffset(element, rect), size = rectSize(element, rect);
+                var rect = element[BOUNDING_RECT](), box = rectOffset(element, rect), size = rectSize(element, rect);
                 box[2] = size[0];
                 box[3] = size[1];
                 box[4] = rect.right;
@@ -1364,7 +1433,7 @@
                 return box;
             }
             function rectSize(element, boundingRect) {
-                var M = Math, rect = boundingRect || element.getBoundingClientRect(), size = [ M.max(0, rect.width || 0), M.max(0, rect.height || 0) ];
+                var M = Math, rect = boundingRect || element[BOUNDING_RECT](), size = [ M.max(0, rect.width || 0), M.max(0, rect.height || 0) ];
                 rect = null;
                 return size;
             }
@@ -1373,7 +1442,7 @@
                 return [ M.max(0, element[OFFSET_WIDTH] || 0), M.max(0, element[OFFSET_HEIGHT] || 0) ];
             }
             function rectOffset(element, boundingRect) {
-                var scrolled = getPageScroll(element.ownerDocument[DEFAULTVIEW]), rect = boundingRect || element.getBoundingClientRect(), factor = DIMENSION_INFO.zoomfactor ? getZoomFactor(global.window.document[IE_PAGE_STAT_ACCESS]) : 1, offset = [ rect.left * factor + scrolled[0], rect.top * factor + scrolled[1] ];
+                var scrolled = getPageScroll(element.ownerDocument[DEFAULTVIEW]), rect = boundingRect || element[BOUNDING_RECT](), factor = DIMENSION_INFO.zoomfactor ? getZoomFactor(global.window.document[IE_PAGE_STAT_ACCESS]) : 1, offset = [ rect.left * factor + scrolled[0], rect.top * factor + scrolled[1] ];
                 rect = null;
                 return offset;
             }
@@ -1415,7 +1484,7 @@
                 var rect, body;
                 if (boundingRect) {
                     body = window.document.body;
-                    rect = body.getBoundingClientRect();
+                    rect = body[BOUNDING_RECT]();
                     factor = Math.round((rect.right - rect.left / body[OFFSET_WIDTH]) * 100) / 100;
                 }
                 body = null;
@@ -1447,8 +1516,8 @@
                 IEVERSION = DETECTED.browser.ieVersion;
                 getPageScroll = DIMENSION_INFO.pagescroll ? w3cPageScrollOffset : iePageScrollOffset;
                 getScreenSize = DIMENSION_INFO.screensize ? w3cScreenSize : ieScreenSize;
-                boundingRect = DIMENSION_INFO.rectmethod && "getBoundingClientRect";
-                getOffset = boundingRect && (!IEVERSION || IEVERSION > 8) ? rectOffset : manualOffset;
+                boundingRect = DIMENSION_INFO.rectmethod && BOUNDING_RECT;
+                getOffset = boundingRect ? rectOffset : manualOffset;
                 getSize = boundingRect ? rectSize : manualSize;
                 getBox = boundingRect ? rectBox : manualBox;
             }
@@ -1818,7 +1887,7 @@
                 }
             }
             function callback() {
-                var specs = displacements, names = specs[0], from = specs[1], to = specs[2], total = frames, current = ++frame, len = names.length, result = {}, eased = type(current, 0, 1, total), last = current === total;
+                var specs = displacements, names = specs[1], from = specs[2], to = specs[3], total = frames, current = ++frame, len = names.length, result = {}, eased = type(current, 0, 1, total), last = current === total;
                 var start;
                 for (;len--; ) {
                     start = from[len];
@@ -1840,24 +1909,25 @@
             frames = M.max(10, M.round(duration / defaultInterval));
             interval = setInterval(callback, defaultInterval);
             stop.interval = interval;
-            list[interval] = [ [], [], [] ];
+            list[interval] = [ {}, [], [], [] ];
             displacements = applyDisplacements(interval, displacements);
             return stop;
         }
         function applyDisplacements(sessionId, displacements) {
             var list = SESSIONS, O = OBJECT, hasOwn = O.contains, string = O.string, number = O.number, parse = parseFloat;
-            var config, name, value, names, len, from, to, index, itemFrom, itemTo;
+            var config, name, value, names, len, from, to, index, idx, itemFrom, itemTo;
             if (sessionId in list) {
                 config = list[sessionId];
-                names = config[0];
-                from = config[1];
-                to = config[2];
+                index = config[0];
+                names = config[1];
+                from = config[2];
+                to = config[3];
                 len = names.length - 1;
                 for (name in displacements) {
                     if (hasOwn(displacements, name)) {
                         value = displacements[name];
                         if (value instanceof Array && value.length > 1) {
-                            index = names.indexOf(name);
+                            idx = hasOwn(index, name) ? index[name] : -1;
                             itemFrom = value[0];
                             if (string(itemFrom)) {
                                 itemFrom = parse(itemFrom);
@@ -1872,12 +1942,12 @@
                             if (!number(itemTo)) {
                                 continue;
                             }
-                            if (index === -1) {
-                                index = ++len;
-                                names[index] = name;
+                            if (idx === -1) {
+                                index[name] = idx = ++len;
+                                names[idx] = name;
                             }
-                            from[index] = itemFrom;
-                            to[index] = itemTo;
+                            from[idx] = itemFrom;
+                            to[idx] = itemTo;
                         }
                         value = displacements[name];
                         if (value instanceof Array && value.length > 1) {

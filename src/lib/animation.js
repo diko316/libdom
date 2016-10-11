@@ -41,9 +41,9 @@ function animate(handler, displacements, type, duration) {
     
     function callback() {
         var specs = displacements,
-            names = specs[0],
-            from = specs[1],
-            to = specs[2],
+            names = specs[1],
+            from = specs[2],
+            to = specs[3],
             total = frames,
             current = ++frame,
             len = names.length,
@@ -81,7 +81,7 @@ function animate(handler, displacements, type, duration) {
     
     interval = setInterval(callback, defaultInterval);
     stop.interval = interval;
-    list[interval] = [[],[],[]];
+    list[interval] = [{}, [], [], []];
     displacements = applyDisplacements(interval, displacements);
     
     return stop;
@@ -95,21 +95,23 @@ function applyDisplacements(sessionId, displacements) {
         string = O.string,
         number = O.number,
         parse = parseFloat;
-    var config, name, value, names, len, from, to, index, itemFrom, itemTo;
+    var config, name, value, names, len, from, to, index, idx, itemFrom, itemTo;
     
     if (sessionId in list) {
         config = list[sessionId];
         //displacements = config[1];
-        names = config[0];
-        from = config[1];
-        to = config[2];
+        index = config[0];
+        names = config[1];
+        from = config[2];
+        to = config[3];
         len = names.length - 1;
         
         for (name in displacements) {
             if (hasOwn(displacements, name)) {
                 value = displacements[name];
                 if (value instanceof Array && value.length > 1) {
-                    index = names.indexOf(name);
+                    idx = hasOwn(index, name) ?
+                                index[name] : -1;
                     
                     // finalize value
                     itemFrom = value[0];
@@ -129,14 +131,14 @@ function applyDisplacements(sessionId, displacements) {
                     }
                     
                     // create
-                    if (index === -1) {
-                        index = ++len;
-                        names[index] = name;
+                    if (idx === -1) {
+                        index[name] = idx = ++len;
+                        names[idx] = name;
                     }
                     
                     // update
-                    from[index] = itemFrom;
-                    to[index] = itemTo;
+                    from[idx] = itemFrom;
+                    to[idx] = itemTo;
                 }
                 
                 value = displacements[name];
@@ -170,6 +172,9 @@ function applyDisplacements(sessionId, displacements) {
 function hasAnimationType(type) {
     return OBJECT.contains(EASING, type);
 }
+
+
+
 
 module.exports = EXPORTS;
 

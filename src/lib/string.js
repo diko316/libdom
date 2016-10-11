@@ -33,10 +33,11 @@ var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
         1152: "Invalid Animation [displacements] parameter.",
         
         2001: "Style Attribute manipulation is not supported",
-        2002: "Computed style is not supported in this browser.",
+        2002: "Computed style is not supported by this browser.",
         2003 : "CSS Selector query form DOM is not supported.",
         2004: "DOM position comparison is not supported.",
-        2005: "DOM selection not supported."
+        2005: "DOM selection not supported.",
+        2006: "CSS Opacity is not supported by this browser"
         
         
         

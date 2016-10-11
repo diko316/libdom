@@ -17,7 +17,9 @@ module.exports = EXPORTS = {
     ieStyle: !!ROOT.currentStyle,
     setattribute: !!STYLE.setAttribute,
     setproperty: !!STYLE.setProperty,
-    transition: false
+    transition: false,
+    opacity: typeof STYLE.opacity !== 'undefined',
+    filterOpacity: typeof STYLE.filter !== 'undefined'
 };
 
 // detect transition
@@ -28,5 +30,6 @@ for (l = TRANSITION_SUPPORT.length; l--;) {
         break;
     }
 }
+
 
 WINDOW = ROOT = STYLE = null;

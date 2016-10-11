@@ -46,7 +46,9 @@ applyIf(EXPORTS,
         css = require("./lib/css.js"),
         {
             'addClass': 'add',
-            'removeClass': 'remove'
+            'removeClass': 'remove',
+            'computedStyle': 'computedStyle',
+            'stylize': 'style'
         });
 
 
