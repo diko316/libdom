@@ -4,6 +4,7 @@ var OBJECT = require("./object.js"),
     STRING = require("./string.js"),
     DETECTED = require("./detect.js"),
     DOM = require("./dom.js"),
+    COLOR = require("./color.js"),
     
     PADDING_BOTTOM = 'paddingBottom',
     PADDING_TOP = 'paddingTop',
@@ -18,6 +19,7 @@ var OBJECT = require("./object.js"),
     CLIENT_WIDTH = 'clientWidth',
     CLIENT_HEIGHT = 'clientHeight',
     
+    COLOR_RE = /[Cc]olor$/,
     
     DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/,
     EM_OR_PERCENT_RE = /%|em/,
@@ -35,7 +37,6 @@ var OBJECT = require("./object.js"),
     
     SET_STYLE = styleManipulationNotSupported,
     GET_STYLE = styleManipulationNotSupported,
-    REMOVE_STYLE = styleManipulationNotSupported,
     
     ERROR_INVALID_DOM = STRING[1101],
     
@@ -81,18 +82,20 @@ function removeClass(element) {
     return EXPORTS.chain;
 }
 
-
-
-
-
 function applyStyle(element, style, value) {
     var O = OBJECT,
-        isString = O.string,
-        isNumber = O.number,
+        string = O.string,
+        number = O.number,
+        hasOwn = O.contains,
+        color = COLOR,
+        set = SET_STYLE,
+        setOpacity = SET_OPACITY,
+        colorRe = COLOR_RE,
         parse = parseCSSText,
         camelize = STRING.stylize,
         len = arguments.length;
-    var hasOwn, name, type, elementStyle, set, remove;
+        
+    var name, elementStyle, isOpacity, isNumber, primaryColorUnit;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
@@ -101,8 +104,7 @@ function applyStyle(element, style, value) {
     // setter
     if (len > 1) {
         
-        set = SET_STYLE;
-        if (isString(style)) {
+        if (string(style)) {
             if (len > 2) {
                 elementStyle = {};
                 elementStyle[style] = value;
@@ -117,21 +119,38 @@ function applyStyle(element, style, value) {
             throw new Error(STRING[1141]);
         }
         
-        remove = REMOVE_STYLE;
-        hasOwn = O.contains;
+        primaryColorUnit = CSS_INFO.alphaColor ? 'rgba' : 'hex';
         elementStyle = element.style;
 
         for (name in style) {
             if (hasOwn(style, name)) {
                 value = style[name];
-                type = typeof value;
-                // remove
-                if (value === null || type === 'undefined')  {
-                    remove(elementStyle, camelize(name), value);
+                name = camelize(name);
+                isOpacity = name === 'opacity';
+                
+                isNumber = number(value);
+                
+                // for removal of property
+                if (!isNumber && !string(value)) {
+                    value = null;
+                    if (isOpacity) {
+                        set(elementStyle, 'filter', value);
+                    }
                 }
-                else if (isString(value) || isNumber(value)) {
-                    set(elementStyle, camelize(name), value);
+                // set opacity
+                else if (isOpacity) {
+                    setOpacity(elementStyle, value);
+                    continue;
                 }
+                // set color
+                else if (colorRe.test(name)) {
+                    if (!isNumber) {
+                        value = color.parse(value);
+                    }
+                    value = color.stringify(value, primaryColorUnit);
+                }
+                set(elementStyle, name, value);
+
             }
         }
         elementStyle = null;
@@ -394,7 +413,7 @@ function ieGetPositionStyle(element, style) {
     height -= (parse(style[ptop]) || 0) +
                 (parse(style[pbottom]) || 0);
     
-    parent = parentStyle = style = null;
+    parent = parentStyle = null;
     
     return {
         left: left,
@@ -472,13 +491,11 @@ function w3cSetOpacity(style, opacity) {
 /**
  * Style manipulation
  */
-
 function w3cSetStyleValue(style, name, value) {
-    switch (name) {
-    case 'opacity':
-        SET_OPACITY(style, value);
-        break;
-    default:
+    if (value === null) {
+        style.removeProperty(name);
+    }
+    else {
         style.setProperty(name,
                             value,
                             style.getPropertyPriority(name) || '');
@@ -489,16 +506,11 @@ function w3cGetStyleValue(style, name) {
     return style.getPropertyValue(name);
 }
 
-function w3cRemoveStyleValue(style, name) {
-    style.removeProperty(name);
-}
-
 function ieSetStyleValue(style, name, value) {
-    switch (name) {
-    case 'opacity':
-        SET_OPACITY(style, value);
-        break;
-    default:
+    if (value === null) {
+        style.removeAttribute(name);
+    }
+    else {
         style.setAttribute(name, value);
     }
 }
@@ -506,33 +518,23 @@ function ieGetStyleValue(style, name) {
     return style.getAttribute(name);
 }
 
-function ieRemoveStyleValue(style, name) {
-    style.removeAttribute(name);
-}
-
 CSS_INFO = DETECTED && DETECTED.css;
 if (CSS_INFO) {
     
     EXPORTS.computedStyle = CSS_INFO.w3cStyle ?
-                        w3cGetCurrentStyle :
-                        CSS_INFO.ieStyle ?
-                            ieGetCurrentStyle :
-                            computedStyleNotSupported;
+                                w3cGetCurrentStyle :
+                                CSS_INFO.ieStyle ?
+                                    ieGetCurrentStyle :
+                                    computedStyleNotSupported;
                             
     if (CSS_INFO.setattribute) {
         SET_STYLE = ieSetStyleValue;
         GET_STYLE = ieGetStyleValue;
-        REMOVE_STYLE = ieRemoveStyleValue;
     }
     else if (CSS_INFO.setproperty) {
         SET_STYLE = w3cSetStyleValue;
         GET_STYLE = w3cGetStyleValue;
-        REMOVE_STYLE = w3cRemoveStyleValue;
     }
-    
-    
-    console.log('opacity? ', CSS_INFO.opacity);
-    console.log('filter opacity? ', CSS_INFO.filterOpacity);
     
     if (CSS_INFO.opacity) {
         GET_OPACITY = w3cGetOpacity;

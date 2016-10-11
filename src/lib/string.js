@@ -26,8 +26,8 @@ var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
         
         
         1141: "Invalid [style] Rule parameter.",
-        1142: "Invalid Colorset [type] parameter.",
-        1143: "Invalid [colorValue] integer parameter.",
+        //1142: "Invalid Colorset [type] parameter.",
+        //1143: "Invalid [colorValue] integer parameter.",
         
         1151: "Invalid Animation [handler] parameter.",
         1152: "Invalid Animation [displacements] parameter.",

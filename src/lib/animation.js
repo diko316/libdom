@@ -3,6 +3,7 @@
 var STRING =  require("./string.js"),
     OBJECT = require("./object.js"),
     EASING = require("./easing.js"),
+    CSS = require("./css.js"),
     SESSIONS = {},
     EXPORTS = {
         interval: 10,
@@ -173,7 +174,12 @@ function hasAnimationType(type) {
     return OBJECT.contains(EASING, type);
 }
 
-
+/**
+ * CSS animation
+ */
+function animateStyle(element) {
+    
+}
 
 
 module.exports = EXPORTS;

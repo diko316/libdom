@@ -1,7 +1,6 @@
 'use strict';
 
 var OBJECT = require("./object.js"),
-    STRING = require("./string.js"),
     FORMAT = require("./color/format.js"),
     COLOR_RE =
     /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/,
@@ -14,83 +13,104 @@ var OBJECT = require("./object.js"),
         hex: require("./color/hex.js"),
     },
     EXPORTS = {
-        parse: itemizeString,
+        parse: parseColorString,
+        parseType: parseType,
         stringify: toColorString
     };
 
-function itemizeString(str) {
-    var re = COLOR_RE,
-        F = FORMAT,
-        numberRe = NUMBER_RE;
-    var m, c, l, item, items, get2, returnItems,
-        itemizer, processor, type;
-        
-    if (OBJECT.string(str) && re.test(str)) {
-        
+function parseType(str) {
+    var items = parseColorStringType(str);
+    return items ? items[0] : null;
+}
+
+
+function parseColorStringType(str) {
+    var O = OBJECT,
+        re = COLOR_RE,
+        list = TO_RGBA;
+    var type, m, items, isHex, item;
+    
+    if (O.string(str) && re.test(str)) {
         m = str.match(re);
         type = m[1];
         
-        switch (type) {
-        // hsla
-        case 'hsla':
-        /* falls through */
-        case 'hsl':
-            break;
-        
-        // rgba
-        case 'rgba':
-        /* falls through */
-        case 'rgb':
-            
-        // hex
-        case '#':
-        /* falls through */
-        default:
-            type = 'rgba';
+        if (!O.contains(list, type)) {
+            type = 'hex';
         }
         
-        processor = TO_RGBA[type];
-        itemizer = processor.itemize;
-        
-        // process items
-        c = -1;
         items = m[3];
-        if (items) {
-            returnItems = items = items.split(',');
-            for (l = items.length; l--;) {
-                item = items[++c];
-                if (!numberRe.test(item)) {
-                    return 0;
-                }
-                items[c] = itemizer(item,
-                                    c,
-                                    item.charAt(item.length -1) === '%' ?
-                                        F.PERCENT : F.NUMBER);
-                
+        isHex = !items;
+        
+        // breakdown hex
+        if (isHex) {
+            items = m[2];
+            
+            // three digit
+            if (items.length < 6) {
+                item = items.charAt(2);
+                items = ([items.charAt(0),
+                            items.substring(0, 2),
+                            items.charAt(1),
+                            item,
+                            item]).join('');
             }
         }
         else {
+            items = items.split(',');
+        }
+        return [type, isHex, items];
+    }
+    return null;
+}
+
+function parseColorString(str) {
+    var F = FORMAT,
+        formatPercent = F.PERCENT,
+        formatNumber = F.NUMBER,
+        formatHex = F.HEX,
+        numberRe = NUMBER_RE,
+        parsed = parseColorStringType(str);
+        
+    var c, l, item, items, itemizer, processor, type, isHex, toProcess;
+        
+    if (parsed) {
+        type = parsed[0];
+        processor = TO_RGBA[type];
+        itemizer = processor.itemize;
+        
+        toProcess = [];
+        isHex = parsed[1];
+        items = parsed[2];
+        
+        c = -1;
+        if (isHex) {
+            toProcess[3] = 100;
             l = 3;
-            get2 = l === 6;
-            returnItems = [];
-            items = m[2];
-            for (l = items.length; l--;) {
-                ++c;
-                item = items.charAt(c);
-                item = get2 ?
-                        items.substring(c * 2, c * 2 + 1) :
-                        item + item;
-                
-                returnItems[c] = itemizer(item,
-                                        c,
-                                        F.HEX);
+        }
+        else {
+            l = items.length;
+        }
+        
+        for (; l--;) {
+            item = items[++c];
+            if (isHex) {
+                item = items.substring(c * 2, c * 2 + 2);
             }
-            // add alpha
-            returnItems[++c] = 1;
+            else if (!numberRe.test(item)) {
+                return null;
+            }
+            
+            toProcess[c] = itemizer(item,
+                                    c,
+                                    isHex ?
+                                        formatHex :
+                                        item.charAt(item.length -1) === '%' ?
+                                            formatPercent :
+                                            formatNumber);
         }
         
         // add type
-        return processor.toInteger.apply(processor, returnItems);
+        return processor.toInteger.apply(processor, toProcess);
     }
     return null;
 }
@@ -104,12 +124,8 @@ function toColorString(colorValue, type) {
         type = 'hex';
     }
     
-    if (!O.contains(list, type)) {
-        throw new Error(STRING[1142]);
-    }
-    
-    if (!O.number(colorValue)) {
-        throw new Error(STRING[1143]);
+    if (!O.contains(list, type) || !O.number(colorValue)) {
+        return null;
     }
     
     return list[type].toString(colorValue);

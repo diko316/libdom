@@ -55,25 +55,25 @@
                 computedStyle: "computedStyle",
                 stylize: "style"
             });
-            applyIf(EXPORTS, event = __webpack_require__(13), {
+            applyIf(EXPORTS, event = __webpack_require__(20), {
                 on: "on",
                 un: "un",
                 purge: "purge",
                 dispatch: "fire"
             });
-            applyIf(EXPORTS, dimension = __webpack_require__(14), {
+            applyIf(EXPORTS, dimension = __webpack_require__(21), {
                 offset: "offset",
                 size: "size",
                 box: "box",
                 scroll: "scroll",
                 screen: "screen"
             });
-            applyIf(EXPORTS, selection = __webpack_require__(15), {
+            applyIf(EXPORTS, selection = __webpack_require__(22), {
                 highlight: "select",
                 noHighlight: "unselectable",
                 clearHighlight: "clear"
             });
-            applyIf(EXPORTS, __webpack_require__(16), {
+            applyIf(EXPORTS, __webpack_require__(13), {
                 parseColor: "parse",
                 formatColor: "stringify"
             });
@@ -156,17 +156,25 @@
     }, function(module, exports) {
         (function(global) {
             "use strict";
-            var WINDOW = global, ROOT = WINDOW.document.documentElement, STYLE = ROOT.style, TRANSITION_SUPPORT = [ "OTransition", "webkitTransition", "MozTransition", "transition" ];
+            var WINDOW = global, DOC = WINDOW.document, DIV = DOC.createElement("div"), STYLE = DIV.style, RGBA = "rgba(0,0,0,.5)", TRANSITION_SUPPORT = [ "OTransition", "webkitTransition", "MozTransition", "transition" ];
             var name, l, EXPORTS;
             module.exports = EXPORTS = {
                 w3cStyle: !!WINDOW.getComputedStyle,
-                ieStyle: !!ROOT.currentStyle,
+                ieStyle: !!DOC.documentElement.currentStyle,
                 setattribute: !!STYLE.setAttribute,
                 setproperty: !!STYLE.setProperty,
                 transition: false,
                 opacity: typeof STYLE.opacity !== "undefined",
-                filterOpacity: typeof STYLE.filter !== "undefined"
+                filterOpacity: typeof STYLE.filter !== "undefined",
+                alphaColor: false
             };
+            try {
+                STYLE.color = RGBA;
+                if (RGBA === STYLE.color) {
+                    EXPORTS.alphaColor = true;
+                    console.log("alpha color supported!");
+                }
+            } catch (e) {}
             for (l = TRANSITION_SUPPORT.length; l--; ) {
                 name = TRANSITION_SUPPORT[l];
                 if (typeof STYLE[name] !== "undefined") {
@@ -174,7 +182,7 @@
                     break;
                 }
             }
-            WINDOW = ROOT = STYLE = null;
+            WINDOW = DOC = DIV = STYLE = null;
         }).call(exports, function() {
             return this;
         }());
@@ -548,8 +556,6 @@
             1132: "Invalid Event [type] parameter.",
             1133: "Invalid Event [handler] parameter.",
             1141: "Invalid [style] Rule parameter.",
-            1142: "Invalid Colorset [type] parameter.",
-            1143: "Invalid [colorValue] integer parameter.",
             1151: "Invalid Animation [handler] parameter.",
             1152: "Invalid Animation [displacements] parameter.",
             2001: "Style Attribute manipulation is not supported",
@@ -608,7 +614,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", CLIENT_WIDTH = "clientWidth", CLIENT_HEIGHT = "clientHeight", DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i, IE_ALPHA_OPACITY_TEMPLATE = "alpha(opacity=$opacity)", IE_ALPHA_OPACITY_TEMPLATE_RE = /\$opacity/, GET_OPACITY = opacityNotSupported, SET_OPACITY = opacityNotSupported, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, REMOVE_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
+            var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), COLOR = __webpack_require__(13), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", CLIENT_WIDTH = "clientWidth", CLIENT_HEIGHT = "clientHeight", COLOR_RE = /[Cc]olor$/, DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i, IE_ALPHA_OPACITY_TEMPLATE = "alpha(opacity=$opacity)", IE_ALPHA_OPACITY_TEMPLATE_RE = /\$opacity/, GET_OPACITY = opacityNotSupported, SET_OPACITY = opacityNotSupported, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
                 add: addClass,
                 remove: removeClass,
                 computedStyle: computedStyleNotSupported,
@@ -636,14 +642,13 @@
                 return EXPORTS.chain;
             }
             function applyStyle(element, style, value) {
-                var O = OBJECT, isString = O.string, isNumber = O.number, parse = parseCSSText, camelize = STRING.stylize, len = arguments.length;
-                var hasOwn, name, type, elementStyle, set, remove;
+                var O = OBJECT, string = O.string, number = O.number, hasOwn = O.contains, color = COLOR, set = SET_STYLE, setOpacity = SET_OPACITY, colorRe = COLOR_RE, parse = parseCSSText, camelize = STRING.stylize, len = arguments.length;
+                var name, elementStyle, isOpacity, isNumber, primaryColorUnit;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
                 }
                 if (len > 1) {
-                    set = SET_STYLE;
-                    if (isString(style)) {
+                    if (string(style)) {
                         if (len > 2) {
                             elementStyle = {};
                             elementStyle[style] = value;
@@ -655,18 +660,29 @@
                     if (!O.type(style, "[object Object]")) {
                         throw new Error(STRING[1141]);
                     }
-                    remove = REMOVE_STYLE;
-                    hasOwn = O.contains;
+                    primaryColorUnit = CSS_INFO.alphaColor ? "rgba" : "hex";
                     elementStyle = element.style;
                     for (name in style) {
                         if (hasOwn(style, name)) {
                             value = style[name];
-                            type = typeof value;
-                            if (value === null || type === "undefined") {
-                                remove(elementStyle, camelize(name), value);
-                            } else if (isString(value) || isNumber(value)) {
-                                set(elementStyle, camelize(name), value);
+                            name = camelize(name);
+                            isOpacity = name === "opacity";
+                            isNumber = number(value);
+                            if (!isNumber && !string(value)) {
+                                value = null;
+                                if (isOpacity) {
+                                    set(elementStyle, "filter", value);
+                                }
+                            } else if (isOpacity) {
+                                setOpacity(elementStyle, value);
+                                continue;
+                            } else if (colorRe.test(name)) {
+                                if (!isNumber) {
+                                    value = color.parse(value);
+                                }
+                                value = color.stringify(value, primaryColorUnit);
                             }
+                            set(elementStyle, name, value);
                         }
                     }
                     elementStyle = null;
@@ -847,7 +863,7 @@
                 bottom -= top;
                 width -= (parse(style[pleft]) || 0) + (parse(style[pright]) || 0);
                 height -= (parse(style[ptop]) || 0) + (parse(style[pbottom]) || 0);
-                parent = parentStyle = style = null;
+                parent = parentStyle = null;
                 return {
                     left: left,
                     top: top,
@@ -893,36 +909,24 @@
                 }
             }
             function w3cSetStyleValue(style, name, value) {
-                switch (name) {
-                  case "opacity":
-                    SET_OPACITY(style, value);
-                    break;
-
-                  default:
+                if (value === null) {
+                    style.removeProperty(name);
+                } else {
                     style.setProperty(name, value, style.getPropertyPriority(name) || "");
                 }
             }
             function w3cGetStyleValue(style, name) {
                 return style.getPropertyValue(name);
             }
-            function w3cRemoveStyleValue(style, name) {
-                style.removeProperty(name);
-            }
             function ieSetStyleValue(style, name, value) {
-                switch (name) {
-                  case "opacity":
-                    SET_OPACITY(style, value);
-                    break;
-
-                  default:
+                if (value === null) {
+                    style.removeAttribute(name);
+                } else {
                     style.setAttribute(name, value);
                 }
             }
             function ieGetStyleValue(style, name) {
                 return style.getAttribute(name);
-            }
-            function ieRemoveStyleValue(style, name) {
-                style.removeAttribute(name);
             }
             CSS_INFO = DETECTED && DETECTED.css;
             if (CSS_INFO) {
@@ -930,14 +934,10 @@
                 if (CSS_INFO.setattribute) {
                     SET_STYLE = ieSetStyleValue;
                     GET_STYLE = ieGetStyleValue;
-                    REMOVE_STYLE = ieRemoveStyleValue;
                 } else if (CSS_INFO.setproperty) {
                     SET_STYLE = w3cSetStyleValue;
                     GET_STYLE = w3cGetStyleValue;
-                    REMOVE_STYLE = w3cRemoveStyleValue;
                 }
-                console.log("opacity? ", CSS_INFO.opacity);
-                console.log("filter opacity? ", CSS_INFO.filterOpacity);
                 if (CSS_INFO.opacity) {
                     GET_OPACITY = w3cGetOpacity;
                     SET_OPACITY = w3cSetOpacity;
@@ -950,6 +950,257 @@
         }).call(exports, function() {
             return this;
         }());
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var OBJECT = __webpack_require__(10), FORMAT = __webpack_require__(14), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, TO_RGBA = {
+            rgb: __webpack_require__(15),
+            rgba: __webpack_require__(16),
+            hsl: __webpack_require__(17),
+            hsla: __webpack_require__(18),
+            hex: __webpack_require__(19)
+        }, EXPORTS = {
+            parse: parseColorString,
+            parseType: parseType,
+            stringify: toColorString
+        };
+        function parseType(str) {
+            var items = parseColorStringType(str);
+            return items ? items[0] : null;
+        }
+        function parseColorStringType(str) {
+            var O = OBJECT, re = COLOR_RE, list = TO_RGBA;
+            var type, m, items, isHex, item;
+            if (O.string(str) && re.test(str)) {
+                m = str.match(re);
+                type = m[1];
+                if (!O.contains(list, type)) {
+                    type = "hex";
+                }
+                items = m[3];
+                isHex = !items;
+                if (isHex) {
+                    items = m[2];
+                    if (items.length < 6) {
+                        item = items.charAt(2);
+                        items = [ items.charAt(0), items.substring(0, 2), items.charAt(1), item, item ].join("");
+                    }
+                } else {
+                    items = items.split(",");
+                }
+                return [ type, isHex, items ];
+            }
+            return null;
+        }
+        function parseColorString(str) {
+            var F = FORMAT, formatPercent = F.PERCENT, formatNumber = F.NUMBER, formatHex = F.HEX, numberRe = NUMBER_RE, parsed = parseColorStringType(str);
+            var c, l, item, items, itemizer, processor, type, isHex, toProcess;
+            if (parsed) {
+                type = parsed[0];
+                processor = TO_RGBA[type];
+                itemizer = processor.itemize;
+                toProcess = [];
+                isHex = parsed[1];
+                items = parsed[2];
+                c = -1;
+                if (isHex) {
+                    toProcess[3] = 100;
+                    l = 3;
+                } else {
+                    l = items.length;
+                }
+                for (;l--; ) {
+                    item = items[++c];
+                    if (isHex) {
+                        item = items.substring(c * 2, c * 2 + 2);
+                    } else if (!numberRe.test(item)) {
+                        return null;
+                    }
+                    toProcess[c] = itemizer(item, c, isHex ? formatHex : item.charAt(item.length - 1) === "%" ? formatPercent : formatNumber);
+                }
+                return processor.toInteger.apply(processor, toProcess);
+            }
+            return null;
+        }
+        function toColorString(colorValue, type) {
+            var list = TO_RGBA, O = OBJECT;
+            if (arguments.length < 2) {
+                type = "hex";
+            }
+            if (!O.contains(list, type) || !O.number(colorValue)) {
+                return null;
+            }
+            return list[type].toString(colorValue);
+        }
+        module.exports = EXPORTS;
+    }, function(module, exports) {
+        "use strict";
+        module.exports = {
+            NUMBER: 1,
+            HEX: 2,
+            PERCENT: 3
+        };
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var RGBA = __webpack_require__(16), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA), toArray = EXPORTS.toArray;
+        function toString(integer) {
+            var values = toArray(integer);
+            values.splice(3, 1);
+            return "rgb(" + values.join(",") + ")";
+        }
+        EXPORTS.toString = toString;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var FORMAT = __webpack_require__(14), PIGMENT_SIZE = 255;
+        function toArray(integer) {
+            var size = PIGMENT_SIZE;
+            return [ integer & size, integer >> 8 & size, integer >> 16 & size, integer >> 24 & size ];
+        }
+        function itemize(value, index, format) {
+            var F = FORMAT, M = Math, parse = parseFloat, alpha = index > 2, min = 0, max = alpha ? 100 : PIGMENT_SIZE;
+            switch (format) {
+              case F.HEX:
+                value = parseInt(value, 16);
+                break;
+
+              case F.NUMBER:
+                value = parse(value);
+                if (alpha) {
+                    value *= 100;
+                }
+                break;
+
+              case F.PERCENT:
+                value = parse(value);
+                break;
+            }
+            return M.max(min, M.min(max, M.round(value) || 0));
+        }
+        function toInteger(r, g, b, a) {
+            var size = PIGMENT_SIZE;
+            return (a & size) << 24 | (b & size) << 16 | (g & size) << 8 | r & size;
+        }
+        function toString(integer) {
+            var values = toArray(integer);
+            values[3] = (values[3] / 100).toFixed(2);
+            return "rgba(" + values.join(",") + ")";
+        }
+        module.exports = {
+            itemize: itemize,
+            toArray: toArray,
+            toInteger: toInteger,
+            toString: toString
+        };
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var HSLA = __webpack_require__(17), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, HSLA), toArray = EXPORTS.toArray;
+        function toString(integer) {
+            var values = toArray(integer);
+            values[1] += "%";
+            values[2] += "%";
+            values.splice(3, 1);
+            return "hsl(" + values.join(",") + ")";
+        }
+        EXPORTS.toString = toString;
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var FORMAT = __webpack_require__(14), RGBA = __webpack_require__(16);
+        function hue2rgb(p, q, t) {
+            t = (t + 1) % 1;
+            switch (true) {
+              case t < 1 / 6:
+                return p + (q - p) * 6 * t;
+
+              case t < 1 / 2:
+                return q;
+
+              case t < 2 / 3:
+                return p + (q - p) * (2 / 3 - t) * 6;
+            }
+            return p;
+        }
+        function itemize(value, index, format) {
+            var F = FORMAT, M = Math, parse = parseFloat, min = 0, max = index < 1 ? 360 : 100;
+            switch (format) {
+              case F.HEX:
+                value = parseInt(value, 16) / 255 * max;
+                break;
+
+              case F.NUMBER:
+                value = parse(value);
+                if (index > 2) {
+                    value *= 100;
+                }
+                break;
+
+              case F.PERCENT:
+                value = parse(value);
+                break;
+            }
+            return M.max(min, M.min(max, value || 0));
+        }
+        function toInteger(h, s, l, a) {
+            var M = Math, h2r = hue2rgb, rgba2integer = RGBA.toInteger, size = 255;
+            var q, p;
+            l /= 100;
+            if (s === 0) {
+                return rgba2integer(l, l, l, a);
+            }
+            h /= 360;
+            s /= 100;
+            q = l < .5 ? l * (1 + s) : l + s - l * s;
+            p = 2 * l - q;
+            return rgba2integer(M.round(h2r(p, q, h + 1 / 3) * size), M.round(h2r(p, q, h) * size), M.round(h2r(p, q, h - 1 / 3) * size), a);
+        }
+        function toArray(integer) {
+            var M = Math, rgba = RGBA.toArray(integer), size = 255, r = rgba[0] / size, g = rgba[1] / size, b = rgba[2] / size, a = rgba[3], max = M.max(r, g, b), min = M.min(r, g, b), l = (max + min) / 2;
+            var d, h, s;
+            if (max === min) {
+                h = s = 0;
+            } else {
+                d = max - min;
+                s = l > .5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                  case r:
+                    h = (g - b) / d + (g < b ? 6 : 0);
+                    break;
+
+                  case g:
+                    h = (b - r) / d + 2;
+                    break;
+
+                  case b:
+                    h = (r - g) / d + 4;
+                    break;
+                }
+                h /= 6;
+            }
+            return [ M.round(h * 360), M.round(s * 100), M.round(l * 100), a ];
+        }
+        function toString(integer) {
+            var values = toArray(integer);
+            values[1] += "%";
+            values[2] += "%";
+            values[3] = (values[3] / 100).toFixed(2);
+            return "hsla(" + values.join(",") + ")";
+        }
+        module.exports = {
+            itemize: itemize,
+            toInteger: toInteger,
+            toArray: toArray,
+            toString: toString
+        };
+    }, function(module, exports, __webpack_require__) {
+        "use strict";
+        var RGBA = __webpack_require__(16), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA);
+        function toHex(integer) {
+            var hex = integer.toString(16);
+            return hex.length < 1 ? "0" + hex : hex;
+        }
+        function toString(integer) {
+            var size = 255, convert = toHex, values = [ convert(integer & size), convert(integer >> 8 & size), convert(integer >> 16 & size) ];
+            return "#" + values.join("");
+        }
+        EXPORTS.toString = toString;
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
@@ -1528,7 +1779,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(11), DOM = __webpack_require__(9), DIMENSION = __webpack_require__(14), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
+            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(11), DOM = __webpack_require__(9), DIMENSION = __webpack_require__(21), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
                 select: select,
                 clear: clear,
                 unselectable: unselectable
@@ -1628,249 +1879,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), FORMAT = __webpack_require__(17), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, TO_RGBA = {
-            rgb: __webpack_require__(18),
-            rgba: __webpack_require__(19),
-            hsl: __webpack_require__(20),
-            hsla: __webpack_require__(21),
-            hex: __webpack_require__(22)
-        }, EXPORTS = {
-            parse: itemizeString,
-            stringify: toColorString
-        };
-        function itemizeString(str) {
-            var re = COLOR_RE, F = FORMAT, numberRe = NUMBER_RE;
-            var m, c, l, item, items, get2, returnItems, itemizer, processor, type;
-            if (OBJECT.string(str) && re.test(str)) {
-                m = str.match(re);
-                type = m[1];
-                switch (type) {
-                  case "hsla":
-                  case "hsl":
-                    break;
-
-                  case "rgba":
-                  case "rgb":
-                  case "#":
-                  default:
-                    type = "rgba";
-                }
-                processor = TO_RGBA[type];
-                itemizer = processor.itemize;
-                c = -1;
-                items = m[3];
-                if (items) {
-                    returnItems = items = items.split(",");
-                    for (l = items.length; l--; ) {
-                        item = items[++c];
-                        if (!numberRe.test(item)) {
-                            return 0;
-                        }
-                        items[c] = itemizer(item, c, item.charAt(item.length - 1) === "%" ? F.PERCENT : F.NUMBER);
-                    }
-                } else {
-                    l = 3;
-                    get2 = l === 6;
-                    returnItems = [];
-                    items = m[2];
-                    for (l = items.length; l--; ) {
-                        ++c;
-                        item = items.charAt(c);
-                        item = get2 ? items.substring(c * 2, c * 2 + 1) : item + item;
-                        returnItems[c] = itemizer(item, c, F.HEX);
-                    }
-                    returnItems[++c] = 1;
-                }
-                return processor.toInteger.apply(processor, returnItems);
-            }
-            return null;
-        }
-        function toColorString(colorValue, type) {
-            var list = TO_RGBA, O = OBJECT;
-            if (arguments.length < 2) {
-                type = "hex";
-            }
-            if (!O.contains(list, type)) {
-                throw new Error(STRING[1142]);
-            }
-            if (!O.number(colorValue)) {
-                throw new Error(STRING[1143]);
-            }
-            return list[type].toString(colorValue);
-        }
-        module.exports = EXPORTS;
-    }, function(module, exports) {
-        "use strict";
-        module.exports = {
-            NUMBER: 1,
-            HEX: 2,
-            PERCENT: 3
-        };
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var RGBA = __webpack_require__(19), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA), toArray = EXPORTS.toArray;
-        function toString(integer) {
-            var values = toArray(integer);
-            values.splice(3, 1);
-            return "rgb(" + values.join(",") + ")";
-        }
-        EXPORTS.toString = toString;
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var FORMAT = __webpack_require__(17), PIGMENT_SIZE = 255;
-        function toArray(integer) {
-            var size = PIGMENT_SIZE;
-            return [ integer & size, integer >> 8 & size, integer >> 16 & size, integer >> 24 & size ];
-        }
-        function itemize(value, index, format) {
-            var F = FORMAT, M = Math, parse = parseFloat, alpha = index > 2, min = 0, max = alpha ? 100 : PIGMENT_SIZE;
-            switch (format) {
-              case F.HEX:
-                value = parseInt(value, 16);
-                break;
-
-              case F.NUMBER:
-                value = parse(value);
-                if (alpha) {
-                    value *= 100;
-                }
-                break;
-
-              case F.PERCENT:
-                value = parse(value);
-                break;
-            }
-            return M.max(min, M.min(max, M.round(value) || 0));
-        }
-        function toInteger(r, g, b, a) {
-            var size = PIGMENT_SIZE;
-            return (a & size) << 24 | (b & size) << 16 | (g & size) << 8 | r & size;
-        }
-        function toString(integer) {
-            var values = toArray(integer);
-            values[3] = (values[3] / 100).toFixed(2);
-            return "rgba(" + values.join(",") + ")";
-        }
-        module.exports = {
-            itemize: itemize,
-            toArray: toArray,
-            toInteger: toInteger,
-            toString: toString
-        };
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var HSLA = __webpack_require__(20), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, HSLA), toArray = EXPORTS.toArray;
-        function toString(integer) {
-            var values = toArray(integer);
-            values[1] += "%";
-            values[2] += "%";
-            values.splice(3, 1);
-            return "hsl(" + values.join(",") + ")";
-        }
-        EXPORTS.toString = toString;
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var FORMAT = __webpack_require__(17), RGBA = __webpack_require__(19);
-        function hue2rgb(p, q, t) {
-            t = (t + 1) % 1;
-            switch (true) {
-              case t < 1 / 6:
-                return p + (q - p) * 6 * t;
-
-              case t < 1 / 2:
-                return q;
-
-              case t < 2 / 3:
-                return p + (q - p) * (2 / 3 - t) * 6;
-            }
-            return p;
-        }
-        function itemize(value, index, format) {
-            var F = FORMAT, M = Math, parse = parseFloat, min = 0, max = index < 1 ? 360 : 100;
-            switch (format) {
-              case F.HEX:
-                value = parseInt(value, 16) / 255 * max;
-                break;
-
-              case F.NUMBER:
-                value = parse(value);
-                if (index > 2) {
-                    value *= 100;
-                }
-                break;
-
-              case F.PERCENT:
-                value = parse(value);
-                break;
-            }
-            return M.max(min, M.min(max, value || 0));
-        }
-        function toInteger(h, s, l, a) {
-            var M = Math, h2r = hue2rgb, rgba2integer = RGBA.toInteger, size = 255;
-            var q, p;
-            l /= 100;
-            if (s === 0) {
-                return rgba2integer(l, l, l, a);
-            }
-            h /= 360;
-            s /= 100;
-            q = l < .5 ? l * (1 + s) : l + s - l * s;
-            p = 2 * l - q;
-            return rgba2integer(M.round(h2r(p, q, h + 1 / 3) * size), M.round(h2r(p, q, h) * size), M.round(h2r(p, q, h - 1 / 3) * size), a);
-        }
-        function toArray(integer) {
-            var M = Math, rgba = RGBA.toArray(integer), size = 255, r = rgba[0] / size, g = rgba[1] / size, b = rgba[2] / size, a = rgba[3], max = M.max(r, g, b), min = M.min(r, g, b), l = (max + min) / 2;
-            var d, h, s;
-            if (max === min) {
-                h = s = 0;
-            } else {
-                d = max - min;
-                s = l > .5 ? d / (2 - max - min) : d / (max + min);
-                switch (max) {
-                  case r:
-                    h = (g - b) / d + (g < b ? 6 : 0);
-                    break;
-
-                  case g:
-                    h = (b - r) / d + 2;
-                    break;
-
-                  case b:
-                    h = (r - g) / d + 4;
-                    break;
-                }
-                h /= 6;
-            }
-            return [ M.round(h * 360), M.round(s * 100), M.round(l * 100), a ];
-        }
-        function toString(integer) {
-            var values = toArray(integer);
-            values[1] += "%";
-            values[2] += "%";
-            values[3] = (values[3] / 100).toFixed(2);
-            return "hsla(" + values.join(",") + ")";
-        }
-        module.exports = {
-            itemize: itemize,
-            toInteger: toInteger,
-            toArray: toArray,
-            toString: toString
-        };
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var RGBA = __webpack_require__(19), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA);
-        function toHex(integer) {
-            var hex = integer.toString(16);
-            return hex.length < 1 ? "0" + hex : hex;
-        }
-        function toString(integer) {
-            var size = 255, convert = toHex, values = [ convert(integer & size), convert(integer >> 8 & size), convert(integer >> 16 & size) ];
-            return "#" + values.join("");
-        }
-        EXPORTS.toString = toString;
-    }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), EASING = __webpack_require__(24), SESSIONS = {}, EXPORTS = {
+        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), EASING = __webpack_require__(24), CSS = __webpack_require__(12), SESSIONS = {}, EXPORTS = {
             interval: 10,
             each: animate,
             has: hasAnimationType
@@ -1978,6 +1987,7 @@
         function hasAnimationType(type) {
             return OBJECT.contains(EASING, type);
         }
+        function animateStyle(element) {}
         module.exports = EXPORTS;
     }, function(module, exports) {
         "use strict";

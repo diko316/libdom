@@ -19,4 +19,5 @@ function toString(integer) {
     return '#' + values.join('');
 }
 
+
 EXPORTS.toString = toString;
