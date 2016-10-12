@@ -11,7 +11,8 @@ main.eachDisplacement(
     function (o) {
         main.offset(subject, o.x, o.y);
     },
-    { x: [10, 1000], y: [50, 300] },
+    { x: 10, y: 50 },
+    { x: 1000, y: 300 },
     'easeOut');
 
 
@@ -35,12 +36,8 @@ main.on(DOC, 'click',
                     animating = false;
                 }
             },
-            {
-                x: [current[0],
-                    screen[0] + event.clientX],
-                y: [current[1],
-                    screen[1] + event.clientY]
-            },
+            { x: current[0], y: current[1] },
+            { x: screen[0] + event.clientX, y: screen[1] + event.clientY },
             'easeOut');
 
     });

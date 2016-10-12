@@ -1492,7 +1492,8 @@
                 box: box,
                 scroll: scroll,
                 screen: screen,
-                visible: visible
+                visible: visible,
+                translate: translateBox
             };
             var DIMENSION_INFO, IEVERSION;
             function offset(element, x, y) {
@@ -1515,70 +1516,65 @@
                 return isViewable(element) === PAGE_VIEW ? pageBox(element).slice(2, 4) : getSize(element);
             }
             function box(element, x, y, width, height) {
-                var css = CSS, cssValue = css.unitValue, parse = parseFloat, NUMBER = "number", setter = arguments.length > 1, viewmode = isViewable(element);
-                var hasLeft, hasTop, hasWidth, hasHeight, parent, hasPosition, hasSize, diff, applyStyle, currentDimension;
-                if (!setter && viewmode === PAGE_VIEW) {
+                var applyStyle, viewmode;
+                if (arguments.length > 1) {
+                    applyStyle = translateBox(element, x, y, width, height);
+                    if (applyStyle) {
+                        CSS.style(element, applyStyle);
+                    }
+                    return EXPORTS.chain;
+                }
+                viewmode = isViewable(element);
+                if (viewmode === PAGE_VIEW) {
                     return pageBox(element);
                 }
                 if (viewmode !== ELEMENT_VIEW) {
                     throw new Error(ERROR_INVALID_ELEMENT);
                 }
-                if (setter) {
-                    applyStyle = null;
-                    if (x instanceof Array) {
-                        height = 3 in x ? x[3] : null;
-                        width = 2 in x ? x[2] : null;
-                        y = 1 in y ? x[1] : null;
-                        x = x[0];
-                    }
-                    currentDimension = css.computedStyle(element, "position", "top", "left", "width", "height");
-                    hasLeft = hasTop = hasWidth = hasHeight = hasPosition = hasSize = false;
-                    switch (currentDimension.position) {
-                      case "relative":
-                      case "absolute":
-                      case "fixed":
-                        x = cssValue(x);
-                        if (x !== false) {
-                            hasLeft = hasPosition = true;
-                        }
-                        y = cssValue(y);
-                        if (y !== false) {
-                            hasTop = hasPosition = true;
-                        }
-                    }
-                    width = cssValue(width);
-                    if (width !== false) {
-                        hasWidth = hasSize = true;
-                    }
-                    height = cssValue(height);
-                    if (height !== false) {
-                        hasHeight = hasSize = true;
-                    }
-                    if (hasPosition || hasSize) {
-                        applyStyle = {};
-                        if (hasPosition) {
-                            diff = getOffset(element);
-                            if (hasLeft) {
-                                applyStyle.left = typeof x === NUMBER ? parse(currentDimension.left || 0) + (x - diff[0]) + "px" : x;
-                            }
-                            if (hasTop) {
-                                applyStyle.top = typeof y === NUMBER ? parse(currentDimension.top || 0) + (y - diff[1]) + "px" : y;
-                            }
-                        }
-                        if (hasSize) {
-                            if (hasWidth) {
-                                applyStyle.width = typeof width === NUMBER ? parse(currentDimension.width || 0) + (width - element[OFFSET_WIDTH]) + "px" : width;
-                            }
-                            if (hasHeight) {
-                                applyStyle.height = typeof height === NUMBER ? parse(currentDimension.height || 0) + (height - element[OFFSET_HEIGHT]) + "px" : height;
-                            }
-                        }
-                        css.style(element, applyStyle);
-                    }
-                    parent = null;
-                    return EXPORTS.chain;
-                }
                 return getBox(element);
+            }
+            function translateBox(element, x, y, width, height) {
+                var css = CSS, cssValue = css.unitValue, parse = parseFloat, NUMBER = "number", applyStyle = {}, hasLeft = false, hasTop = false;
+                var hasWidth, hasHeight, diff, currentDimension;
+                if (isViewable(element) !== ELEMENT_VIEW) {
+                    throw new Error(ERROR_INVALID_ELEMENT);
+                }
+                if (x instanceof Array) {
+                    height = 3 in x ? x[3] : null;
+                    width = 2 in x ? x[2] : null;
+                    y = 1 in y ? x[1] : null;
+                    x = x[0];
+                }
+                currentDimension = css.computedStyle(element, "position", "top", "left", "width", "height");
+                switch (currentDimension.position) {
+                  case "relative":
+                  case "absolute":
+                  case "fixed":
+                    x = cssValue(x);
+                    y = cssValue(y);
+                    hasLeft = x !== false;
+                    hasTop = y !== false;
+                    if (hasLeft || hasTop) {
+                        diff = getOffset(element);
+                        if (hasLeft) {
+                            applyStyle.left = typeof x === NUMBER ? parse(currentDimension.left || 0) + (x - diff[0]) + "px" : x;
+                        }
+                        if (hasTop) {
+                            applyStyle.top = typeof y === NUMBER ? parse(currentDimension.top || 0) + (y - diff[1]) + "px" : y;
+                        }
+                    }
+                }
+                width = cssValue(width);
+                height = cssValue(height);
+                hasWidth = width !== false;
+                hasHeight = height !== false;
+                if (hasWidth) {
+                    applyStyle.width = typeof width === NUMBER ? parse(currentDimension.width || 0) + (width - element[OFFSET_WIDTH]) + "px" : width;
+                }
+                if (hasHeight) {
+                    applyStyle.height = typeof height === NUMBER ? parse(currentDimension.height || 0) + (height - element[OFFSET_HEIGHT]) + "px" : height;
+                }
+                return hasLeft || hasTop || hasWidth || hasWidth ? applyStyle : null;
             }
             function scroll(dom, x, y) {
                 var setter = arguments.length > 1, isNumber = OBJECT.number, stop = SCROLL_TOP, sleft = SCROLL_LEFT;
@@ -1879,116 +1875,102 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), EASING = __webpack_require__(24), CSS = __webpack_require__(12), SESSIONS = {}, EXPORTS = {
+        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), ARRAY = __webpack_require__(24), EASING = __webpack_require__(25), CSS = __webpack_require__(12), SESSIONS = {}, EXPORTS = {
             interval: 10,
             each: animate,
             has: hasAnimationType
         };
-        function animate(handler, displacements, type, duration) {
+        function animate(handler, from, to, type, duration) {
             var M = Math, string = STRING, easing = EASING, O = OBJECT, list = SESSIONS, defaultInterval = EXPORTS.interval, interval = null, frame = 0;
-            var frames;
-            function stop() {
+            var frames, displacements;
+            function control(updates) {
                 if (interval) {
-                    clearInterval(interval);
-                    delete list[interval];
-                    delete stop.interval;
-                    interval = null;
+                    if (arguments.length) {
+                        applyDisplacements(displacements, displacements[3], updates);
+                    } else {
+                        clearInterval(interval);
+                        delete list[interval];
+                        delete control.interval;
+                        interval = null;
+                    }
                 }
             }
             function callback() {
-                var specs = displacements, names = specs[1], from = specs[2], to = specs[3], total = frames, current = ++frame, len = names.length, result = {}, eased = type(current, 0, 1, total), last = current === total;
+                var specs = displacements, names = specs[0], from = specs[1], to = specs[2], total = frames, current = ++frame, len = names.length, result = {}, eased = type(current, 0, 1, total), last = current === total;
                 var start;
                 for (;len--; ) {
                     start = from[len];
                     result[names[len]] = (to[len] - start) * eased + start;
                 }
+                specs[3] = result;
                 handler(result, last);
                 if (last) {
-                    stop();
+                    control();
                 }
             }
             if (!(handler instanceof Function)) {
                 throw new Error(string[1151]);
             }
-            if (!O.type(displacements, "[object Object]")) {
+            if (!O.type(from, "[object Object]") || !O.type(to, "[object Object]")) {
                 throw new Error(string[1152]);
             }
             type = O.contains(easing, type) ? easing[type] : easing.linear;
             duration = (O.number(duration) && duration > 0 ? duration : 1) * 1e3;
             frames = M.max(10, M.round(duration / defaultInterval));
+            displacements = [ [], [], [], from ];
             interval = setInterval(callback, defaultInterval);
-            stop.interval = interval;
-            list[interval] = [ {}, [], [], [] ];
-            displacements = applyDisplacements(interval, displacements);
-            return stop;
+            control.interval = interval;
+            list[interval] = displacements;
+            displacements = applyDisplacements(displacements, from, to);
+            return control;
         }
-        function applyDisplacements(sessionId, displacements) {
-            var list = SESSIONS, O = OBJECT, hasOwn = O.contains, string = O.string, number = O.number, parse = parseFloat;
-            var config, name, value, names, len, from, to, index, idx, itemFrom, itemTo;
-            if (sessionId in list) {
-                config = list[sessionId];
-                index = config[0];
-                names = config[1];
-                from = config[2];
-                to = config[3];
-                len = names.length - 1;
-                for (name in displacements) {
-                    if (hasOwn(displacements, name)) {
-                        value = displacements[name];
-                        if (value instanceof Array && value.length > 1) {
-                            idx = hasOwn(index, name) ? index[name] : -1;
-                            itemFrom = value[0];
-                            if (string(itemFrom)) {
-                                itemFrom = parse(itemFrom);
-                            }
-                            if (!number(itemFrom)) {
-                                continue;
-                            }
-                            itemTo = value[1];
-                            if (string(itemTo)) {
-                                itemTo = parse(itemTo);
-                            }
-                            if (!number(itemTo)) {
-                                continue;
-                            }
-                            if (idx === -1) {
-                                index[name] = idx = ++len;
-                                names[idx] = name;
-                            }
-                            from[idx] = itemFrom;
-                            to[idx] = itemTo;
-                        }
-                        value = displacements[name];
-                        if (value instanceof Array && value.length > 1) {
-                            itemFrom = value[0];
-                            if (string(itemFrom)) {
-                                itemFrom = parse(itemFrom);
-                            }
-                            if (!number(itemFrom)) {
-                                continue;
-                            }
-                            itemTo = value[1];
-                            if (string(itemTo)) {
-                                itemTo = parse(itemTo);
-                            }
-                            if (!number(itemTo)) {
-                                continue;
-                            }
-                            names[len] = name;
-                            from[len] = itemFrom;
-                            to[len++] = itemTo;
-                        }
-                    }
-                }
-                return config;
+        function validValue(value) {
+            var O = OBJECT;
+            if (O.string(value)) {
+                value = parseFloat(value);
             }
-            return void 0;
+            return O.number(value) && value;
+        }
+        function applyDisplacements(session, from, to) {
+            var hasOwn = OBJECT.contains, indexOf = ARRAY.indexOf, format = validValue, names = session[0], sourceValues = session[1], targetValues = session[2], len = names.length;
+            var name, index, source, target;
+            for (name in to) {
+                if (hasOwn(to, name) && hasOwn(from, name)) {
+                    source = format(from[name]);
+                    target = format(to[name]);
+                    if (source === false || target === false) {
+                        continue;
+                    }
+                    index = indexOf(names, name);
+                    if (index === -1) {
+                        index = ++len;
+                        names[index] = name;
+                    }
+                    sourceValues[index] = source;
+                    targetValues[index] = target;
+                }
+            }
+            return session;
         }
         function hasAnimationType(type) {
             return OBJECT.contains(EASING, type);
         }
         function animateStyle(element) {}
         module.exports = EXPORTS;
+    }, function(module, exports) {
+        "use strict";
+        function indexOf(array, item) {
+            var l = array.length;
+            for (;l--; ) {
+                if (array[l] === item) {
+                    return l;
+                }
+            }
+            return -1;
+        }
+        module.exports = {
+            indexOf: indexOf
+        };
     }, function(module, exports) {
         "use strict";
         var EXPORTS = {

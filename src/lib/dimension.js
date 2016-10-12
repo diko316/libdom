@@ -22,11 +22,6 @@ var DETECTED = require("./detect.js"),
     
     BOUNDING_RECT = 'getBoundingClientRect',
     
-    //PADDING_TOP = 'paddingTop',
-    //PADDING_LEFT = 'paddingLeft',
-    //PADDING_RIGHT = 'paddingRight',
-    //PADDING_BOTTOM = 'paddingBottom',
-    
     DEFAULTVIEW = null,
     ELEMENT_VIEW = 1,
     PAGE_VIEW = 2,
@@ -45,7 +40,8 @@ var DETECTED = require("./detect.js"),
         box: box,
         scroll: scroll,
         screen: screen,
-        visible: visible
+        visible: visible,
+        translate: translateBox
     };
 
 var DIMENSION_INFO, IEVERSION;
@@ -85,125 +81,122 @@ function size(element, width, height) {
 }
 
 function box(element, x, y, width, height) {
-    var css = CSS,
-        cssValue = css.unitValue,
-        parse = parseFloat,
-        NUMBER = 'number',
-        setter = arguments.length > 1,
-        viewmode = isViewable(element);
-        
-    var hasLeft, hasTop, hasWidth, hasHeight, parent,
-        hasPosition, hasSize,
-        diff, applyStyle, currentDimension;
+    var applyStyle, viewmode;
     
-    // try page box
-    if (!setter && viewmode === PAGE_VIEW) {
-        return pageBox(element);
+    // setter
+    if (arguments.length > 1) {
+        
+        applyStyle = translateBox(element, x, y, width, height);
+        
+        if (applyStyle) {
+            CSS.style(element, applyStyle);
+        }
+        return EXPORTS.chain;
     }
     
+    // getter
+    viewmode = isViewable(element);
+    if (viewmode === PAGE_VIEW) {
+        return pageBox(element);
+    }
     
     if (viewmode !== ELEMENT_VIEW) {
         throw new Error(ERROR_INVALID_ELEMENT);
     }
     
-    // setter
-    if (setter) {
-        applyStyle = null;
+    return getBox(element);
+}
+
+function translateBox(element, x, y, width, height) {
+    var css = CSS,
+        cssValue = css.unitValue,
+        parse = parseFloat,
+        NUMBER = 'number',
+        applyStyle = {},
+        hasLeft = false,
+        hasTop = false;
         
-        if (x instanceof Array) {
-            height = 3 in x ? x[3] : null;
-            width = 2 in x ? x[2] : null;
-            y = 1 in y ? x[1] : null;
-            x = x[0];
-        }
+    var hasWidth, hasHeight, diff, currentDimension;
         
-        currentDimension = css.computedStyle(element,
-                                        'position',
-                                        'top',
-                                        'left',
-                                        'width',
-                                        'height');
+    if (isViewable(element) !== ELEMENT_VIEW) {
+        throw new Error(ERROR_INVALID_ELEMENT);
+    }
         
-        hasLeft = hasTop = hasWidth = hasHeight = hasPosition = hasSize = false;
-        switch (currentDimension.position) {
-        case 'relative':
-        case 'absolute':
-        case 'fixed':
-            x = cssValue(x);
-            if (x !== false) {
-                hasLeft = hasPosition = true;
-            }
-            y = cssValue(y);
-            if (y !== false) {
-                hasTop = hasPosition = true;
-            }
-        }
-        width = cssValue(width);
-        if (width !== false) {
-            hasWidth = hasSize = true;
-        }
-        
-        height = cssValue(height);
-        if (height !== false) {
-            hasHeight = hasSize = true;
-        }
-        
-        if (hasPosition || hasSize) {
-            applyStyle = {};
-            
-            if (hasPosition) {
-                diff = getOffset(element);
-                
-                if (hasLeft) {
-                    applyStyle.left = typeof x === NUMBER ? (
-                                        parse(currentDimension.left || 0) +
-                                        (x - diff[0])
-                                    ) + 'px' :
-                                    x;
-                    
-                }
-                
-                if (hasTop) {
-                    applyStyle.top = typeof y === NUMBER ? (
-                                        parse(currentDimension.top || 0) +
-                                        (y - diff[1])
-                                    ) + 'px' :
-                                    y;
-                }
-                
-            }
-            
-            // size
-            if (hasSize) {
-                
-                if (hasWidth) {
-                    applyStyle.width = typeof width === NUMBER ? (
-                                        parse(currentDimension.width || 0) +
-                                        (width - element[OFFSET_WIDTH])
-                                    ) + 'px' :
-                                    width;
-                }
-                
-                if (hasHeight) {
-                    applyStyle.height = typeof height === NUMBER ? (
-                                        parse(currentDimension.height || 0) +
-                                        (height - element[OFFSET_HEIGHT])
-                                    ) + 'px' :
-                                    height;
-                }
-                
-            }
-            
-            css.style(element, applyStyle);
-            
-        }
-        
-        parent = null;
-        return EXPORTS.chain;
+    if (x instanceof Array) {
+        height = 3 in x ? x[3] : null;
+        width = 2 in x ? x[2] : null;
+        y = 1 in y ? x[1] : null;
+        x = x[0];
     }
     
-    // getter
-    return getBox(element);
+    currentDimension = css.computedStyle(element,
+                                    'position',
+                                    'top',
+                                    'left',
+                                    'width',
+                                    'height');
+    
+    // resolve position
+    switch (currentDimension.position) {
+    case 'relative':
+    case 'absolute':
+    case 'fixed':
+        
+        // create position
+        x = cssValue(x);
+        y = cssValue(y);
+        
+        hasLeft = x !== false;
+        hasTop = y !== false;
+        
+        if (hasLeft || hasTop) {
+            
+            diff = getOffset(element);
+            
+            if (hasLeft) {
+                applyStyle.left = typeof x === NUMBER ? (
+                                    parse(currentDimension.left || 0) +
+                                    (x - diff[0])
+                                ) + 'px' :
+                                x;
+                
+            }
+            
+            if (hasTop) {
+                applyStyle.top = typeof y === NUMBER ? (
+                                    parse(currentDimension.top || 0) +
+                                    (y - diff[1])
+                                ) + 'px' :
+                                y;
+            }
+        }
+        
+    }
+    
+    // resolve size
+    width = cssValue(width);
+    height = cssValue(height);
+    
+    hasWidth = width !== false;
+    hasHeight = height !== false;
+
+    if (hasWidth) {
+        applyStyle.width = typeof width === NUMBER ? (
+                            parse(currentDimension.width || 0) +
+                            (width - element[OFFSET_WIDTH])
+                        ) + 'px' :
+                        width;
+    }
+    
+    if (hasHeight) {
+        applyStyle.height = typeof height === NUMBER ? (
+                            parse(currentDimension.height || 0) +
+                            (height - element[OFFSET_HEIGHT])
+                        ) + 'px' :
+                        height;
+    }
+
+    return hasLeft || hasTop || hasWidth || hasWidth ? applyStyle : null;
 }
 
 
