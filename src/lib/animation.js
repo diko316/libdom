@@ -25,29 +25,44 @@ function animate(handler, from, to, type, duration) {
         string = STRING,
         easing = EASING,
         O = OBJECT,
+        oType = O.type,
         list = SESSIONS,
         defaultInterval = EXPORTS.interval,
+        clear = clearInterval,
+        set = setInterval,
         interval = null,
         frame = 0;
         
     var frames, displacements;
     
-    function control(updates) {
+    function control() {
         if (interval) {
-            // update
-            if (arguments.length) {
-                applyDisplacements(
-                    displacements,
-                    displacements[3],
-                    updates);
+            clear(interval);
+            delete list[interval];
+            delete control.interval;
+            delete control.update;
+            interval = null;
+        }
+    }
+    
+    function update(updates) {
+        if (interval) {
+            if (!oType(updates, '[object Object]')) {
+                throw new Error(string[1152]);
             }
-            // stop
-            else {
-                clearInterval(interval);
-                delete list[interval];
-                delete control.interval;
-                interval = null;
-            }
+            applyDisplacements(
+                        displacements,
+                        displacements[3],
+                        updates);
+            
+            // renew interval
+            clear(interval);
+            delete list[interval];
+            interval = set(callback, defaultInterval);
+            frame = 0;
+            control.interval = interval;
+            list[interval] = displacements;
+            
         }
     }
     
@@ -83,7 +98,7 @@ function animate(handler, from, to, type, duration) {
         throw new Error(string[1151]);
     }
     
-    if (!O.type(from, '[object Object]') || !O.type(to, '[object Object]')) {
+    if (!oType(from, '[object Object]') || !oType(to, '[object Object]')) {
         throw new Error(string[1152]);
     }
     
@@ -93,8 +108,9 @@ function animate(handler, from, to, type, duration) {
     frames = M.max(10, M.round(duration / defaultInterval));
     
     displacements = [[], [], [], from];
-    interval = setInterval(callback, defaultInterval);
+    interval = set(callback, defaultInterval);
     control.interval = interval;
+    control.update = update;
     list[interval] = displacements;
     displacements = applyDisplacements(displacements, from, to);
     return control;
@@ -111,7 +127,7 @@ function validValue(value) {
 
 function applyDisplacements(session, from, to) {
     var hasOwn = OBJECT.contains,
-        indexOf = ARRAY.indexOf,
+        indexOf = ARRAY.lastIndexOf,
         format = validValue,
         names = session[0],
         sourceValues = session[1],
@@ -121,26 +137,36 @@ function applyDisplacements(session, from, to) {
     
     // valid target names from source
     for (name in to) {
-        if (hasOwn(to, name) && hasOwn(from, name)) {
-            source = format(from[name]);
-            target = format(to[name]);
+        if (!hasOwn(to, name)) {
+            continue;
+        }
+        
+        target = format(to[name]);
+        
+        if (target === false) {
+            continue;
+        }
             
-            if (source === false || target === false) {
+        index = indexOf(names, name);
+        source = hasOwn(from, name) && format(from[name]);
+        
+        // create from source if did not exist
+        if (index === -1) {
+            if (source === false) {
                 continue;
             }
+            index = ++len;
+            names[index] = name;
             
-            index = indexOf(names, name);
-            
-            // create
-            if (index === -1) {
-                index = ++len;
-                names[index] = name;
-            }
-            
-            // update
-            sourceValues[index] = source;
-            targetValues[index] = target;
         }
+        else if (source === false) {
+            source = sourceValues[index];
+        }
+        
+        // update
+        sourceValues[index] = source;
+        targetValues[index] = target;
+
     }
     return session;
 }

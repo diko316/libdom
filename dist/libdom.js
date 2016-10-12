@@ -1881,18 +1881,29 @@
             has: hasAnimationType
         };
         function animate(handler, from, to, type, duration) {
-            var M = Math, string = STRING, easing = EASING, O = OBJECT, list = SESSIONS, defaultInterval = EXPORTS.interval, interval = null, frame = 0;
+            var M = Math, string = STRING, easing = EASING, O = OBJECT, oType = O.type, list = SESSIONS, defaultInterval = EXPORTS.interval, clear = clearInterval, set = setInterval, interval = null, frame = 0;
             var frames, displacements;
-            function control(updates) {
+            function control() {
                 if (interval) {
-                    if (arguments.length) {
-                        applyDisplacements(displacements, displacements[3], updates);
-                    } else {
-                        clearInterval(interval);
-                        delete list[interval];
-                        delete control.interval;
-                        interval = null;
+                    clear(interval);
+                    delete list[interval];
+                    delete control.interval;
+                    delete control.update;
+                    interval = null;
+                }
+            }
+            function update(updates) {
+                if (interval) {
+                    if (!oType(updates, "[object Object]")) {
+                        throw new Error(string[1152]);
                     }
+                    applyDisplacements(displacements, displacements[3], updates);
+                    clear(interval);
+                    delete list[interval];
+                    interval = set(callback, defaultInterval);
+                    frame = 0;
+                    control.interval = interval;
+                    list[interval] = displacements;
                 }
             }
             function callback() {
@@ -1911,15 +1922,16 @@
             if (!(handler instanceof Function)) {
                 throw new Error(string[1151]);
             }
-            if (!O.type(from, "[object Object]") || !O.type(to, "[object Object]")) {
+            if (!oType(from, "[object Object]") || !oType(to, "[object Object]")) {
                 throw new Error(string[1152]);
             }
             type = O.contains(easing, type) ? easing[type] : easing.linear;
             duration = (O.number(duration) && duration > 0 ? duration : 1) * 1e3;
             frames = M.max(10, M.round(duration / defaultInterval));
             displacements = [ [], [], [], from ];
-            interval = setInterval(callback, defaultInterval);
+            interval = set(callback, defaultInterval);
             control.interval = interval;
+            control.update = update;
             list[interval] = displacements;
             displacements = applyDisplacements(displacements, from, to);
             return control;
@@ -1932,23 +1944,29 @@
             return O.number(value) && value;
         }
         function applyDisplacements(session, from, to) {
-            var hasOwn = OBJECT.contains, indexOf = ARRAY.indexOf, format = validValue, names = session[0], sourceValues = session[1], targetValues = session[2], len = names.length;
+            var hasOwn = OBJECT.contains, indexOf = ARRAY.lastIndexOf, format = validValue, names = session[0], sourceValues = session[1], targetValues = session[2], len = names.length;
             var name, index, source, target;
             for (name in to) {
-                if (hasOwn(to, name) && hasOwn(from, name)) {
-                    source = format(from[name]);
-                    target = format(to[name]);
-                    if (source === false || target === false) {
+                if (!hasOwn(to, name)) {
+                    continue;
+                }
+                target = format(to[name]);
+                if (target === false) {
+                    continue;
+                }
+                index = indexOf(names, name);
+                source = hasOwn(from, name) && format(from[name]);
+                if (index === -1) {
+                    if (source === false) {
                         continue;
                     }
-                    index = indexOf(names, name);
-                    if (index === -1) {
-                        index = ++len;
-                        names[index] = name;
-                    }
-                    sourceValues[index] = source;
-                    targetValues[index] = target;
+                    index = ++len;
+                    names[index] = name;
+                } else if (source === false) {
+                    source = sourceValues[index];
                 }
+                sourceValues[index] = source;
+                targetValues[index] = target;
             }
             return session;
         }
@@ -1960,6 +1978,15 @@
     }, function(module, exports) {
         "use strict";
         function indexOf(array, item) {
+            var c = -1, l = array.length;
+            for (;l--; ) {
+                if (array[++c] === item) {
+                    return c;
+                }
+            }
+            return -1;
+        }
+        function lastIndexOf(array, item) {
             var l = array.length;
             for (;l--; ) {
                 if (array[l] === item) {
@@ -1969,7 +1996,8 @@
             return -1;
         }
         module.exports = {
-            indexOf: indexOf
+            indexOf: indexOf,
+            lastIndexOf: lastIndexOf
         };
     }, function(module, exports) {
         "use strict";

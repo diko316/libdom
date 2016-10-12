@@ -18,26 +18,32 @@ main.eachDisplacement(
 
 main.on(DOC, 'click',
     function (event) {
-        var screen, current;
+        var screen = main.screen(),
+            current = main.offset(subject),
+            updates = {
+                        x: screen[0] + event.clientX,
+                        y: screen[1] + event.clientY
+                    };
         
         if (animating) {
+            animating.update(updates);
             return;
         }
         
-        animating = true;
         
-        screen = main.screen();
-        current = main.offset(subject);
         
-        main.eachDisplacement(
-            function (o, last) {
-                main.offset(subject, o.x, o.y);
-                if (last) {
-                    animating = false;
-                }
-            },
-            { x: current[0], y: current[1] },
-            { x: screen[0] + event.clientX, y: screen[1] + event.clientY },
-            'easeOut');
+        animating = main.eachDisplacement(
+                        function (o, last) {
+                            main.offset(subject, o.x, o.y);
+                            if (last) {
+                                animating = false;
+                            }
+                        },
+                        {
+                            x: current[0],
+                            y: current[1]
+                        },
+                        updates,
+                        'easeOut');
 
     });
