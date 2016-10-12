@@ -1893,17 +1893,13 @@
                 }
             }
             function update(updates) {
+                var specs = displacements;
                 if (interval) {
                     if (!oType(updates, "[object Object]")) {
                         throw new Error(string[1152]);
                     }
-                    applyDisplacements(displacements, displacements[3], updates);
-                    clear(interval);
-                    delete list[interval];
-                    interval = set(callback, defaultInterval);
+                    applyDisplacements(specs, specs[3], updates);
                     frame = 0;
-                    control.interval = interval;
-                    list[interval] = displacements;
                 }
             }
             function callback() {
