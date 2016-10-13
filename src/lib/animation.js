@@ -4,7 +4,20 @@ var STRING =  require("./string.js"),
     OBJECT = require("./object.js"),
     ARRAY = require("./array.js"),
     EASING = require("./easing.js"),
+    COLOR = require("./color.js"),
     CSS = require("./css.js"),
+    DIMENSION = require("./dimension.js"),
+    BOX_POSITION = {
+        left: 0,
+        top: 1,
+        right: 2,
+        bottom: 3,
+        width: 4,
+        height: 5
+    },
+    BOX_RE = CSS.boxRe,
+    DIMENSION_RE = CSS.dimensionRe,
+    COLOR_RE = CSS.colorRe,
     SESSIONS = {},
     EXPORTS = {
         interval: 10,
@@ -36,23 +49,33 @@ function animate(handler, from, to, type, duration) {
     var frames, displacements;
     
     function control() {
+        var fn = control;
+        
         if (interval) {
             clear(interval);
             delete list[interval];
-            delete control.interval;
-            delete control.update;
+            delete fn.session;
+            delete fn.update;
+            delete fn.running;
             interval = null;
         }
+        fn = null;
     }
     
-    function update(updates) {
-        var specs = displacements;
+    function update(updates, initialValues, animationType) {
+        var specs = displacements,
+            type = oType,
+            signature = '[object Object]';
         
         if (interval) {
-            if (!oType(updates, '[object Object]')) {
+            if (!type(updates, signature)) {
                 throw new Error(string[1152]);
             }
-            applyDisplacements(specs, specs[3], updates);
+            
+            if (!type(initialValues, signature)) {
+                initialValues = specs[3];
+            }
+            applyDisplacements(specs, initialValues, updates, animationType);
             // reset frame
             frame = 0;
             
@@ -102,8 +125,9 @@ function animate(handler, from, to, type, duration) {
     
     displacements = [[], [], [], from];
     interval = set(callback, defaultInterval);
-    control.interval = interval;
+    control.session = interval;
     control.update = update;
+    control.running = true;
     list[interval] = displacements;
     displacements = applyDisplacements(displacements, from, to);
     return control;
@@ -171,8 +195,151 @@ function hasAnimationType(type) {
 /**
  * CSS animation
  */
-function animateStyle(element) {
+function animateStyle(element, styles, type) {
+    var values = createElementValues(styles);
+    var session, sessionId, animateObject, names, staticValues;
+        
+        //animate = [element],
+        //handler = createAnimationObject(animate);
+        
+    if (values) {
+        names = values[0];
+        staticValues = values[2];
+        
+        // has animation
+        if (names) {
+            sessionId = element.__animate_session;
+            
+            // create
+            if (!sessionId) {
+                animateObject = {
+                    node: element
+                };
+                
+                session = animate(createElementHandler(animateObject),
+                                                createElementDefaults(element,
+                                                                        names),
+                                                values[1],
+                                                type);
+                animateObject.id = sessionId = session.session;
+                
+                element.__animate_session = sessionId;
+                
+            }
+            // update
+            else {
+                
+            }
+        }
+        
+        if (staticValues) {
+            CSS.style(element, staticValues);
+        }
+    }
     
+}
+
+function createElementHandler(animate) {
+    function onAnimate(values, last) {
+        console.log('animate! ', values);
+        
+        
+        
+        if (last) {
+            delete animate.node.__animate_session;
+        }
+        
+    }
+    return onAnimate;
+}
+
+function createElementDefaults(element, names) {
+    var css = CSS,
+        values = css.computedStyle(names),
+        dimension = DIMENSION,
+        c = -1,
+        l = names.length,
+        cssValue = css.unitValue,
+        dimensionRe = DIMENSION_RE,
+        colorRe = COLOR_RE,
+        colorParse = COLOR.parse,
+        boxRe = BOX_RE,
+        boxPosition = BOX_POSITION,
+        box = null;
+    var name, value;
+    
+    for (; l--;) {
+        name = names[++c];
+        value = values[name];
+        if (boxRe.test(name)) {
+            if (!box) {
+                box = dimension.box(element);
+            }
+            value = box[boxPosition[name]];
+        }
+        else if (dimensionRe.test(name)) {
+            value = cssValue(value);
+        }
+        else if (colorRe.test(name)) {
+            value = colorParse(value);
+        }
+        values[name] = parseFloat(value) || 0;
+    }
+    return values;
+}
+
+function createElementValues(styles) {
+    var O = OBJECT,
+        hasOwn = O.contains,
+        number = O.number,
+        boxRe = BOX_RE,
+        cssValue = CSS.unitValue,
+        dimensionRe = DIMENSION_RE,
+        colorRe = COLOR_RE,
+        parseColor = COLOR.parse,
+        animateNames = [],
+        len = 0,
+        animateValues = {},
+        staticValues = {},
+        hasStaticValues = false;
+    var name, raw, value;
+    
+    for (name in styles) {
+        if (hasOwn(styles, name)) {
+            value = raw = styles[name];
+            
+            // opacity
+            if (name === 'opacity') {
+                value = parseFloat(raw);
+                
+            }
+            // box and dimension
+            else if (boxRe.test(name) || dimensionRe.test(name)) {
+                value = cssValue(raw);
+            }
+            // color
+            else if (colorRe.test(name)) {
+                value = parseColor(raw);
+                if (value === null) {
+                    value = false;
+                }
+            }
+            
+            if (number(value)) {
+                animateNames[len++] = name;
+                animateValues[name] = value;
+            }
+            else if (value !== false) {
+                hasStaticValues = true;
+                staticValues[name] = value;
+            }
+        }
+    }
+    
+    return (!!len || hasStaticValues) && [len ? animateNames : null,
+                                        len ? animateValues : null,
+                                        hasStaticValues ? staticValues : null];
+
 }
 
 

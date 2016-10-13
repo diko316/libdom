@@ -620,7 +620,10 @@
                 computedStyle: computedStyleNotSupported,
                 style: applyStyle,
                 unitValue: getCSSUnitValue,
-                styleOpacity: opacityNotSupported
+                styleOpacity: opacityNotSupported,
+                boxRe: /(top|bottom|left|right|width|height)$/,
+                dimensionRe: /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size)$/,
+                colorRe: COLOR_RE
             }, SLICE = Array.prototype.slice;
             var CSS_INFO;
             function addClass(element) {
@@ -720,6 +723,7 @@
             }
             function getCSSUnitValue(value) {
                 var is = isFinite;
+                var len;
                 switch (typeof value) {
                   case "number":
                     if (is(value)) {
@@ -728,7 +732,10 @@
                     break;
 
                   case "string":
-                    if (value === "auto" || value === "inherit" || CSS_MEASUREMENT_RE.test(value)) {
+                    len = value.length;
+                    if (CSS_MEASUREMENT_RE.test(value) && value.substring(len - 2, len) !== "px") {
+                        return value;
+                    } else if (value === "auto" || value === "inherit") {
                         return value;
                     }
                     value = parseFloat(value);
@@ -747,15 +754,17 @@
             function computedStyleNotSupported() {
                 throw new Error(STRING[2002]);
             }
-            function w3cGetCurrentStyle(element) {
+            function w3cGetCurrentStyle(element, list) {
                 var camel = STRING.stylize, isString = OBJECT.string;
-                var style, list, c, l, name, value, values, access;
+                var style, c, l, name, value, values, access;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
                 }
                 style = global.getComputedStyle(element);
                 values = {};
-                list = SLICE.call(arguments, 1);
+                if (!(list instanceof Array)) {
+                    list = SLICE.call(arguments, 1);
+                }
                 for (c = -1, l = list.length; l--; ) {
                     name = list[++c];
                     if (isString(name)) {
@@ -774,9 +783,9 @@
                 style = null;
                 return values;
             }
-            function ieGetCurrentStyle(element) {
+            function ieGetCurrentStyle(element, list) {
                 var dimensionRe = DIMENSION_RE, isString = OBJECT.string, camel = STRING.stylize, pixelSize = ieGetPixelSize;
-                var style, list, c, l, name, value, access, fontSize, values, dimension;
+                var style, c, l, name, value, access, fontSize, values, dimension;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
                 }
@@ -784,7 +793,9 @@
                 fontSize = false;
                 dimension = false;
                 values = {};
-                list = SLICE.call(arguments, 1);
+                if (!(list instanceof Array)) {
+                    list = SLICE.call(arguments, 1);
+                }
                 for (c = -1, l = list.length; l--; ) {
                     name = list[++c];
                     if (isString(name)) {
@@ -1486,7 +1497,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DOM = __webpack_require__(9), CSS = __webpack_require__(12), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", BOUNDING_RECT = "getBoundingClientRect", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getBox = null, getScreenSize = null, EXPORTS = {
+            var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DOM = __webpack_require__(9), CSS = __webpack_require__(12), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", BOUNDING_RECT = "getBoundingClientRect", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getScreenSize = null, EXPORTS = {
                 offset: offset,
                 size: size,
                 box: box,
@@ -1505,7 +1516,7 @@
                     return pageBox(element).slice(0, 2);
 
                   case ELEMENT_VIEW:
-                    return getOffset(element);
+                    return getOffset(element).slice(0, 2);
                 }
                 throw new Error(ERROR_INVALID_ELEMENT);
             }
@@ -1516,9 +1527,9 @@
                 return isViewable(element) === PAGE_VIEW ? pageBox(element).slice(2, 4) : getSize(element);
             }
             function box(element, x, y, width, height) {
-                var applyStyle, viewmode;
+                var applyStyle, viewmode, dimension;
                 if (arguments.length > 1) {
-                    applyStyle = translateBox(element, x, y, width, height);
+                    applyStyle = translateBox(element, x, y, null, null, width, height);
                     if (applyStyle) {
                         CSS.style(element, applyStyle);
                     }
@@ -1526,41 +1537,74 @@
                 }
                 viewmode = isViewable(element);
                 if (viewmode === PAGE_VIEW) {
-                    return pageBox(element);
+                    dimension = pageBox(element);
+                    x = dimension[0];
+                    y = dimension[1];
+                    width = dimension[2];
+                    height = dimension[3];
+                    dimension = screen(element);
+                    return [ x, y, width - x - dimension[2], height - y - dimension[3], width, height ];
                 }
                 if (viewmode !== ELEMENT_VIEW) {
                     throw new Error(ERROR_INVALID_ELEMENT);
                 }
-                return getBox(element);
+                dimension = getSize(element);
+                width = dimension[0];
+                height = dimension[1];
+                dimension = getOffset(element);
+                dimension[4] = width;
+                dimension[5] = height;
+                return dimension;
             }
-            function translateBox(element, x, y, width, height) {
-                var css = CSS, cssValue = css.unitValue, parse = parseFloat, NUMBER = "number", applyStyle = {}, hasLeft = false, hasTop = false;
+            function translateBox(element, x, y, right, bottom, width, height, target) {
+                var css = CSS, cssValue = css.unitValue, parse = parseFloat, NUMBER = "number", hasLeft = false, hasTop = hasLeft, hasRight = hasLeft, hasBottom = hasLeft;
                 var hasWidth, hasHeight, diff, currentDimension;
                 if (isViewable(element) !== ELEMENT_VIEW) {
                     throw new Error(ERROR_INVALID_ELEMENT);
                 }
                 if (x instanceof Array) {
-                    height = 3 in x ? x[3] : null;
-                    width = 2 in x ? x[2] : null;
+                    target = y;
+                    if (x.length > 4) {
+                        height = 5 in x ? x[5] : null;
+                        width = 4 in x ? x[4] : null;
+                        bottom = 3 in x ? x[3] : null;
+                        right = 2 in x ? x[2] : null;
+                    } else {
+                        height = 3 in x ? x[3] : null;
+                        width = 2 in x ? x[2] : null;
+                        bottom = null;
+                        right = null;
+                    }
                     y = 1 in y ? x[1] : null;
                     x = x[0];
                 }
-                currentDimension = css.computedStyle(element, "position", "top", "left", "width", "height");
+                if (!OBJECT.type(target, "[object Object]")) {
+                    target = {};
+                }
+                currentDimension = css.computedStyle(element, "position", "top", "left", "right", "bottom", "width", "height");
                 switch (currentDimension.position) {
                   case "relative":
                   case "absolute":
                   case "fixed":
                     x = cssValue(x);
                     y = cssValue(y);
+                    right = cssValue(right);
+                    bottom = cssValue(bottom);
                     hasLeft = x !== false;
                     hasTop = y !== false;
+                    hasRight = !hasLeft && right !== false;
+                    hasBottom = !hasBottom && bottom !== false;
                     if (hasLeft || hasTop) {
                         diff = getOffset(element);
                         if (hasLeft) {
-                            applyStyle.left = typeof x === NUMBER ? parse(currentDimension.left || 0) + (x - diff[0]) + "px" : x;
+                            target.left = typeof x === NUMBER ? parse(currentDimension.left || 0) + (x - diff[0]) + "px" : x;
+                        } else if (hasRight) {
+                            target.right = typeof right === NUMBER ? parse(currentDimension.right || 0) + (right - diff[2]) + "px" : right;
                         }
                         if (hasTop) {
-                            applyStyle.top = typeof y === NUMBER ? parse(currentDimension.top || 0) + (y - diff[1]) + "px" : y;
+                            target.top = typeof y === NUMBER ? parse(currentDimension.top || 0) + (y - diff[1]) + "px" : y;
+                        } else if (hasBottom) {
+                            target.bottom = typeof right === NUMBER ? parse(currentDimension.bottom || 0) + (bottom - diff[3]) + "px" : bottom;
                         }
                     }
                 }
@@ -1569,12 +1613,12 @@
                 hasWidth = width !== false;
                 hasHeight = height !== false;
                 if (hasWidth) {
-                    applyStyle.width = typeof width === NUMBER ? parse(currentDimension.width || 0) + (width - element[OFFSET_WIDTH]) + "px" : width;
+                    target.width = typeof width === NUMBER ? parse(currentDimension.width || 0) + (width - element[OFFSET_WIDTH]) + "px" : width;
                 }
                 if (hasHeight) {
-                    applyStyle.height = typeof height === NUMBER ? parse(currentDimension.height || 0) + (height - element[OFFSET_HEIGHT]) + "px" : height;
+                    target.height = typeof height === NUMBER ? parse(currentDimension.height || 0) + (height - element[OFFSET_HEIGHT]) + "px" : height;
                 }
-                return hasLeft || hasTop || hasWidth || hasWidth ? applyStyle : null;
+                return hasLeft || hasTop || hasWidth || hasWidth ? target : null;
             }
             function scroll(dom, x, y) {
                 var setter = arguments.length > 1, isNumber = OBJECT.number, stop = SCROLL_TOP, sleft = SCROLL_LEFT;
@@ -1648,10 +1692,21 @@
                 }
                 return false;
             }
-            function screen() {
-                var window = global.window, box = getPageScroll(window), size = getScreenSize(window);
+            function screen(dom) {
+                var help = DOM, subject = dom;
+                var box, size;
+                if (help.is(subject, 1, 9)) {
+                    console.log(subject);
+                    subject = (subject.nodeType === 1 ? subject.ownerDocument : subject)[help.documentViewAccess];
+                }
+                if (!help.isView(subject)) {
+                    subject = global.window;
+                }
+                box = getPageScroll(subject);
+                size = getScreenSize(subject);
                 box[2] = size[0];
                 box[3] = size[1];
+                subject = null;
                 return box;
             }
             function w3cScreenSize(window) {
@@ -1661,23 +1716,6 @@
                 var factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1, subject = window.document[IE_PAGE_STAT_ACCESS], size = [ subject.clientWidth * factor, subject.clientHeight * factor ];
                 subject = null;
                 return size;
-            }
-            function rectBox(element) {
-                var rect = element[BOUNDING_RECT](), box = rectOffset(element, rect), size = rectSize(element, rect);
-                box[2] = size[0];
-                box[3] = size[1];
-                box[4] = rect.right;
-                box[5] = rect.bottom;
-                rect = null;
-                return box;
-            }
-            function manualBox(element) {
-                var box = manualOffset(element), size = manualSize(element), width = size[0], height = size[1];
-                box[2] = width;
-                box[3] = height;
-                box[4] = width + box[0];
-                box[5] = height + box[1];
-                return box;
             }
             function rectSize(element, boundingRect) {
                 var M = Math, rect = boundingRect || element[BOUNDING_RECT](), size = [ M.max(0, rect.width || 0), M.max(0, rect.height || 0) ];
@@ -1689,29 +1727,29 @@
                 return [ M.max(0, element[OFFSET_WIDTH] || 0), M.max(0, element[OFFSET_HEIGHT] || 0) ];
             }
             function rectOffset(element, boundingRect) {
-                var scrolled = getPageScroll(element.ownerDocument[DEFAULTVIEW]), rect = boundingRect || element[BOUNDING_RECT](), factor = DIMENSION_INFO.zoomfactor ? getZoomFactor(global.window.document[IE_PAGE_STAT_ACCESS]) : 1, offset = [ rect.left * factor + scrolled[0], rect.top * factor + scrolled[1] ];
+                var page = screen(element), rect = boundingRect || element[BOUNDING_RECT](), factor = DIMENSION_INFO.zoomfactor ? getZoomFactor(global.window.document[IE_PAGE_STAT_ACCESS]) : 1, scrollX = page[0], scrollY = page[1], x = rect.left * factor + scrollX, y = rect.top * factor + scrollY, offset = [ x, y, rect.right * factor - page[2], rect.bottom * factor - page[3] ];
                 rect = null;
                 return offset;
             }
             function manualOffset(element) {
-                var root = global.document[IE_PAGE_STAT_ACCESS], css = CSS, top = OFFSET_TOP, left = OFFSET_LEFT, mtop = MARGIN_TOP, mleft = MARGIN_LEFT, stop = SCROLL_TOP, sleft = SCROLL_LEFT, offset = [ element[left], element[top] ], findStyles = [ mleft, mtop ], parent = element.offsetParent, style = css.computedStyle(element, findStyles);
-                offset[0] += parseFloat(style[mleft]) || 0;
-                offset[1] += parseFloat(style[mtop]) || 0;
+                var root = global.document[IE_PAGE_STAT_ACCESS], css = CSS, top = OFFSET_TOP, left = OFFSET_LEFT, mtop = MARGIN_TOP, mleft = MARGIN_LEFT, stop = SCROLL_TOP, sleft = SCROLL_LEFT, findStyles = [ mleft, mtop ], parent = element.offsetParent, style = css.computedStyle(element, [ findStyles ]), page = screen(element), x = element[left], y = element[top];
+                x += parseFloat(style[mleft]) || 0;
+                y += parseFloat(style[mtop]) || 0;
                 for (;parent; parent = parent.offsetParent) {
                     if (parent.nodeType === 1) {
                         style = css.computedStyle(parent, findStyles);
-                        offset[0] += (parent[left] || 0) + (parent.clientLeft || 0) + (parseFloat(style[mleft]) || 0);
-                        offset[1] += (parent[top] || 0) + (parent.clientTop || 0) + (parseFloat(style[mtop]) || 0);
+                        x += (parent[left] || 0) + (parent.clientLeft || 0) + (parseFloat(style[mleft]) || 0);
+                        y += (parent[top] || 0) + (parent.clientTop || 0) + (parseFloat(style[mtop]) || 0);
                     }
                 }
                 for (parent = element.parentNode; parent; parent = parent.parentNode) {
                     if (parent.nodeType === 1 && parent !== root) {
-                        offset[0] += parent[sleft] || 0;
-                        offset[1] += parent[stop] || 0;
+                        x += parent[sleft] || 0;
+                        y += parent[stop] || 0;
                     }
                 }
                 root = parent = null;
-                return offset;
+                return [ x, y, x + element[OFFSET_WIDTH] - page[2], y + element[OFFSET_HEIGHT] - page[3] ];
             }
             function setPageScroll(window, x, y) {
                 var factor = USE_ZOOM_FACTOR ? getZoomFactor(window) : 1;
@@ -1766,7 +1804,6 @@
                 boundingRect = DIMENSION_INFO.rectmethod && BOUNDING_RECT;
                 getOffset = boundingRect ? rectOffset : manualOffset;
                 getSize = boundingRect ? rectSize : manualSize;
-                getBox = boundingRect ? rectBox : manualBox;
             }
             module.exports = EXPORTS.chain = EXPORTS;
         }).call(exports, function() {
@@ -1875,7 +1912,14 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), ARRAY = __webpack_require__(24), EASING = __webpack_require__(25), CSS = __webpack_require__(12), SESSIONS = {}, EXPORTS = {
+        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), ARRAY = __webpack_require__(24), EASING = __webpack_require__(25), COLOR = __webpack_require__(13), CSS = __webpack_require__(12), DIMENSION = __webpack_require__(21), BOX_POSITION = {
+            left: 0,
+            top: 1,
+            right: 2,
+            bottom: 3,
+            width: 4,
+            height: 5
+        }, BOX_RE = CSS.boxRe, DIMENSION_RE = CSS.dimensionRe, COLOR_RE = CSS.colorRe, SESSIONS = {}, EXPORTS = {
             interval: 10,
             each: animate,
             has: hasAnimationType
@@ -1884,21 +1928,27 @@
             var M = Math, string = STRING, easing = EASING, O = OBJECT, oType = O.type, list = SESSIONS, defaultInterval = EXPORTS.interval, clear = clearInterval, set = setInterval, interval = null, frame = 0;
             var frames, displacements;
             function control() {
+                var fn = control;
                 if (interval) {
                     clear(interval);
                     delete list[interval];
-                    delete control.interval;
-                    delete control.update;
+                    delete fn.session;
+                    delete fn.update;
+                    delete fn.running;
                     interval = null;
                 }
+                fn = null;
             }
-            function update(updates) {
-                var specs = displacements;
+            function update(updates, initialValues, animationType) {
+                var specs = displacements, type = oType, signature = "[object Object]";
                 if (interval) {
-                    if (!oType(updates, "[object Object]")) {
+                    if (!type(updates, signature)) {
                         throw new Error(string[1152]);
                     }
-                    applyDisplacements(specs, specs[3], updates);
+                    if (!type(initialValues, signature)) {
+                        initialValues = specs[3];
+                    }
+                    applyDisplacements(specs, initialValues, updates, animationType);
                     frame = 0;
                 }
             }
@@ -1926,8 +1976,9 @@
             frames = M.max(10, M.round(duration / defaultInterval));
             displacements = [ [], [], [], from ];
             interval = set(callback, defaultInterval);
-            control.interval = interval;
+            control.session = interval;
             control.update = update;
+            control.running = true;
             list[interval] = displacements;
             displacements = applyDisplacements(displacements, from, to);
             return control;
@@ -1969,7 +2020,84 @@
         function hasAnimationType(type) {
             return OBJECT.contains(EASING, type);
         }
-        function animateStyle(element) {}
+        function animateStyle(element, styles, type) {
+            var values = createElementValues(styles);
+            var session, sessionId, animateObject, names, staticValues;
+            if (values) {
+                names = values[0];
+                staticValues = values[2];
+                if (names) {
+                    sessionId = element.__animate_session;
+                    if (!sessionId) {
+                        animateObject = {
+                            node: element
+                        };
+                        session = animate(createElementHandler(animateObject), createElementDefaults(element, names), values[1], type);
+                        animateObject.id = sessionId = session.session;
+                        element.__animate_session = sessionId;
+                    } else {}
+                }
+                if (staticValues) {
+                    CSS.style(element, staticValues);
+                }
+            }
+        }
+        function createElementHandler(animate) {
+            function onAnimate(values, last) {
+                console.log("animate! ", values);
+                if (last) {
+                    delete animate.node.__animate_session;
+                }
+            }
+            return onAnimate;
+        }
+        function createElementDefaults(element, names) {
+            var css = CSS, values = css.computedStyle(names), dimension = DIMENSION, c = -1, l = names.length, cssValue = css.unitValue, dimensionRe = DIMENSION_RE, colorRe = COLOR_RE, colorParse = COLOR.parse, boxRe = BOX_RE, boxPosition = BOX_POSITION, box = null;
+            var name, value;
+            for (;l--; ) {
+                name = names[++c];
+                value = values[name];
+                if (boxRe.test(name)) {
+                    if (!box) {
+                        box = dimension.box(element);
+                    }
+                    value = box[boxPosition[name]];
+                } else if (dimensionRe.test(name)) {
+                    value = cssValue(value);
+                } else if (colorRe.test(name)) {
+                    value = colorParse(value);
+                }
+                values[name] = parseFloat(value) || 0;
+            }
+            return values;
+        }
+        function createElementValues(styles) {
+            var O = OBJECT, hasOwn = O.contains, number = O.number, boxRe = BOX_RE, cssValue = CSS.unitValue, dimensionRe = DIMENSION_RE, colorRe = COLOR_RE, parseColor = COLOR.parse, animateNames = [], len = 0, animateValues = {}, staticValues = {}, hasStaticValues = false;
+            var name, raw, value;
+            for (name in styles) {
+                if (hasOwn(styles, name)) {
+                    value = raw = styles[name];
+                    if (name === "opacity") {
+                        value = parseFloat(raw);
+                    } else if (boxRe.test(name) || dimensionRe.test(name)) {
+                        value = cssValue(raw);
+                    } else if (colorRe.test(name)) {
+                        value = parseColor(raw);
+                        if (value === null) {
+                            value = false;
+                        }
+                    }
+                    if (number(value)) {
+                        animateNames[len++] = name;
+                        animateValues[name] = value;
+                    } else if (value !== false) {
+                        hasStaticValues = true;
+                        staticValues[name] = value;
+                    }
+                }
+            }
+            return (!!len || hasStaticValues) && [ len ? animateNames : null, len ? animateValues : null, hasStaticValues ? staticValues : null ];
+        }
         module.exports = EXPORTS;
     }, function(module, exports) {
         "use strict";

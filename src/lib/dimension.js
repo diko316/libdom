@@ -32,7 +32,7 @@ var DETECTED = require("./detect.js"),
     getPageScroll = null,
     getOffset = null,
     getSize = null,
-    getBox = null,
+    //getBox = null,
     getScreenSize = null,
     EXPORTS = {
         offset: offset,
@@ -61,7 +61,7 @@ function offset(element, x, y) {
     case PAGE_VIEW:
         return pageBox(element).slice(0, 2);
     case ELEMENT_VIEW:
-        return getOffset(element);
+        return getOffset(element).slice(0, 2);
     }
     
     throw new Error(ERROR_INVALID_ELEMENT);
@@ -81,12 +81,12 @@ function size(element, width, height) {
 }
 
 function box(element, x, y, width, height) {
-    var applyStyle, viewmode;
+    var applyStyle, viewmode, dimension;
     
     // setter
     if (arguments.length > 1) {
         
-        applyStyle = translateBox(element, x, y, width, height);
+        applyStyle = translateBox(element, x, y, null, null, width, height);
         
         if (applyStyle) {
             CSS.style(element, applyStyle);
@@ -97,42 +97,79 @@ function box(element, x, y, width, height) {
     // getter
     viewmode = isViewable(element);
     if (viewmode === PAGE_VIEW) {
-        return pageBox(element);
+        dimension = pageBox(element);
+        x = dimension[0];
+        y = dimension[1];
+        width = dimension[2];
+        height = dimension[3];
+        dimension = screen(element);
+        return [
+            x,
+            y,
+            width - x - dimension[2],
+            height - y - dimension[3],
+            width,
+            height];
     }
     
     if (viewmode !== ELEMENT_VIEW) {
         throw new Error(ERROR_INVALID_ELEMENT);
     }
+    dimension = getSize(element);
+    width = dimension[0];
+    height = dimension[1];
+    dimension = getOffset(element);
+    dimension[4] = width;
+    dimension[5] = height;
     
-    return getBox(element);
+    return dimension;
 }
 
-function translateBox(element, x, y, width, height) {
+function translateBox(element, x, y, right, bottom, width, height, target) {
     var css = CSS,
         cssValue = css.unitValue,
         parse = parseFloat,
         NUMBER = 'number',
-        applyStyle = {},
         hasLeft = false,
-        hasTop = false;
+        hasTop = hasLeft,
+        hasRight = hasLeft,
+        hasBottom = hasLeft;
         
     var hasWidth, hasHeight, diff, currentDimension;
         
     if (isViewable(element) !== ELEMENT_VIEW) {
         throw new Error(ERROR_INVALID_ELEMENT);
     }
-        
+    
+    // resolve parameters
     if (x instanceof Array) {
-        height = 3 in x ? x[3] : null;
-        width = 2 in x ? x[2] : null;
+        target = y;
+        if (x.length > 4) {
+            height = 5 in x ? x[5] : null;
+            width = 4 in x ? x[4] : null;
+            bottom = 3 in x ? x[3] : null;
+            right = 2 in x ? x[2] : null;
+        }
+        else {
+            height = 3 in x ? x[3] : null;
+            width = 2 in x ? x[2] : null;
+            bottom = null;
+            right = null;
+        }
         y = 1 in y ? x[1] : null;
         x = x[0];
+    }
+    
+    if (!OBJECT.type(target, '[object Object]')) {
+        target = {};
     }
     
     currentDimension = css.computedStyle(element,
                                     'position',
                                     'top',
                                     'left',
+                                    'right',
+                                    'bottom',
                                     'width',
                                     'height');
     
@@ -145,33 +182,53 @@ function translateBox(element, x, y, width, height) {
         // create position
         x = cssValue(x);
         y = cssValue(y);
+        right = cssValue(right);
+        bottom = cssValue(bottom);
         
         hasLeft = x !== false;
         hasTop = y !== false;
+        hasRight = !hasLeft && right !== false;
+        hasBottom = !hasBottom && bottom !== false;
         
         if (hasLeft || hasTop) {
             
             diff = getOffset(element);
             
             if (hasLeft) {
-                applyStyle.left = typeof x === NUMBER ? (
+                target.left = typeof x === NUMBER ? (
                                     parse(currentDimension.left || 0) +
                                     (x - diff[0])
                                 ) + 'px' :
                                 x;
                 
             }
+            else if (hasRight) {
+                target.right = typeof right === NUMBER ? (
+                                    parse(currentDimension.right || 0) +
+                                    (right - diff[2])
+                                ) + 'px' :
+                                right;
+            }
             
             if (hasTop) {
-                applyStyle.top = typeof y === NUMBER ? (
+                target.top = typeof y === NUMBER ? (
                                     parse(currentDimension.top || 0) +
                                     (y - diff[1])
                                 ) + 'px' :
                                 y;
             }
+            else if (hasBottom) {
+                target.bottom = typeof right === NUMBER ? (
+                                    parse(currentDimension.bottom || 0) +
+                                    (bottom - diff[3])
+                                ) + 'px' :
+                                bottom;
+            }
         }
         
     }
+    
+    
     
     // resolve size
     width = cssValue(width);
@@ -181,7 +238,7 @@ function translateBox(element, x, y, width, height) {
     hasHeight = height !== false;
 
     if (hasWidth) {
-        applyStyle.width = typeof width === NUMBER ? (
+        target.width = typeof width === NUMBER ? (
                             parse(currentDimension.width || 0) +
                             (width - element[OFFSET_WIDTH])
                         ) + 'px' :
@@ -189,14 +246,14 @@ function translateBox(element, x, y, width, height) {
     }
     
     if (hasHeight) {
-        applyStyle.height = typeof height === NUMBER ? (
+        target.height = typeof height === NUMBER ? (
                             parse(currentDimension.height || 0) +
                             (height - element[OFFSET_HEIGHT])
                         ) + 'px' :
                         height;
     }
 
-    return hasLeft || hasTop || hasWidth || hasWidth ? applyStyle : null;
+    return hasLeft || hasTop || hasWidth || hasWidth ? target : null;
 }
 
 
@@ -322,14 +379,25 @@ function visible(element, visibility, displayed) {
 /**
  * Screen offset and size
  */
-function screen() {
-    var window = global.window,
-        box = getPageScroll(window),
-        size = getScreenSize(window);
+function screen(dom) {
+    var help = DOM,
+        subject = dom;
+    var box, size;
+    if (help.is(subject, 1, 9)) {
+        console.log(subject);
+        subject = (subject.nodeType === 1 ?
+                        subject.ownerDocument : subject)[
+                            help.documentViewAccess];
+    }
+    if (!help.isView(subject)) {
+        subject = global.window;
+    }
+    box = getPageScroll(subject);
+    size = getScreenSize(subject);
     
     box[2] = size[0];
     box[3] = size[1];
-    
+    subject = null;
     return box;
     
 }
@@ -348,39 +416,6 @@ function ieScreenSize(window) {
     subject = null;
     return size;
 }
-
-
-
-/**
- * Element Box
- */
-function rectBox(element) {
-    var rect = element[BOUNDING_RECT](),
-        box = rectOffset(element, rect),
-        size = rectSize(element, rect);
-    
-    box[2] = size[0];
-    box[3] = size[1];
-    box[4] = rect.right;
-    box[5] = rect.bottom;
-    rect = null;
-    return box;
-}
-
-function manualBox(element) {
-    var box = manualOffset(element),
-        size = manualSize(element),
-        width = size[0],
-        height = size[1];
-        
-    box[2] = width;
-    box[3] = height;
-    box[4] = width + box[0];
-    box[5] = height + box[1];
-    
-    return box;
-}
-
 
 /**
  * Element Size
@@ -406,13 +441,22 @@ function manualSize(element) {
  * Element Offset
  */
 function rectOffset(element, boundingRect) {
-    var scrolled = getPageScroll(element.ownerDocument[DEFAULTVIEW]),
+    var //scrolled = getPageScroll(element.ownerDocument[DEFAULTVIEW]),
+        page = screen(element),
         rect = boundingRect || element[BOUNDING_RECT](),
         factor = DIMENSION_INFO.zoomfactor ?
                     getZoomFactor(global.window.document[IE_PAGE_STAT_ACCESS]) :
                     1,
-        offset = [rect.left * factor + scrolled[0],
-                    rect.top * factor + scrolled[1]];
+        scrollX = page[0],
+        scrollY = page[1],
+        x = rect.left * factor + scrollX,
+        y = rect.top * factor + scrollY,
+        
+        offset = [
+            x,
+            y,
+            rect.right * factor - page[2],
+            rect.bottom * factor - page[3]];
     rect = null;
     return offset;
 }
@@ -428,14 +472,17 @@ function manualOffset(element) {
         
         stop = SCROLL_TOP,
         sleft = SCROLL_LEFT,
-        
-        offset = [element[left], element[top]],
+
         findStyles = [mleft, mtop],
         parent = element.offsetParent,
-        style = css.computedStyle(element, findStyles);
+        style = css.computedStyle(element,
+                        [findStyles]),
+        page = screen(element),
+        x = element[left],
+        y = element[top];
     
-    offset[0] += parseFloat(style[mleft]) || 0;
-    offset[1] += parseFloat(style[mtop]) || 0;
+    x += parseFloat(style[mleft]) || 0;
+    y += parseFloat(style[mtop]) || 0;
     
     for (; parent; parent = parent.offsetParent) {
         
@@ -443,11 +490,11 @@ function manualOffset(element) {
             
             style = css.computedStyle(parent, findStyles);
             
-            offset[0] += (parent[left] || 0) +
+            x += (parent[left] || 0) +
                             (parent.clientLeft || 0) +
                             (parseFloat(style[mleft]) || 0);
                             
-            offset[1] += (parent[top] || 0) +
+            y += (parent[top] || 0) +
                             (parent.clientTop || 0) +
                             (parseFloat(style[mtop]) || 0);
                             
@@ -456,13 +503,17 @@ function manualOffset(element) {
 
     for (parent = element.parentNode; parent; parent = parent.parentNode) {
         if (parent.nodeType === 1 && parent !== root) {
-            offset[0] += parent[sleft] || 0;
-            offset[1] += parent[stop] || 0;
+            x += parent[sleft] || 0;
+            y += parent[stop] || 0;
         }
     }
-
+    
     root = parent = null;
-    return offset;
+    return [
+        x,
+        y,
+        x + element[OFFSET_WIDTH] - page[2],
+        y + element[OFFSET_HEIGHT] - page[3]];
 }
 
 
@@ -563,7 +614,7 @@ if (DIMENSION_INFO) {
     getOffset = boundingRect ? rectOffset : manualOffset;
                         
     getSize = boundingRect ? rectSize : manualSize;
-    getBox = boundingRect ? rectBox : manualBox;
+    //getBox = boundingRect ? rectBox : manualBox;
 }
 
 

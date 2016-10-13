@@ -46,7 +46,11 @@ var OBJECT = require("./object.js"),
         computedStyle: computedStyleNotSupported,
         style: applyStyle,
         unitValue: getCSSUnitValue,
-        styleOpacity: opacityNotSupported
+        styleOpacity: opacityNotSupported,
+        boxRe: /(top|bottom|left|right|width|height)$/,
+        dimensionRe:
+            /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size)$/,
+        colorRe: COLOR_RE
     },
     SLICE = Array.prototype.slice;
     
@@ -206,6 +210,7 @@ function parseCSSText(str) {
 
 function getCSSUnitValue(value) {
     var is = isFinite;
+    var len;
     
     switch (typeof value) {
     case 'number':
@@ -214,9 +219,12 @@ function getCSSUnitValue(value) {
         }
         break;
     case 'string':
-        if (value === 'auto' ||
-            value === 'inherit' ||
-            CSS_MEASUREMENT_RE.test(value)) {
+        len = value.length;
+        if (CSS_MEASUREMENT_RE.test(value) &&
+            value.substring(len - 2, len) !== 'px') {
+            return value;
+        }
+        else if (value === 'auto' || value === 'inherit') {
             return value;
         }
         value = parseFloat(value);
@@ -245,10 +253,10 @@ function computedStyleNotSupported() {
     throw new Error(STRING[2002]);
 }
 
-function w3cGetCurrentStyle(element) {
+function w3cGetCurrentStyle(element, list) {
     var camel = STRING.stylize,
         isString = OBJECT.string;
-    var style, list, c, l, name, value, values, access;
+    var style, c, l, name, value, values, access;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
@@ -257,7 +265,9 @@ function w3cGetCurrentStyle(element) {
     style = global.getComputedStyle(element);
     
     values = {};
-    list = SLICE.call(arguments, 1);
+    if (!(list instanceof Array)) {
+        list = SLICE.call(arguments, 1);
+    }
     for (c = -1, l = list.length; l--;) {
         name = list[++c];
         if (isString(name)) {
@@ -278,13 +288,13 @@ function w3cGetCurrentStyle(element) {
     return values;
 }
 
-function ieGetCurrentStyle(element) {
+function ieGetCurrentStyle(element, list) {
     var dimensionRe = DIMENSION_RE,
         isString = OBJECT.string,
         camel = STRING.stylize,
         pixelSize = ieGetPixelSize;
         
-    var style, list, c, l, name, value, access, fontSize, values, dimension;
+    var style, c, l, name, value, access, fontSize, values, dimension;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
@@ -294,7 +304,10 @@ function ieGetCurrentStyle(element) {
     fontSize = false;
     dimension = false;
     values = {};
-    list = SLICE.call(arguments, 1);
+    
+    if (!(list instanceof Array)) {
+        list = SLICE.call(arguments, 1);
+    }
     
     for (c = -1, l = list.length; l--;) {
         name = list[++c];
