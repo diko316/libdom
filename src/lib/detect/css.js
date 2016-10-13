@@ -5,13 +5,13 @@ var WINDOW = global,
     DOC = WINDOW.document,
     DIV = DOC.createElement('div'),
     STYLE = DIV.style,
-    RGBA = 'rgba(0,0,0,.5)',
+    RGBA = 'rgba(0,0,0,0.5)',
     TRANSITION_SUPPORT = ['OTransition',
                             'webkitTransition',
                             'MozTransition',
                             'transition'];
 
-var name, l, EXPORTS;
+var name, l, EXPORTS, color;
 
 
 module.exports = EXPORTS = {
@@ -28,12 +28,20 @@ module.exports = EXPORTS = {
 // try alpha color
 try {
     STYLE.color = RGBA;
-    if (RGBA === STYLE.color) {
+    color = STYLE.color;
+    
+    if (typeof color === 'string') {
+        color = color.replace(/[ \r\n\t\s]+/g, '').toLowerCase();
+    }
+
+    if (RGBA === color) {
         EXPORTS.alphaColor = true;
         console.log('alpha color supported!');
     }
 }
 catch (e) {}
+
+console.log('supports alpha color: ', EXPORTS.alphaColor);
 
 // detect transition
 for (l = TRANSITION_SUPPORT.length; l--;) {

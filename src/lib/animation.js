@@ -22,7 +22,8 @@ var STRING =  require("./string.js"),
     EXPORTS = {
         interval: 10,
         each: animate,
-        has: hasAnimationType
+        has: hasAnimationType,
+        style: animateStyle
     };
 
 /**
@@ -123,7 +124,7 @@ function animate(handler, from, to, type, duration) {
     duration = (O.number(duration) && duration > 0 ? duration : 1) * 1000;
     frames = M.max(10, M.round(duration / defaultInterval));
     
-    displacements = [[], [], [], from];
+    displacements = [[], [], [], from, control];
     interval = set(callback, defaultInterval);
     control.session = interval;
     control.update = update;
@@ -172,7 +173,7 @@ function applyDisplacements(session, from, to) {
             if (source === false) {
                 continue;
             }
-            index = ++len;
+            index = len++;
             names[index] = name;
             
         }
@@ -185,6 +186,7 @@ function applyDisplacements(session, from, to) {
         targetValues[index] = target;
 
     }
+    
     return session;
 }
 
@@ -197,18 +199,22 @@ function hasAnimationType(type) {
  */
 function animateStyle(element, styles, type) {
     var values = createElementValues(styles);
-    var session, sessionId, animateObject, names, staticValues;
+    var session, sessionId, animateObject,
+        names, defaults, animateValues, staticValues;
         
         //animate = [element],
         //handler = createAnimationObject(animate);
         
     if (values) {
         names = values[0];
+        animateValues = values[1];
         staticValues = values[2];
+        
         
         // has animation
         if (names) {
             sessionId = element.__animate_session;
+            defaults = createElementDefaults(element, names);
             
             // create
             if (!sessionId) {
@@ -217,10 +223,10 @@ function animateStyle(element, styles, type) {
                 };
                 
                 session = animate(createElementHandler(animateObject),
-                                                createElementDefaults(element,
-                                                                        names),
-                                                values[1],
+                                                defaults,
+                                                animateValues,
                                                 type);
+                
                 animateObject.id = sessionId = session.session;
                 
                 element.__animate_session = sessionId;
@@ -228,6 +234,9 @@ function animateStyle(element, styles, type) {
             }
             // update
             else {
+                
+                session = SESSIONS[sessionId][4];
+                session.update(animateValues, defaults, type);
                 
             }
         }
@@ -241,21 +250,54 @@ function animateStyle(element, styles, type) {
 
 function createElementHandler(animate) {
     function onAnimate(values, last) {
-        console.log('animate! ', values);
+        var boxRe = BOX_RE,
+            css = CSS,
+            colorUnit = css.colorUnit,
+            formatColor = COLOR.stringify,
+            dimensionRe = DIMENSION_RE,
+            colorRe = COLOR_RE,
+            names = SESSIONS[animate.id][0],
+            node = animate.node,
+            c = -1,
+            l = names.length;
+        var name, value;
         
+        // transform dimension
+        DIMENSION.translate(node,
+                            values.left,
+                            values.top,
+                            values.right,
+                            values.bottom,
+                            values.width,
+                            values.height,
+                            values);
         
-        
-        if (last) {
-            delete animate.node.__animate_session;
+        // transform others
+        for (; l--;) {
+            name = names[++c];
+            value = values[name];
+            if (!boxRe.test(name) && dimensionRe.test(name)) {
+                values[name] = '' + value + 'px';
+            }
+            else if (colorRe.test(name)) {
+                values[name] = formatColor(value, colorUnit);
+            }
         }
         
+        css.style(node, values);
+        
+        if (last) {
+            delete node.__animate_session;
+        }
+        
+        node = null;
     }
     return onAnimate;
 }
 
 function createElementDefaults(element, names) {
     var css = CSS,
-        values = css.computedStyle(names),
+        values = css.computedStyle(element, names),
         dimension = DIMENSION,
         c = -1,
         l = names.length,
@@ -285,6 +327,7 @@ function createElementDefaults(element, names) {
         }
         values[name] = parseFloat(value) || 0;
     }
+    
     return values;
 }
 
@@ -320,6 +363,7 @@ function createElementValues(styles) {
             // color
             else if (colorRe.test(name)) {
                 value = parseColor(raw);
+                //console.log('parsed: ', raw, ' == ', value);
                 if (value === null) {
                     value = false;
                 }

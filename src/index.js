@@ -89,7 +89,8 @@ applyIf(EXPORTS,
 applyIf(EXPORTS,
         require("./lib/animation.js"),
         {
-            'eachDisplacement': 'each'
+            'eachDisplacement': 'each',
+            'animateStyle': 'style'
         });
 
 if (detect) {

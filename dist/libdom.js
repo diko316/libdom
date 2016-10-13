@@ -78,7 +78,8 @@
                 formatColor: "stringify"
             });
             applyIf(EXPORTS, __webpack_require__(23), {
-                eachDisplacement: "each"
+                eachDisplacement: "each",
+                animateStyle: "style"
             });
             if (detect) {
                 css.chain = event.chain = dimension.chain = selection.chain = EXPORTS;
@@ -156,8 +157,8 @@
     }, function(module, exports) {
         (function(global) {
             "use strict";
-            var WINDOW = global, DOC = WINDOW.document, DIV = DOC.createElement("div"), STYLE = DIV.style, RGBA = "rgba(0,0,0,.5)", TRANSITION_SUPPORT = [ "OTransition", "webkitTransition", "MozTransition", "transition" ];
-            var name, l, EXPORTS;
+            var WINDOW = global, DOC = WINDOW.document, DIV = DOC.createElement("div"), STYLE = DIV.style, RGBA = "rgba(0,0,0,0.5)", TRANSITION_SUPPORT = [ "OTransition", "webkitTransition", "MozTransition", "transition" ];
+            var name, l, EXPORTS, color;
             module.exports = EXPORTS = {
                 w3cStyle: !!WINDOW.getComputedStyle,
                 ieStyle: !!DOC.documentElement.currentStyle,
@@ -170,11 +171,16 @@
             };
             try {
                 STYLE.color = RGBA;
-                if (RGBA === STYLE.color) {
+                color = STYLE.color;
+                if (typeof color === "string") {
+                    color = color.replace(/[ \r\n\t\s]+/g, "").toLowerCase();
+                }
+                if (RGBA === color) {
                     EXPORTS.alphaColor = true;
                     console.log("alpha color supported!");
                 }
             } catch (e) {}
+            console.log("supports alpha color: ", EXPORTS.alphaColor);
             for (l = TRANSITION_SUPPORT.length; l--; ) {
                 name = TRANSITION_SUPPORT[l];
                 if (typeof STYLE[name] !== "undefined") {
@@ -621,6 +627,7 @@
                 style: applyStyle,
                 unitValue: getCSSUnitValue,
                 styleOpacity: opacityNotSupported,
+                colorUnit: "hex",
                 boxRe: /(top|bottom|left|right|width|height)$/,
                 dimensionRe: /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size)$/,
                 colorRe: COLOR_RE
@@ -645,8 +652,8 @@
                 return EXPORTS.chain;
             }
             function applyStyle(element, style, value) {
-                var O = OBJECT, string = O.string, number = O.number, hasOwn = O.contains, color = COLOR, set = SET_STYLE, setOpacity = SET_OPACITY, colorRe = COLOR_RE, parse = parseCSSText, camelize = STRING.stylize, len = arguments.length;
-                var name, elementStyle, isOpacity, isNumber, primaryColorUnit;
+                var O = OBJECT, string = O.string, number = O.number, hasOwn = O.contains, color = COLOR, set = SET_STYLE, setOpacity = SET_OPACITY, colorRe = COLOR_RE, parse = parseCSSText, primaryColorUnit = EXPORTS.colorUnit, camelize = STRING.stylize, len = arguments.length;
+                var name, elementStyle, isOpacity, isNumber;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
                 }
@@ -663,7 +670,6 @@
                     if (!O.type(style, "[object Object]")) {
                         throw new Error(STRING[1141]);
                     }
-                    primaryColorUnit = CSS_INFO.alphaColor ? "rgba" : "hex";
                     elementStyle = element.style;
                     for (name in style) {
                         if (hasOwn(style, name)) {
@@ -679,10 +685,7 @@
                             } else if (isOpacity) {
                                 setOpacity(elementStyle, value);
                                 continue;
-                            } else if (colorRe.test(name)) {
-                                if (!isNumber) {
-                                    value = color.parse(value);
-                                }
+                            } else if (colorRe.test(name) && isNumber) {
                                 value = color.stringify(value, primaryColorUnit);
                             }
                             set(elementStyle, name, value);
@@ -923,7 +926,7 @@
                 if (value === null) {
                     style.removeProperty(name);
                 } else {
-                    style.setProperty(name, value, style.getPropertyPriority(name) || "");
+                    style[name] = value;
                 }
             }
             function w3cGetStyleValue(style, name) {
@@ -933,7 +936,7 @@
                 if (value === null) {
                     style.removeAttribute(name);
                 } else {
-                    style.setAttribute(name, value);
+                    style[name] = value;
                 }
             }
             function ieGetStyleValue(style, name) {
@@ -956,6 +959,9 @@
                     GET_OPACITY = ieGetOpacity;
                     SET_OPACITY = ieSetOpacity;
                 }
+                if (CSS_INFO.alphaColor) {
+                    EXPORTS.colorUnit = "rgba";
+                }
             }
             module.exports = EXPORTS.chain = EXPORTS;
         }).call(exports, function() {
@@ -963,7 +969,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var OBJECT = __webpack_require__(10), FORMAT = __webpack_require__(14), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, TO_RGBA = {
+        var OBJECT = __webpack_require__(10), FORMAT = __webpack_require__(14), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, REMOVE_SPACES = /[ \r\n\t\s]+/g, TO_RGBA = {
             rgb: __webpack_require__(15),
             rgba: __webpack_require__(16),
             hsl: __webpack_require__(17),
@@ -975,36 +981,45 @@
             stringify: toColorString
         };
         function parseType(str) {
-            var items = parseColorStringType(str);
-            return items ? items[0] : null;
-        }
-        function parseColorStringType(str) {
-            var O = OBJECT, re = COLOR_RE, list = TO_RGBA;
-            var type, m, items, isHex, item;
-            if (O.string(str) && re.test(str)) {
-                m = str.match(re);
-                type = m[1];
-                if (!O.contains(list, type)) {
-                    type = "hex";
-                }
-                items = m[3];
-                isHex = !items;
-                if (isHex) {
-                    items = m[2];
-                    if (items.length < 6) {
-                        item = items.charAt(2);
-                        items = [ items.charAt(0), items.substring(0, 2), items.charAt(1), item, item ].join("");
-                    }
-                } else {
-                    items = items.split(",");
-                }
-                return [ type, isHex, items ];
+            str = preParseValue(str);
+            if (str) {
+                return parseColorStringType(str) || null;
             }
             return null;
         }
+        function preParseValue(str) {
+            if (typeof str === "string") {
+                str = str.replace(REMOVE_SPACES, "");
+                if (COLOR_RE.test(str)) {
+                    return str;
+                }
+            }
+            return null;
+        }
+        function parseColorStringType(str) {
+            var O = OBJECT, list = TO_RGBA, m = str.match(COLOR_RE), type = m[1];
+            var items, isHex, item;
+            if (!O.contains(list, type)) {
+                type = "hex";
+            }
+            items = m[3];
+            isHex = !items;
+            if (isHex) {
+                items = m[2];
+                if (items.length < 6) {
+                    item = items.charAt(2);
+                    items = [ items.charAt(0), items.substring(0, 2), items.charAt(1), item, item ].join("");
+                }
+            } else {
+                items = items.split(",");
+            }
+            return [ type, isHex, items ];
+        }
         function parseColorString(str) {
-            var F = FORMAT, formatPercent = F.PERCENT, formatNumber = F.NUMBER, formatHex = F.HEX, numberRe = NUMBER_RE, parsed = parseColorStringType(str);
-            var c, l, item, items, itemizer, processor, type, isHex, toProcess;
+            var F = FORMAT, formatPercent = F.PERCENT, formatNumber = F.NUMBER, formatHex = F.HEX, numberRe = NUMBER_RE;
+            var parsed, c, l, item, items, itemizer, processor, type, isHex, toProcess;
+            str = preParseValue(str);
+            parsed = str && parseColorStringType(str);
             if (parsed) {
                 type = parsed[0];
                 processor = TO_RGBA[type];
@@ -1040,16 +1055,34 @@
             if (!O.contains(list, type) || !O.number(colorValue)) {
                 return null;
             }
+            colorValue = Math.round(colorValue);
             return list[type].toString(colorValue);
         }
         module.exports = EXPORTS;
     }, function(module, exports) {
         "use strict";
-        module.exports = {
+        var EXPORTS = module.exports = {
             NUMBER: 1,
             HEX: 2,
-            PERCENT: 3
+            PERCENT: 3,
+            format: convert2Number
         };
+        function convert2Number(value, format) {
+            var parse = parseFloat, F = EXPORTS;
+            console.log("format: ", format);
+            switch (format) {
+              case F.HEX:
+                return parseInt(value, 16) || 0;
+
+              case F.NUMBER:
+                return parse(value) || 0;
+
+              case F.PERCENT:
+                console.log("value: ", value, " = ", (parse(value) || 1) * 100);
+                return Math.round((parse(value) || 1) * 100);
+            }
+            return 0;
+        }
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var RGBA = __webpack_require__(16), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA), toArray = EXPORTS.toArray;
@@ -1058,7 +1091,11 @@
             values.splice(3, 1);
             return "rgb(" + values.join(",") + ")";
         }
+        function toInteger(r, g, b) {
+            return RGBA.toInteger(r, g, b, 100);
+        }
         EXPORTS.toString = toString;
+        EXPORTS.toInteger = toInteger;
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var FORMAT = __webpack_require__(14), PIGMENT_SIZE = 255;
@@ -1067,32 +1104,17 @@
             return [ integer & size, integer >> 8 & size, integer >> 16 & size, integer >> 24 & size ];
         }
         function itemize(value, index, format) {
-            var F = FORMAT, M = Math, parse = parseFloat, alpha = index > 2, min = 0, max = alpha ? 100 : PIGMENT_SIZE;
-            switch (format) {
-              case F.HEX:
-                value = parseInt(value, 16);
-                break;
-
-              case F.NUMBER:
-                value = parse(value);
-                if (alpha) {
-                    value *= 100;
-                }
-                break;
-
-              case F.PERCENT:
-                value = parse(value);
-                break;
-            }
-            return M.max(min, M.min(max, M.round(value) || 0));
+            var F = FORMAT, M = Math, min = 0, max = index > 2 ? 100 : PIGMENT_SIZE;
+            value = F.format(value, format);
+            return M.max(min, M.min(max, value));
         }
         function toInteger(r, g, b, a) {
             var size = PIGMENT_SIZE;
             return (a & size) << 24 | (b & size) << 16 | (g & size) << 8 | r & size;
         }
         function toString(integer) {
-            var values = toArray(integer);
-            values[3] = (values[3] / 100).toFixed(2);
+            var values = toArray(integer), alpha = values[3] / 100;
+            values[3] = parseFloat(alpha.toFixed(2));
             return "rgba(" + values.join(",") + ")";
         }
         module.exports = {
@@ -1696,7 +1718,6 @@
                 var help = DOM, subject = dom;
                 var box, size;
                 if (help.is(subject, 1, 9)) {
-                    console.log(subject);
                     subject = (subject.nodeType === 1 ? subject.ownerDocument : subject)[help.documentViewAccess];
                 }
                 if (!help.isView(subject)) {
@@ -1922,7 +1943,8 @@
         }, BOX_RE = CSS.boxRe, DIMENSION_RE = CSS.dimensionRe, COLOR_RE = CSS.colorRe, SESSIONS = {}, EXPORTS = {
             interval: 10,
             each: animate,
-            has: hasAnimationType
+            has: hasAnimationType,
+            style: animateStyle
         };
         function animate(handler, from, to, type, duration) {
             var M = Math, string = STRING, easing = EASING, O = OBJECT, oType = O.type, list = SESSIONS, defaultInterval = EXPORTS.interval, clear = clearInterval, set = setInterval, interval = null, frame = 0;
@@ -1974,7 +1996,7 @@
             type = O.contains(easing, type) ? easing[type] : easing.linear;
             duration = (O.number(duration) && duration > 0 ? duration : 1) * 1e3;
             frames = M.max(10, M.round(duration / defaultInterval));
-            displacements = [ [], [], [], from ];
+            displacements = [ [], [], [], from, control ];
             interval = set(callback, defaultInterval);
             control.session = interval;
             control.update = update;
@@ -2007,7 +2029,7 @@
                     if (source === false) {
                         continue;
                     }
-                    index = ++len;
+                    index = len++;
                     names[index] = name;
                 } else if (source === false) {
                     source = sourceValues[index];
@@ -2022,20 +2044,25 @@
         }
         function animateStyle(element, styles, type) {
             var values = createElementValues(styles);
-            var session, sessionId, animateObject, names, staticValues;
+            var session, sessionId, animateObject, names, defaults, animateValues, staticValues;
             if (values) {
                 names = values[0];
+                animateValues = values[1];
                 staticValues = values[2];
                 if (names) {
                     sessionId = element.__animate_session;
+                    defaults = createElementDefaults(element, names);
                     if (!sessionId) {
                         animateObject = {
                             node: element
                         };
-                        session = animate(createElementHandler(animateObject), createElementDefaults(element, names), values[1], type);
+                        session = animate(createElementHandler(animateObject), defaults, animateValues, type);
                         animateObject.id = sessionId = session.session;
                         element.__animate_session = sessionId;
-                    } else {}
+                    } else {
+                        session = SESSIONS[sessionId][4];
+                        session.update(animateValues, defaults, type);
+                    }
                 }
                 if (staticValues) {
                     CSS.style(element, staticValues);
@@ -2044,15 +2071,28 @@
         }
         function createElementHandler(animate) {
             function onAnimate(values, last) {
-                console.log("animate! ", values);
-                if (last) {
-                    delete animate.node.__animate_session;
+                var boxRe = BOX_RE, css = CSS, colorUnit = css.colorUnit, formatColor = COLOR.stringify, dimensionRe = DIMENSION_RE, colorRe = COLOR_RE, names = SESSIONS[animate.id][0], node = animate.node, c = -1, l = names.length;
+                var name, value;
+                DIMENSION.translate(node, values.left, values.top, values.right, values.bottom, values.width, values.height, values);
+                for (;l--; ) {
+                    name = names[++c];
+                    value = values[name];
+                    if (!boxRe.test(name) && dimensionRe.test(name)) {
+                        values[name] = "" + value + "px";
+                    } else if (colorRe.test(name)) {
+                        values[name] = formatColor(value, colorUnit);
+                    }
                 }
+                css.style(node, values);
+                if (last) {
+                    delete node.__animate_session;
+                }
+                node = null;
             }
             return onAnimate;
         }
         function createElementDefaults(element, names) {
-            var css = CSS, values = css.computedStyle(names), dimension = DIMENSION, c = -1, l = names.length, cssValue = css.unitValue, dimensionRe = DIMENSION_RE, colorRe = COLOR_RE, colorParse = COLOR.parse, boxRe = BOX_RE, boxPosition = BOX_POSITION, box = null;
+            var css = CSS, values = css.computedStyle(element, names), dimension = DIMENSION, c = -1, l = names.length, cssValue = css.unitValue, dimensionRe = DIMENSION_RE, colorRe = COLOR_RE, colorParse = COLOR.parse, boxRe = BOX_RE, boxPosition = BOX_POSITION, box = null;
             var name, value;
             for (;l--; ) {
                 name = names[++c];

@@ -384,7 +384,6 @@ function screen(dom) {
         subject = dom;
     var box, size;
     if (help.is(subject, 1, 9)) {
-        console.log(subject);
         subject = (subject.nodeType === 1 ?
                         subject.ownerDocument : subject)[
                             help.documentViewAccess];

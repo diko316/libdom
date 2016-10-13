@@ -47,6 +47,7 @@ var OBJECT = require("./object.js"),
         style: applyStyle,
         unitValue: getCSSUnitValue,
         styleOpacity: opacityNotSupported,
+        colorUnit: 'hex',
         boxRe: /(top|bottom|left|right|width|height)$/,
         dimensionRe:
             /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size)$/,
@@ -96,10 +97,11 @@ function applyStyle(element, style, value) {
         setOpacity = SET_OPACITY,
         colorRe = COLOR_RE,
         parse = parseCSSText,
+        primaryColorUnit = EXPORTS.colorUnit,
         camelize = STRING.stylize,
         len = arguments.length;
         
-    var name, elementStyle, isOpacity, isNumber, primaryColorUnit;
+    var name, elementStyle, isOpacity, isNumber;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
@@ -122,8 +124,7 @@ function applyStyle(element, style, value) {
         if (!O.type(style, '[object Object]')) {
             throw new Error(STRING[1141]);
         }
-        
-        primaryColorUnit = CSS_INFO.alphaColor ? 'rgba' : 'hex';
+
         elementStyle = element.style;
 
         for (name in style) {
@@ -147,14 +148,10 @@ function applyStyle(element, style, value) {
                     continue;
                 }
                 // set color
-                else if (colorRe.test(name)) {
-                    if (!isNumber) {
-                        value = color.parse(value);
-                    }
+                else if (colorRe.test(name) && isNumber) {
                     value = color.stringify(value, primaryColorUnit);
                 }
                 set(elementStyle, name, value);
-
             }
         }
         elementStyle = null;
@@ -509,9 +506,10 @@ function w3cSetStyleValue(style, name, value) {
         style.removeProperty(name);
     }
     else {
-        style.setProperty(name,
-                            value,
-                            style.getPropertyPriority(name) || '');
+        style[name] = value;
+        //style.setProperty(name,
+        //                    value,
+        //                    style.getPropertyPriority(name) || '');
     }
 }
 
@@ -524,7 +522,8 @@ function ieSetStyleValue(style, name, value) {
         style.removeAttribute(name);
     }
     else {
-        style.setAttribute(name, value);
+        //style.setAttribute(name, value);
+        style[name] = value;
     }
 }
 function ieGetStyleValue(style, name) {
@@ -556,6 +555,10 @@ if (CSS_INFO) {
     else if (CSS_INFO.filterOpacity) {
         GET_OPACITY = ieGetOpacity;
         SET_OPACITY = ieSetOpacity;
+    }
+    
+    if (CSS_INFO.alphaColor) {
+        EXPORTS.colorUnit = 'rgba';
     }
 }
 

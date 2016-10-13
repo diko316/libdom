@@ -12,4 +12,8 @@ function toString(integer) {
     return 'rgb(' + values.join(',') + ')';
 }
 
+function toInteger(r, g, b) {
+    return RGBA.toInteger(r, g, b, 100);
+}
 EXPORTS.toString = toString;
+EXPORTS.toInteger = toInteger;

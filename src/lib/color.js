@@ -5,6 +5,7 @@ var OBJECT = require("./object.js"),
     COLOR_RE =
     /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/,
     NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/,
+    REMOVE_SPACES = /[ \r\n\t\s]+/g,
     TO_RGBA = {
         rgb: require("./color/rgb.js"),
         rgba: require("./color/rgba.js"),
@@ -19,48 +20,58 @@ var OBJECT = require("./object.js"),
     };
 
 function parseType(str) {
-    var items = parseColorStringType(str);
-    return items ? items[0] : null;
+    str = preParseValue(str);
+    if (str) {
+        return parseColorStringType(str) || null;
+    }
+    return null;
+}
+
+function preParseValue(str) {
+    if (typeof str === 'string') {
+        str = str.replace(REMOVE_SPACES, '');
+        if (COLOR_RE.test(str)) {
+            return str;
+        }
+    }
+    return null;
 }
 
 
 function parseColorStringType(str) {
     var O = OBJECT,
-        re = COLOR_RE,
-        list = TO_RGBA;
-    var type, m, items, isHex, item;
-    
-    if (O.string(str) && re.test(str)) {
-        m = str.match(re);
+        list = TO_RGBA,
+        m = str.match(COLOR_RE),
         type = m[1];
         
-        if (!O.contains(list, type)) {
-            type = 'hex';
-        }
-        
-        items = m[3];
-        isHex = !items;
-        
-        // breakdown hex
-        if (isHex) {
-            items = m[2];
-            
-            // three digit
-            if (items.length < 6) {
-                item = items.charAt(2);
-                items = ([items.charAt(0),
-                            items.substring(0, 2),
-                            items.charAt(1),
-                            item,
-                            item]).join('');
-            }
-        }
-        else {
-            items = items.split(',');
-        }
-        return [type, isHex, items];
+    var items, isHex, item;
+    
+    if (!O.contains(list, type)) {
+        type = 'hex';
     }
-    return null;
+    
+    items = m[3];
+    isHex = !items;
+    
+    // breakdown hex
+    if (isHex) {
+        items = m[2];
+        
+        // three digit
+        if (items.length < 6) {
+            item = items.charAt(2);
+            items = ([items.charAt(0),
+                        items.substring(0, 2),
+                        items.charAt(1),
+                        item,
+                        item]).join('');
+        }
+    }
+    else {
+        items = items.split(',');
+    }
+    return [type, isHex, items];
+    
 }
 
 function parseColorString(str) {
@@ -68,10 +79,12 @@ function parseColorString(str) {
         formatPercent = F.PERCENT,
         formatNumber = F.NUMBER,
         formatHex = F.HEX,
-        numberRe = NUMBER_RE,
-        parsed = parseColorStringType(str);
+        numberRe = NUMBER_RE;
         
-    var c, l, item, items, itemizer, processor, type, isHex, toProcess;
+    var parsed, c, l, item, items, itemizer, processor, type, isHex, toProcess;
+    
+    str = preParseValue(str);
+    parsed = str && parseColorStringType(str);
         
     if (parsed) {
         type = parsed[0];
@@ -127,6 +140,8 @@ function toColorString(colorValue, type) {
     if (!O.contains(list, type) || !O.number(colorValue)) {
         return null;
     }
+    
+    colorValue = Math.round(colorValue);
     
     return list[type].toString(colorValue);
 }
