@@ -214,7 +214,7 @@ function animateStyle(element, styles, type) {
         // has animation
         if (names) {
             sessionId = element.__animate_session;
-            defaults = createElementDefaults(element, names);
+            defaults = createStyleDefaults(element, names);
             
             // create
             if (!sessionId) {
@@ -250,17 +250,8 @@ function animateStyle(element, styles, type) {
 
 function createElementHandler(animate) {
     function onAnimate(values, last) {
-        var boxRe = BOX_RE,
-            css = CSS,
-            colorUnit = css.colorUnit,
-            formatColor = COLOR.stringify,
-            dimensionRe = DIMENSION_RE,
-            colorRe = COLOR_RE,
-            names = SESSIONS[animate.id][0],
-            node = animate.node,
-            c = -1,
-            l = names.length;
-        var name, value;
+        var session = animate,
+            node = session.node;
         
         // transform dimension
         DIMENSION.translate(node,
@@ -272,30 +263,20 @@ function createElementHandler(animate) {
                             values.height,
                             values);
         
-        // transform others
-        for (; l--;) {
-            name = names[++c];
-            value = values[name];
-            if (!boxRe.test(name) && dimensionRe.test(name)) {
-                values[name] = '' + value + 'px';
-            }
-            else if (colorRe.test(name)) {
-                values[name] = formatColor(value, colorUnit);
-            }
-        }
-        
-        css.style(node, values);
+        CSS.style(node, values);
         
         if (last) {
             delete node.__animate_session;
+            session.node = null;
+            delete session.node;
         }
         
-        node = null;
+        session = node = null;
     }
     return onAnimate;
 }
 
-function createElementDefaults(element, names) {
+function createStyleDefaults(element, names) {
     var css = CSS,
         values = css.computedStyle(element, names),
         dimension = DIMENSION,
@@ -363,7 +344,6 @@ function createElementValues(styles) {
             // color
             else if (colorRe.test(name)) {
                 value = parseColor(raw);
-                //console.log('parsed: ', raw, ' == ', value);
                 if (value === null) {
                     value = false;
                 }

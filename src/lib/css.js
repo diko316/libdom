@@ -21,12 +21,15 @@ var OBJECT = require("./object.js"),
     
     COLOR_RE = /[Cc]olor$/,
     
-    DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/,
+    //DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/,
     EM_OR_PERCENT_RE = /%|em/,
     CSS_MEASUREMENT_RE =
 /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/,
     WIDTH_RE = /width/i,
     NUMBER_RE = /\d/,
+    BOX_RE = /(top|bottom|left|right|width|height)$/,
+    DIMENSION_RE =
+        /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size|Radius)$/,
     
     IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i,
     IE_ALPHA_OPACITY_TEMPLATE = 'alpha(opacity=$opacity)',
@@ -48,9 +51,9 @@ var OBJECT = require("./object.js"),
         unitValue: getCSSUnitValue,
         styleOpacity: opacityNotSupported,
         colorUnit: 'hex',
-        boxRe: /(top|bottom|left|right|width|height)$/,
-        dimensionRe:
-            /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size)$/,
+        boxRe: BOX_RE,
+        dimensionRe: DIMENSION_RE,
+            
         colorRe: COLOR_RE
     },
     SLICE = Array.prototype.slice;
@@ -97,11 +100,12 @@ function applyStyle(element, style, value) {
         setOpacity = SET_OPACITY,
         colorRe = COLOR_RE,
         parse = parseCSSText,
+        dimensionRe = DIMENSION_RE,
         primaryColorUnit = EXPORTS.colorUnit,
         camelize = STRING.stylize,
         len = arguments.length;
         
-    var name, elementStyle, isOpacity, isNumber;
+    var name, elementStyle, isOpacity, isNumber, isScalar;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
@@ -127,31 +131,63 @@ function applyStyle(element, style, value) {
 
         elementStyle = element.style;
 
-        for (name in style) {
+        main: for (name in style) {
             if (hasOwn(style, name)) {
                 value = style[name];
                 name = camelize(name);
                 isOpacity = name === 'opacity';
-                
                 isNumber = number(value);
+                isScalar = isNumber || string(value);
                 
-                // for removal of property
-                if (!isNumber && !string(value)) {
-                    value = null;
-                    if (isOpacity) {
-                        set(elementStyle, 'filter', value);
+                switch (true) {
+
+                case name === 'opacity':
+                    if (!isScalar) {
+                        // remove IE style opacity
+                        set(elementStyle, 'filter', value = null);
+                    
+                    }
+                    else {
+                        setOpacity(elementStyle, value);
+                        continue main;
+                    }
+                    break;
+                
+                case isNumber && dimensionRe.test(name):
+                    value = '' + value + 'px';
+                    isNumber = !(isScalar = true);
+                    break;
+                
+                case isNumber && colorRe.test(name):
+                    value = color.stringify(value, primaryColorUnit);
+                    isNumber = !(isScalar = true);
+                    break;
+                
+                default:
+                    if (!isScalar) {
+                        value = null;
                     }
                 }
-                // set opacity
-                else if (isOpacity) {
-                    setOpacity(elementStyle, value);
-                    continue;
-                }
-                // set color
-                else if (colorRe.test(name) && isNumber) {
-                    value = color.stringify(value, primaryColorUnit);
-                }
+                
                 set(elementStyle, name, value);
+                
+                //// for removal of property
+                //if (!isNumber && !string(value)) {
+                //    value = null;
+                //    if (isOpacity) {
+                //        set(elementStyle, 'filter', value);
+                //    }
+                //}
+                //// set opacity
+                //else if (isOpacity) {
+                //    setOpacity(elementStyle, value);
+                //    continue;
+                //}
+                //// set color
+                //else if (colorRe.test(name) && isNumber) {
+                //    value = color.stringify(value, primaryColorUnit);
+                //}
+                //set(elementStyle, name, value);
             }
         }
         elementStyle = null;
@@ -287,8 +323,10 @@ function w3cGetCurrentStyle(element, list) {
 
 function ieGetCurrentStyle(element, list) {
     var dimensionRe = DIMENSION_RE,
+        boxRe = BOX_RE,
         isString = OBJECT.string,
         camel = STRING.stylize,
+        getOpacity = GET_OPACITY,
         pixelSize = ieGetPixelSize;
         
     var style, c, l, name, value, access, fontSize, values, dimension;
@@ -310,37 +348,65 @@ function ieGetCurrentStyle(element, list) {
         name = list[++c];
         if (isString(name)) {
             access = camel(name);
-            switch (access) {
-            case 'opacity':
-                value = GET_OPACITY(style);
+            
+            switch (true) {
+            case access === 'opacity':
+                value = getOpacity(style);
                 break;
             
-            case 'width':
-            case 'height':
-            case 'top':
-            case 'left':
-            case 'bottom':
-            case 'right':
+            case boxRe.test(access):
                 if (!dimension) {
                     dimension = ieGetPositionStyle(element, style);
                 }
                 value = dimension[access] + 'px';
                 break;
             
+            case dimensionRe.test(access) && style[access] !== 'auto':
+                if (fontSize === false) {
+                    fontSize = pixelSize(element, style, 'fontSize', null);
+                }
+                value = pixelSize(element, style, access, fontSize) + 'px';
+                break;
+            
+            case access === 'float':
+                value = style.styleFloat;
+                break;
+            
             default:
-                if (dimensionRe.test(access) && style[access] !== 'auto') {
-                    if (fontSize === false) {
-                        fontSize = pixelSize(element, style, 'fontSize', null);
-                    }
-                    value = pixelSize(element, style, access, fontSize) + 'px';
-                }
-                else if (access === 'float') {
-                    value = style.styleFloat;
-                }
-                else {
-                    value = style[access];
-                }
+                value = style[access];
             }
+            
+            //switch (access) {
+            //case 'opacity':
+            //    value = GET_OPACITY(style);
+            //    break;
+            //
+            //case 'width':
+            //case 'height':
+            //case 'top':
+            //case 'left':
+            //case 'bottom':
+            //case 'right':
+            //    if (!dimension) {
+            //        dimension = ieGetPositionStyle(element, style);
+            //    }
+            //    value = dimension[access] + 'px';
+            //    break;
+            //
+            //default:
+            //    if (dimensionRe.test(access) && style[access] !== 'auto') {
+            //        if (fontSize === false) {
+            //            fontSize = pixelSize(element, style, 'fontSize', null);
+            //        }
+            //        value = pixelSize(element, style, access, fontSize) + 'px';
+            //    }
+            //    else if (access === 'float') {
+            //        value = style.styleFloat;
+            //    }
+            //    else {
+            //        value = style[access];
+            //    }
+            //}
             values[name] = value;
         }
     }

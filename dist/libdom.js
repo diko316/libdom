@@ -620,7 +620,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), COLOR = __webpack_require__(13), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", CLIENT_WIDTH = "clientWidth", CLIENT_HEIGHT = "clientHeight", COLOR_RE = /[Cc]olor$/, DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i, IE_ALPHA_OPACITY_TEMPLATE = "alpha(opacity=$opacity)", IE_ALPHA_OPACITY_TEMPLATE_RE = /\$opacity/, GET_OPACITY = opacityNotSupported, SET_OPACITY = opacityNotSupported, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
+            var OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), DETECTED = __webpack_require__(2), DOM = __webpack_require__(9), COLOR = __webpack_require__(13), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", CLIENT_WIDTH = "clientWidth", CLIENT_HEIGHT = "clientHeight", COLOR_RE = /[Cc]olor$/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, BOX_RE = /(top|bottom|left|right|width|height)$/, DIMENSION_RE = /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size|Radius)$/, IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i, IE_ALPHA_OPACITY_TEMPLATE = "alpha(opacity=$opacity)", IE_ALPHA_OPACITY_TEMPLATE_RE = /\$opacity/, GET_OPACITY = opacityNotSupported, SET_OPACITY = opacityNotSupported, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
                 add: addClass,
                 remove: removeClass,
                 computedStyle: computedStyleNotSupported,
@@ -628,8 +628,8 @@
                 unitValue: getCSSUnitValue,
                 styleOpacity: opacityNotSupported,
                 colorUnit: "hex",
-                boxRe: /(top|bottom|left|right|width|height)$/,
-                dimensionRe: /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size)$/,
+                boxRe: BOX_RE,
+                dimensionRe: DIMENSION_RE,
                 colorRe: COLOR_RE
             }, SLICE = Array.prototype.slice;
             var CSS_INFO;
@@ -652,8 +652,8 @@
                 return EXPORTS.chain;
             }
             function applyStyle(element, style, value) {
-                var O = OBJECT, string = O.string, number = O.number, hasOwn = O.contains, color = COLOR, set = SET_STYLE, setOpacity = SET_OPACITY, colorRe = COLOR_RE, parse = parseCSSText, primaryColorUnit = EXPORTS.colorUnit, camelize = STRING.stylize, len = arguments.length;
-                var name, elementStyle, isOpacity, isNumber;
+                var O = OBJECT, string = O.string, number = O.number, hasOwn = O.contains, color = COLOR, set = SET_STYLE, setOpacity = SET_OPACITY, colorRe = COLOR_RE, parse = parseCSSText, dimensionRe = DIMENSION_RE, primaryColorUnit = EXPORTS.colorUnit, camelize = STRING.stylize, len = arguments.length;
+                var name, elementStyle, isOpacity, isNumber, isScalar;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
                 }
@@ -671,22 +671,37 @@
                         throw new Error(STRING[1141]);
                     }
                     elementStyle = element.style;
-                    for (name in style) {
+                    main: for (name in style) {
                         if (hasOwn(style, name)) {
                             value = style[name];
                             name = camelize(name);
                             isOpacity = name === "opacity";
                             isNumber = number(value);
-                            if (!isNumber && !string(value)) {
-                                value = null;
-                                if (isOpacity) {
-                                    set(elementStyle, "filter", value);
+                            isScalar = isNumber || string(value);
+                            switch (true) {
+                              case name === "opacity":
+                                if (!isScalar) {
+                                    set(elementStyle, "filter", value = null);
+                                } else {
+                                    setOpacity(elementStyle, value);
+                                    continue main;
                                 }
-                            } else if (isOpacity) {
-                                setOpacity(elementStyle, value);
-                                continue;
-                            } else if (colorRe.test(name) && isNumber) {
+                                break;
+
+                              case isNumber && dimensionRe.test(name):
+                                value = "" + value + "px";
+                                isNumber = !(isScalar = true);
+                                break;
+
+                              case isNumber && colorRe.test(name):
                                 value = color.stringify(value, primaryColorUnit);
+                                isNumber = !(isScalar = true);
+                                break;
+
+                              default:
+                                if (!isScalar) {
+                                    value = null;
+                                }
                             }
                             set(elementStyle, name, value);
                         }
@@ -787,7 +802,7 @@
                 return values;
             }
             function ieGetCurrentStyle(element, list) {
-                var dimensionRe = DIMENSION_RE, isString = OBJECT.string, camel = STRING.stylize, pixelSize = ieGetPixelSize;
+                var dimensionRe = DIMENSION_RE, boxRe = BOX_RE, isString = OBJECT.string, camel = STRING.stylize, getOpacity = GET_OPACITY, pixelSize = ieGetPixelSize;
                 var style, c, l, name, value, access, fontSize, values, dimension;
                 if (!DOM.is(element, 1)) {
                     throw new Error(ERROR_INVALID_DOM);
@@ -803,34 +818,31 @@
                     name = list[++c];
                     if (isString(name)) {
                         access = camel(name);
-                        switch (access) {
-                          case "opacity":
-                            value = GET_OPACITY(style);
+                        switch (true) {
+                          case access === "opacity":
+                            value = getOpacity(style);
                             break;
 
-                          case "width":
-                          case "height":
-                          case "top":
-                          case "left":
-                          case "bottom":
-                          case "right":
+                          case boxRe.test(access):
                             if (!dimension) {
                                 dimension = ieGetPositionStyle(element, style);
                             }
                             value = dimension[access] + "px";
                             break;
 
-                          default:
-                            if (dimensionRe.test(access) && style[access] !== "auto") {
-                                if (fontSize === false) {
-                                    fontSize = pixelSize(element, style, "fontSize", null);
-                                }
-                                value = pixelSize(element, style, access, fontSize) + "px";
-                            } else if (access === "float") {
-                                value = style.styleFloat;
-                            } else {
-                                value = style[access];
+                          case dimensionRe.test(access) && style[access] !== "auto":
+                            if (fontSize === false) {
+                                fontSize = pixelSize(element, style, "fontSize", null);
                             }
+                            value = pixelSize(element, style, access, fontSize) + "px";
+                            break;
+
+                          case access === "float":
+                            value = style.styleFloat;
+                            break;
+
+                          default:
+                            value = style[access];
                         }
                         values[name] = value;
                     }
@@ -2051,7 +2063,7 @@
                 staticValues = values[2];
                 if (names) {
                     sessionId = element.__animate_session;
-                    defaults = createElementDefaults(element, names);
+                    defaults = createStyleDefaults(element, names);
                     if (!sessionId) {
                         animateObject = {
                             node: element
@@ -2071,27 +2083,19 @@
         }
         function createElementHandler(animate) {
             function onAnimate(values, last) {
-                var boxRe = BOX_RE, css = CSS, colorUnit = css.colorUnit, formatColor = COLOR.stringify, dimensionRe = DIMENSION_RE, colorRe = COLOR_RE, names = SESSIONS[animate.id][0], node = animate.node, c = -1, l = names.length;
-                var name, value;
+                var session = animate, node = session.node;
                 DIMENSION.translate(node, values.left, values.top, values.right, values.bottom, values.width, values.height, values);
-                for (;l--; ) {
-                    name = names[++c];
-                    value = values[name];
-                    if (!boxRe.test(name) && dimensionRe.test(name)) {
-                        values[name] = "" + value + "px";
-                    } else if (colorRe.test(name)) {
-                        values[name] = formatColor(value, colorUnit);
-                    }
-                }
-                css.style(node, values);
+                CSS.style(node, values);
                 if (last) {
                     delete node.__animate_session;
+                    session.node = null;
+                    delete session.node;
                 }
-                node = null;
+                session = node = null;
             }
             return onAnimate;
         }
-        function createElementDefaults(element, names) {
+        function createStyleDefaults(element, names) {
             var css = CSS, values = css.computedStyle(element, names), dimension = DIMENSION, c = -1, l = names.length, cssValue = css.unitValue, dimensionRe = DIMENSION_RE, colorRe = COLOR_RE, colorParse = COLOR.parse, boxRe = BOX_RE, boxPosition = BOX_POSITION, box = null;
             var name, value;
             for (;l--; ) {

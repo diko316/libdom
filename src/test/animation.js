@@ -15,12 +15,12 @@ var WIN = global,
 //    'easeOut');
 
 
-main.stylize(subject, 'backgroundColor', '#ff0');
+main.stylize(subject, 'backgroundColor', '#f00');
 
 main.animateStyle(subject, {
             left: 0,
             top: 0,
-            backgroundColor: '#550'
+            backgroundColor: '#ff0'
         });
 
 
