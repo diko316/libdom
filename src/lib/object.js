@@ -34,6 +34,7 @@ function isString(string) {
 
 
 module.exports = {
+    MAX_BIT_INT: 4294967295,
     assign: assign,
     type: isType,
     contains: contains,

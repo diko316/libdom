@@ -190,7 +190,7 @@ function translateBox(element, x, y, right, bottom, width, height, target) {
         hasRight = !hasLeft && right !== false;
         hasBottom = !hasBottom && bottom !== false;
         
-        if (hasLeft || hasTop) {
+        if (hasLeft || hasRight || hasTop || hasBottom) {
             
             diff = getOffset(element);
             
@@ -232,11 +232,7 @@ function translateBox(element, x, y, right, bottom, width, height, target) {
     
     // resolve size
     width = cssValue(width);
-    height = cssValue(height);
-    
     hasWidth = width !== false;
-    hasHeight = height !== false;
-
     if (hasWidth) {
         target.width = typeof width === NUMBER ? (
                             parse(currentDimension.width || 0) +
@@ -245,6 +241,8 @@ function translateBox(element, x, y, right, bottom, width, height, target) {
                         width;
     }
     
+    height = cssValue(height);
+    hasHeight = height !== false;
     if (hasHeight) {
         target.height = typeof height === NUMBER ? (
                             parse(currentDimension.height || 0) +
@@ -253,7 +251,8 @@ function translateBox(element, x, y, right, bottom, width, height, target) {
                         height;
     }
 
-    return hasLeft || hasTop || hasWidth || hasWidth ? target : null;
+    return hasLeft || hasRight || hasTop || hasBottom ||
+            hasWidth || hasHeight ? target : null;
 }
 
 

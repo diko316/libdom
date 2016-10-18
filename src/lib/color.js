@@ -6,7 +6,7 @@ var OBJECT = require("./object.js"),
     /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/,
     NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/,
     REMOVE_SPACES = /[ \r\n\t\s]+/g,
-    TO_RGBA = {
+    TO_COLOR = {
         rgb: require("./color/rgb.js"),
         rgba: require("./color/rgba.js"),
         hsl: require("./color/hsl.js"),
@@ -40,7 +40,7 @@ function preParseValue(str) {
 
 function parseColorStringType(str) {
     var O = OBJECT,
-        list = TO_RGBA,
+        list = TO_COLOR,
         m = str.match(COLOR_RE),
         type = m[1];
         
@@ -88,7 +88,7 @@ function parseColorString(str) {
         
     if (parsed) {
         type = parsed[0];
-        processor = TO_RGBA[type];
+        processor = TO_COLOR[type];
         itemizer = processor.itemize;
         
         toProcess = [];
@@ -130,7 +130,7 @@ function parseColorString(str) {
 
 
 function toColorString(colorValue, type) {
-    var list = TO_RGBA,
+    var list = TO_COLOR,
         O = OBJECT;
     
     if (arguments.length < 2) {

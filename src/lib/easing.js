@@ -9,10 +9,10 @@
  *  totalFrames = total frame
  *  
  */
+    
 
 
-
-var EXPORTS = {
+var EXPORTS = module.exports = {
         // simple linear tweening - no easing, no acceleration
         linear: linearTween,
         

@@ -2,7 +2,8 @@
 
 var FORMAT = require("./format.js"),
     RGBA = require("./rgba.js");
-
+    
+    
 function hue2rgb(p, q, t) {
     t = (t + 1) % 1;
     switch (true) {
@@ -124,7 +125,7 @@ module.exports = {
     itemize: itemize,
     toInteger: toInteger,
     toArray: toArray,
-    toString: toString
+    toString: toString,
 };
 
 // from: https://gist.github.com/mjackson/5311256

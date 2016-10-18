@@ -538,6 +538,7 @@
             return typeof string === "string" && !!string;
         }
         module.exports = {
+            MAX_BIT_INT: 4294967295,
             assign: assign,
             type: isType,
             contains: contains,
@@ -981,7 +982,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var OBJECT = __webpack_require__(10), FORMAT = __webpack_require__(14), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, REMOVE_SPACES = /[ \r\n\t\s]+/g, TO_RGBA = {
+        var OBJECT = __webpack_require__(10), FORMAT = __webpack_require__(14), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, REMOVE_SPACES = /[ \r\n\t\s]+/g, TO_COLOR = {
             rgb: __webpack_require__(15),
             rgba: __webpack_require__(16),
             hsl: __webpack_require__(17),
@@ -1009,7 +1010,7 @@
             return null;
         }
         function parseColorStringType(str) {
-            var O = OBJECT, list = TO_RGBA, m = str.match(COLOR_RE), type = m[1];
+            var O = OBJECT, list = TO_COLOR, m = str.match(COLOR_RE), type = m[1];
             var items, isHex, item;
             if (!O.contains(list, type)) {
                 type = "hex";
@@ -1034,7 +1035,7 @@
             parsed = str && parseColorStringType(str);
             if (parsed) {
                 type = parsed[0];
-                processor = TO_RGBA[type];
+                processor = TO_COLOR[type];
                 itemizer = processor.itemize;
                 toProcess = [];
                 isHex = parsed[1];
@@ -1060,7 +1061,7 @@
             return null;
         }
         function toColorString(colorValue, type) {
-            var list = TO_RGBA, O = OBJECT;
+            var list = TO_COLOR, O = OBJECT;
             if (arguments.length < 2) {
                 type = "hex";
             }
@@ -1111,6 +1112,64 @@
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var FORMAT = __webpack_require__(14), PIGMENT_SIZE = 255;
+        function rgb2hsl(r, g, b) {
+            var M = Math, size = PIGMENT_SIZE;
+            var max, min, h, s, l, d;
+            r /= size;
+            g /= size;
+            b /= size;
+            max = M.max(r, g, b);
+            min = M.min(r, g, b);
+            l = (max + min) / 2;
+            if (max == min) {
+                h = s = 0;
+            } else {
+                d = max - min;
+                s = l > .5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                  case r:
+                    h = (g - b) / d + (g < b ? 6 : 0);
+                    break;
+
+                  case g:
+                    h = (b - r) / d + 2;
+                    break;
+
+                  case b:
+                    h = (r - g) / d + 4;
+                    break;
+                }
+                h /= 6;
+            }
+            return [ h, s, l ];
+        }
+        function hsl2rgb(h, s, l) {
+            var M = Math, h2r = hue2rgb, size = 255;
+            var q, p;
+            l /= 100;
+            if (s === 0) {
+                return [ l, l, l ];
+            }
+            h /= 360;
+            s /= 100;
+            q = l < .5 ? l * (1 + s) : l + s - l * s;
+            p = 2 * l - q;
+            return [ M.round(h2r(p, q, h + 1 / 3) * size), M.round(h2r(p, q, h) * size), M.round(h2r(p, q, h - 1 / 3) * size) ];
+        }
+        function hue2rgb(p, q, t) {
+            t = (t + 1) % 1;
+            switch (true) {
+              case t < 1 / 6:
+                return p + (q - p) * 6 * t;
+
+              case t < 1 / 2:
+                return q;
+
+              case t < 2 / 3:
+                return p + (q - p) * (2 / 3 - t) * 6;
+            }
+            return p;
+        }
         function toArray(integer) {
             var size = PIGMENT_SIZE;
             return [ integer & size, integer >> 8 & size, integer >> 16 & size, integer >> 24 & size ];
@@ -1129,6 +1188,11 @@
             values[3] = parseFloat(alpha.toFixed(2));
             return "rgba(" + values.join(",") + ")";
         }
+        function toPointInteger(r, g, b, a) {
+            var M = Math, size = PIGMENT_SIZE, hsl = rgb2hsl(r, g, b);
+            return (a & size) << 24 | (M.round(hsl[2] * 100) & size) << 16 | (M.round(hsl[1] * 100) & size) << 8 | M.round(hsl[0] * 100) & size;
+        }
+        function toPointString(integer) {}
         module.exports = {
             itemize: itemize,
             toArray: toArray,
@@ -1628,7 +1692,7 @@
                     hasTop = y !== false;
                     hasRight = !hasLeft && right !== false;
                     hasBottom = !hasBottom && bottom !== false;
-                    if (hasLeft || hasTop) {
+                    if (hasLeft || hasRight || hasTop || hasBottom) {
                         diff = getOffset(element);
                         if (hasLeft) {
                             target.left = typeof x === NUMBER ? parse(currentDimension.left || 0) + (x - diff[0]) + "px" : x;
@@ -1643,16 +1707,16 @@
                     }
                 }
                 width = cssValue(width);
-                height = cssValue(height);
                 hasWidth = width !== false;
-                hasHeight = height !== false;
                 if (hasWidth) {
                     target.width = typeof width === NUMBER ? parse(currentDimension.width || 0) + (width - element[OFFSET_WIDTH]) + "px" : width;
                 }
+                height = cssValue(height);
+                hasHeight = height !== false;
                 if (hasHeight) {
                     target.height = typeof height === NUMBER ? parse(currentDimension.height || 0) + (height - element[OFFSET_HEIGHT]) + "px" : height;
                 }
-                return hasLeft || hasTop || hasWidth || hasWidth ? target : null;
+                return hasLeft || hasRight || hasTop || hasBottom || hasWidth || hasHeight ? target : null;
             }
             function scroll(dom, x, y) {
                 var setter = arguments.length > 1, isNumber = OBJECT.number, stop = SCROLL_TOP, sleft = SCROLL_LEFT;
@@ -1945,7 +2009,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), ARRAY = __webpack_require__(24), EASING = __webpack_require__(25), COLOR = __webpack_require__(13), CSS = __webpack_require__(12), DIMENSION = __webpack_require__(21), BOX_POSITION = {
+        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), ARRAY = __webpack_require__(24), EASING = __webpack_require__(25), COLOR = __webpack_require__(13), CSS = __webpack_require__(12), BYTE = 255, DIMENSION = __webpack_require__(21), BOX_POSITION = {
             left: 0,
             top: 1,
             right: 2,
@@ -2169,7 +2233,7 @@
         };
     }, function(module, exports) {
         "use strict";
-        var EXPORTS = {
+        var EXPORTS = module.exports = {
             linear: linearTween,
             easeIn: easeInQuad,
             easeInQuad: easeInQuad,

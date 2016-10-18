@@ -6,6 +6,7 @@ var STRING =  require("./string.js"),
     EASING = require("./easing.js"),
     COLOR = require("./color.js"),
     CSS = require("./css.js"),
+    BYTE = 0xFF,
     DIMENSION = require("./dimension.js"),
     BOX_POSITION = {
         left: 0,
@@ -97,10 +98,12 @@ function animate(handler, from, to, type, duration) {
             
         var start;
         
+        // normal animation
         for (; len--;) {
             start = from[len];
             result[names[len]] = (to[len] - start) * eased + start;
         }
+        
         
         specs[3] = result;
         handler(result, last);
