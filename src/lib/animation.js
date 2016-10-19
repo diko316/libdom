@@ -6,7 +6,6 @@ var STRING =  require("./string.js"),
     EASING = require("./easing.js"),
     COLOR = require("./color.js"),
     CSS = require("./css.js"),
-    BYTE = 0xFF,
     DIMENSION = require("./dimension.js"),
     BOX_POSITION = {
         left: 0,

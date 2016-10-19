@@ -55,20 +55,20 @@
                 computedStyle: "computedStyle",
                 stylize: "style"
             });
-            applyIf(EXPORTS, event = __webpack_require__(20), {
+            applyIf(EXPORTS, event = __webpack_require__(21), {
                 on: "on",
                 un: "un",
                 purge: "purge",
                 dispatch: "fire"
             });
-            applyIf(EXPORTS, dimension = __webpack_require__(21), {
+            applyIf(EXPORTS, dimension = __webpack_require__(22), {
                 offset: "offset",
                 size: "size",
                 box: "box",
                 scroll: "scroll",
                 screen: "screen"
             });
-            applyIf(EXPORTS, selection = __webpack_require__(22), {
+            applyIf(EXPORTS, selection = __webpack_require__(23), {
                 highlight: "select",
                 noHighlight: "unselectable",
                 clearHighlight: "clear"
@@ -77,7 +77,7 @@
                 parseColor: "parse",
                 formatColor: "stringify"
             });
-            applyIf(EXPORTS, __webpack_require__(23), {
+            applyIf(EXPORTS, __webpack_require__(24), {
                 eachDisplacement: "each",
                 animateStyle: "style"
             });
@@ -985,9 +985,9 @@
         var OBJECT = __webpack_require__(10), FORMAT = __webpack_require__(14), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, REMOVE_SPACES = /[ \r\n\t\s]+/g, TO_COLOR = {
             rgb: __webpack_require__(15),
             rgba: __webpack_require__(16),
-            hsl: __webpack_require__(17),
-            hsla: __webpack_require__(18),
-            hex: __webpack_require__(19)
+            hsl: __webpack_require__(18),
+            hsla: __webpack_require__(19),
+            hex: __webpack_require__(20)
         }, EXPORTS = {
             parse: parseColorString,
             parseType: parseType,
@@ -1082,7 +1082,6 @@
         };
         function convert2Number(value, format) {
             var parse = parseFloat, F = EXPORTS;
-            console.log("format: ", format);
             switch (format) {
               case F.HEX:
                 return parseInt(value, 16) || 0;
@@ -1091,29 +1090,60 @@
                 return parse(value) || 0;
 
               case F.PERCENT:
-                console.log("value: ", value, " = ", (parse(value) || 1) * 100);
                 return Math.round((parse(value) || 1) * 100);
             }
             return 0;
         }
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var RGBA = __webpack_require__(16), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA), toArray = EXPORTS.toArray;
+        var RGBA = __webpack_require__(16), OBJECT = __webpack_require__(10), CONSTANTS = __webpack_require__(17), EXPORTS = module.exports = OBJECT.assign({}, RGBA);
         function toString(integer) {
-            var values = toArray(integer);
+            var values = RGBA.toArray(integer);
             values.splice(3, 1);
             return "rgb(" + values.join(",") + ")";
         }
         function toInteger(r, g, b) {
-            return RGBA.toInteger(r, g, b, 100);
+            return RGBA.toInteger(r, g, b, CONSTANTS.PERCENT);
         }
         EXPORTS.toString = toString;
         EXPORTS.toInteger = toInteger;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var FORMAT = __webpack_require__(14), PIGMENT_SIZE = 255;
-        function rgb2hsl(r, g, b) {
-            var M = Math, size = PIGMENT_SIZE;
+        var OBJECT = __webpack_require__(10), FORMAT = __webpack_require__(14), CONSTANTS = __webpack_require__(17), BYTE = CONSTANTS.BYTE, BYTE_PERCENT = CONSTANTS.BYTE_PERCENT, BYTE_HUE = CONSTANTS.BYTE_HUE, PERCENT = CONSTANTS.PERCENT, HUE = 360, SATURATION = PERCENT, LUMINOSITY = PERCENT;
+        function hue2rgb(p, q, t) {
+            t = (t + 1) % 1;
+            switch (true) {
+              case t < 1 / 6:
+                return p + (q - p) * 6 * t;
+
+              case t < 1 / 2:
+                return q;
+
+              case t < 2 / 3:
+                return p + (q - p) * (2 / 3 - t) * 6;
+            }
+            return p;
+        }
+        function itemize(value, index, format) {
+            var F = FORMAT, M = Math, min = 0, max = index > 2 ? PERCENT : BYTE;
+            value = F.format(value, format);
+            return M.max(min, M.min(max, value));
+        }
+        function toArray(integer) {
+            var M = Math, h2r = hue2rgb, size = BYTE, psize = BYTE_PERCENT, h = integer & BYTE_HUE, s = integer >> 9 & psize, l = integer >> 16 & psize, a = integer >> 23 & psize;
+            var q, p;
+            l /= LUMINOSITY;
+            if (s === 0) {
+                return [ l, l, l ];
+            }
+            h /= HUE;
+            s /= SATURATION;
+            q = l < .5 ? l * (1 + s) : l + s - l * s;
+            p = 2 * l - q;
+            return [ M.round(h2r(p, q, h + 1 / 3) * size), M.round(h2r(p, q, h) * size), M.round(h2r(p, q, h - 1 / 3) * size), a ];
+        }
+        function toInteger(r, g, b, a) {
+            var M = Math, size = BYTE, psize = BYTE_PERCENT;
             var max, min, h, s, l, d;
             r /= size;
             g /= size;
@@ -1141,69 +1171,35 @@
                 }
                 h /= 6;
             }
-            return [ h, s, l ];
-        }
-        function hsl2rgb(h, s, l) {
-            var M = Math, h2r = hue2rgb, size = 255;
-            var q, p;
-            l /= 100;
-            if (s === 0) {
-                return [ l, l, l ];
+            if (!OBJECT.number(a)) {
+                a = PERCENT;
             }
-            h /= 360;
-            s /= 100;
-            q = l < .5 ? l * (1 + s) : l + s - l * s;
-            p = 2 * l - q;
-            return [ M.round(h2r(p, q, h + 1 / 3) * size), M.round(h2r(p, q, h) * size), M.round(h2r(p, q, h - 1 / 3) * size) ];
-        }
-        function hue2rgb(p, q, t) {
-            t = (t + 1) % 1;
-            switch (true) {
-              case t < 1 / 6:
-                return p + (q - p) * 6 * t;
-
-              case t < 1 / 2:
-                return q;
-
-              case t < 2 / 3:
-                return p + (q - p) * (2 / 3 - t) * 6;
-            }
-            return p;
-        }
-        function toArray(integer) {
-            var size = PIGMENT_SIZE;
-            return [ integer & size, integer >> 8 & size, integer >> 16 & size, integer >> 24 & size ];
-        }
-        function itemize(value, index, format) {
-            var F = FORMAT, M = Math, min = 0, max = index > 2 ? 100 : PIGMENT_SIZE;
-            value = F.format(value, format);
-            return M.max(min, M.min(max, value));
-        }
-        function toInteger(r, g, b, a) {
-            var size = PIGMENT_SIZE;
-            return (a & size) << 24 | (b & size) << 16 | (g & size) << 8 | r & size;
+            return (a & psize) << 23 | (l * LUMINOSITY & psize) << 16 | (s * SATURATION & psize) << 9 | h * HUE & BYTE_HUE;
         }
         function toString(integer) {
-            var values = toArray(integer), alpha = values[3] / 100;
+            var values = toArray(integer), alpha = values[3] / PERCENT;
             values[3] = parseFloat(alpha.toFixed(2));
             return "rgba(" + values.join(",") + ")";
         }
-        function toPointInteger(r, g, b, a) {
-            var M = Math, size = PIGMENT_SIZE, hsl = rgb2hsl(r, g, b);
-            return (a & size) << 24 | (M.round(hsl[2] * 100) & size) << 16 | (M.round(hsl[1] * 100) & size) << 8 | M.round(hsl[0] * 100) & size;
-        }
-        function toPointString(integer) {}
         module.exports = {
             itemize: itemize,
             toArray: toArray,
             toInteger: toInteger,
             toString: toString
         };
+    }, function(module, exports) {
+        "use strict";
+        module.exports = {
+            BYTE: 255,
+            BYTE_PERCENT: 127,
+            BYTE_HUE: 511,
+            PERCENT: 100
+        };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var HSLA = __webpack_require__(17), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, HSLA), toArray = EXPORTS.toArray;
+        var HSLA = __webpack_require__(18), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, HSLA);
         function toString(integer) {
-            var values = toArray(integer);
+            var values = HSLA.toArray(integer);
             values[1] += "%";
             values[2] += "%";
             values.splice(3, 1);
@@ -1212,32 +1208,18 @@
         EXPORTS.toString = toString;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var FORMAT = __webpack_require__(14), RGBA = __webpack_require__(16);
-        function hue2rgb(p, q, t) {
-            t = (t + 1) % 1;
-            switch (true) {
-              case t < 1 / 6:
-                return p + (q - p) * 6 * t;
-
-              case t < 1 / 2:
-                return q;
-
-              case t < 2 / 3:
-                return p + (q - p) * (2 / 3 - t) * 6;
-            }
-            return p;
-        }
+        var OBJECT = __webpack_require__(10), CONSTANTS = __webpack_require__(17), FORMAT = __webpack_require__(14), BYTE_PERCENT = CONSTANTS.BYTE_PERCENT, BYTE_HUE = CONSTANTS.BYTE_HUE, PERCENT = CONSTANTS.PERCENT;
         function itemize(value, index, format) {
-            var F = FORMAT, M = Math, parse = parseFloat, min = 0, max = index < 1 ? 360 : 100;
+            var F = FORMAT, M = Math, C = CONSTANTS, percent = PERCENT, parse = parseFloat, min = 0, max = index < 1 ? C.HUE : percent;
             switch (format) {
               case F.HEX:
-                value = parseInt(value, 16) / 255 * max;
+                value = parseInt(value, 16) / C.BYTE * max;
                 break;
 
               case F.NUMBER:
                 value = parse(value);
                 if (index > 2) {
-                    value *= 100;
+                    value *= percent;
                 }
                 break;
 
@@ -1248,48 +1230,21 @@
             return M.max(min, M.min(max, value || 0));
         }
         function toInteger(h, s, l, a) {
-            var M = Math, h2r = hue2rgb, rgba2integer = RGBA.toInteger, size = 255;
-            var q, p;
-            l /= 100;
-            if (s === 0) {
-                return rgba2integer(l, l, l, a);
+            var psize = BYTE_PERCENT;
+            if (!OBJECT.number(a)) {
+                a = PERCENT;
             }
-            h /= 360;
-            s /= 100;
-            q = l < .5 ? l * (1 + s) : l + s - l * s;
-            p = 2 * l - q;
-            return rgba2integer(M.round(h2r(p, q, h + 1 / 3) * size), M.round(h2r(p, q, h) * size), M.round(h2r(p, q, h - 1 / 3) * size), a);
+            return (a & psize) << 23 | (l & psize) << 16 | (s & psize) << 9 | h & BYTE_HUE;
         }
         function toArray(integer) {
-            var M = Math, rgba = RGBA.toArray(integer), size = 255, r = rgba[0] / size, g = rgba[1] / size, b = rgba[2] / size, a = rgba[3], max = M.max(r, g, b), min = M.min(r, g, b), l = (max + min) / 2;
-            var d, h, s;
-            if (max === min) {
-                h = s = 0;
-            } else {
-                d = max - min;
-                s = l > .5 ? d / (2 - max - min) : d / (max + min);
-                switch (max) {
-                  case r:
-                    h = (g - b) / d + (g < b ? 6 : 0);
-                    break;
-
-                  case g:
-                    h = (b - r) / d + 2;
-                    break;
-
-                  case b:
-                    h = (r - g) / d + 4;
-                    break;
-                }
-                h /= 6;
-            }
-            return [ M.round(h * 360), M.round(s * 100), M.round(l * 100), a ];
+            var psize = BYTE_PERCENT;
+            return [ integer & BYTE_HUE, integer >> 9 & psize, integer >> 16 & psize, integer >> 23 & psize ];
         }
         function toString(integer) {
             var values = toArray(integer);
             values[1] += "%";
             values[2] += "%";
-            values[3] = (values[3] / 100).toFixed(2);
+            values[3] = (values[3] / PERCENT).toFixed(2);
             return "hsla(" + values.join(",") + ")";
         }
         module.exports = {
@@ -1300,13 +1255,13 @@
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var RGBA = __webpack_require__(16), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA);
+        var RGBA = __webpack_require__(16), OBJECT = __webpack_require__(10), CONSTANTS = __webpack_require__(17), EXPORTS = module.exports = OBJECT.assign({}, RGBA);
         function toHex(integer) {
             var hex = integer.toString(16);
             return hex.length < 1 ? "0" + hex : hex;
         }
         function toString(integer) {
-            var size = 255, convert = toHex, values = [ convert(integer & size), convert(integer >> 8 & size), convert(integer >> 16 & size) ];
+            var size = CONSTANTS.BYTE, convert = toHex, values = [ convert(integer & size), convert(integer >> 8 & size), convert(integer >> 16 & size) ];
             return "#" + values.join("");
         }
         EXPORTS.toString = toString;
@@ -1909,7 +1864,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(11), DOM = __webpack_require__(9), DIMENSION = __webpack_require__(21), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
+            var DETECTED = __webpack_require__(2), STRING = __webpack_require__(11), DOM = __webpack_require__(9), DIMENSION = __webpack_require__(22), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
                 select: select,
                 clear: clear,
                 unselectable: unselectable
@@ -2009,7 +1964,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), ARRAY = __webpack_require__(24), EASING = __webpack_require__(25), COLOR = __webpack_require__(13), CSS = __webpack_require__(12), BYTE = 255, DIMENSION = __webpack_require__(21), BOX_POSITION = {
+        var STRING = __webpack_require__(11), OBJECT = __webpack_require__(10), ARRAY = __webpack_require__(25), EASING = __webpack_require__(26), COLOR = __webpack_require__(13), CSS = __webpack_require__(12), DIMENSION = __webpack_require__(22), BOX_POSITION = {
             left: 0,
             top: 1,
             right: 2,

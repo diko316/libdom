@@ -2,6 +2,7 @@
 
 var RGBA = require("./rgba.js"),
     OBJECT = require("../object.js"),
+    CONSTANTS = require("./constants.js"),
     EXPORTS = module.exports = OBJECT.assign({}, RGBA);
 
 function toHex(integer) {
@@ -10,7 +11,7 @@ function toHex(integer) {
 }
 
 function toString(integer) {
-    var size = 0xff,
+    var size = CONSTANTS.BYTE,
         convert = toHex,
         values = [
             convert(integer & size),

@@ -1,11 +1,81 @@
 'use strict';
 
-var FORMAT = require("./format.js"),
-    PIGMENT_SIZE = 0xff;
+var OBJECT = require("../object.js"),
+    FORMAT = require("./format.js"),
+    CONSTANTS = require("./constants"),
+
+    BYTE = CONSTANTS.BYTE,
+    BYTE_PERCENT = CONSTANTS.BYTE_PERCENT,
+    BYTE_HUE = CONSTANTS.BYTE_HUE,
     
-function rgb2hsl(r, g, b) {
+    PERCENT = CONSTANTS.PERCENT,
+    HUE = 360,
+    SATURATION = PERCENT,
+    LUMINOSITY = PERCENT;
+
+// from: https://gist.github.com/mjackson/5311256
+function hue2rgb(p, q, t) {
+    t = (t + 1) % 1;
+    switch (true) {
+    case t < 1/6: return p + (q - p) * 6 * t;
+    case t < 1/2: return q;
+    case t < 2/3: return p + (q - p) * (2/3 - t) * 6;
+    }
+    return p;
+}
+
+
+
+function itemize(value, index, format) {
+    var F = FORMAT,
+        M = Math,
+        min = 0,
+        max = index > 2 ? PERCENT : BYTE;
+    
+    value = F.format(value, format);
+
+    return M.max(min, M.min(max, value));
+
+}
+
+function toArray(integer) {
     var M = Math,
-        size = PIGMENT_SIZE;
+        h2r = hue2rgb,
+        size = BYTE,
+        psize = BYTE_PERCENT,
+        h = integer & BYTE_HUE,
+        s = (integer >> 9) & psize,
+        l = (integer >> 16) & psize,
+        a = (integer >> 23) & psize;
+
+    var q, p;
+    
+    l /= LUMINOSITY;
+   
+    if (s === 0) {
+        return [l, l, l];
+    }
+    
+    h /= HUE;
+    s /= SATURATION;
+    
+    q = l < 0.5 ?
+            l * (1 + s) :
+            l + s - l * s;
+            
+    p = 2 * l - q;
+    
+    return [M.round(h2r(p, q, h + 1/3) * size),
+                M.round(h2r(p, q, h) * size),
+                M.round(h2r(p, q, h - 1/3) * size),
+                a];
+}
+
+function toInteger(r, g, b, a) {
+    var M = Math,
+        size = BYTE,
+        psize = BYTE_PERCENT;
+
     var max, min, h, s, l, d;
     
     r /= size;
@@ -32,96 +102,23 @@ function rgb2hsl(r, g, b) {
         h /= 6;
     }
     
-    return [h, s, l];
-}
-
-function hsl2rgb(h, s, l) {
-    var M = Math,
-        h2r = hue2rgb,
-        size = 255;
-    var q, p;
-    
-    l /= 100;
-   
-    if (s === 0) {
-        return [l, l, l];
+    if (!OBJECT.number(a)) {
+        a = PERCENT;
     }
     
-    h /= 360;
-    s /= 100;
-    
-    q = l < 0.5 ?
-            l * (1 + s) :
-            l + s - l * s;
-            
-    p = 2 * l - q;
-    
-    return [M.round(h2r(p, q, h + 1/3) * size),
-                M.round(h2r(p, q, h) * size),
-                M.round(h2r(p, q, h - 1/3) * size)];
-    
-}
-
-function hue2rgb(p, q, t) {
-    t = (t + 1) % 1;
-    switch (true) {
-    case t < 1/6: return p + (q - p) * 6 * t;
-    case t < 1/2: return q;
-    case t < 2/3: return p + (q - p) * (2/3 - t) * 6;
-    }
-    return p;
-}
-
-function toArray(integer) {
-    var size = PIGMENT_SIZE;
-    
-    return [integer & size,
-            (integer >> 8) & size,
-            (integer >> 16) & size,
-            (integer >> 24) & size];
-}
-
-function itemize(value, index, format) {
-    var F = FORMAT,
-        M = Math,
-        min = 0,
-        max = index > 2 ? 100 : PIGMENT_SIZE;
-    
-    value = F.format(value, format);
-
-    return M.max(min, M.min(max, value));
-
-}
-
-function toInteger(r, g, b, a) {
-    var size = PIGMENT_SIZE;
-    
-    return ((a & size) << 24) |
-            ((b & size) << 16) |
-            ((g & size) << 8) |
-            (r & size);
+    return ((a & psize) << 23) |
+            (((l * LUMINOSITY) & psize) << 16) |
+            (((s * SATURATION) & psize) << 9) |
+            ((h * HUE) & BYTE_HUE);
 }
 
 function toString(integer) {
     var values = toArray(integer),
-        alpha = (values[3] / 100);
+        alpha = (values[3] / PERCENT);
     values[3] = parseFloat(alpha.toFixed(2));
     return 'rgba(' + values.join(',') + ')';
 }
 
-function toPointInteger(r, g, b, a) {
-    var M = Math,
-        size = PIGMENT_SIZE,
-        hsl = rgb2hsl(r, g, b);
-    return ((a & size) << 24) |
-            ((M.round(hsl[2] * 100) & size) << 16) |
-            ((M.round(hsl[1] * 100) & size) << 8) |
-            (M.round(hsl[0] * 100) & size);
-}
-
-function toPointString(integer) {
-    
-}
 
 module.exports = {
     itemize: itemize,
