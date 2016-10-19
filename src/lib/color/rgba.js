@@ -2,13 +2,12 @@
 
 var OBJECT = require("../object.js"),
     FORMAT = require("./format.js"),
-    CONSTANTS = require("./constants"),
 
-    BYTE = CONSTANTS.BYTE,
-    BYTE_PERCENT = CONSTANTS.BYTE_PERCENT,
-    BYTE_HUE = CONSTANTS.BYTE_HUE,
+    BYTE = 255,
+    BYTE_PERCENT = 127,
+    BYTE_HUE = 511,
     
-    PERCENT = CONSTANTS.PERCENT,
+    PERCENT = 100,
     HUE = 360,
     SATURATION = PERCENT,
     LUMINOSITY = PERCENT;
@@ -24,15 +23,12 @@ function hue2rgb(p, q, t) {
     return p;
 }
 
-
-
 function itemize(value, index, format) {
-    var F = FORMAT,
-        M = Math,
+    var M = Math,
         min = 0,
         max = index > 2 ? PERCENT : BYTE;
     
-    value = F.format(value, format);
+    value = FORMAT.format(value, format);
 
     return M.max(min, M.min(max, value));
 

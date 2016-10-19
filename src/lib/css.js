@@ -170,24 +170,7 @@ function applyStyle(element, style, value) {
                 }
                 
                 set(elementStyle, name, value);
-                
-                //// for removal of property
-                //if (!isNumber && !string(value)) {
-                //    value = null;
-                //    if (isOpacity) {
-                //        set(elementStyle, 'filter', value);
-                //    }
-                //}
-                //// set opacity
-                //else if (isOpacity) {
-                //    setOpacity(elementStyle, value);
-                //    continue;
-                //}
-                //// set color
-                //else if (colorRe.test(name) && isNumber) {
-                //    value = color.stringify(value, primaryColorUnit);
-                //}
-                //set(elementStyle, name, value);
+
             }
         }
         elementStyle = null;
@@ -376,37 +359,6 @@ function ieGetCurrentStyle(element, list) {
                 value = style[access];
             }
             
-            //switch (access) {
-            //case 'opacity':
-            //    value = GET_OPACITY(style);
-            //    break;
-            //
-            //case 'width':
-            //case 'height':
-            //case 'top':
-            //case 'left':
-            //case 'bottom':
-            //case 'right':
-            //    if (!dimension) {
-            //        dimension = ieGetPositionStyle(element, style);
-            //    }
-            //    value = dimension[access] + 'px';
-            //    break;
-            //
-            //default:
-            //    if (dimensionRe.test(access) && style[access] !== 'auto') {
-            //        if (fontSize === false) {
-            //            fontSize = pixelSize(element, style, 'fontSize', null);
-            //        }
-            //        value = pixelSize(element, style, access, fontSize) + 'px';
-            //    }
-            //    else if (access === 'float') {
-            //        value = style.styleFloat;
-            //    }
-            //    else {
-            //        value = style[access];
-            //    }
-            //}
             values[name] = value;
         }
     }
@@ -595,6 +547,18 @@ function ieSetStyleValue(style, name, value) {
 function ieGetStyleValue(style, name) {
     return style.getAttribute(name);
 }
+
+
+
+/**
+ * DOM Helpers
+ */
+
+
+// register DOM Helpers
+DOM.helper('className', addClass);
+DOM.helper('style', applyStyle);
+
 
 CSS_INFO = DETECTED && DETECTED.css;
 if (CSS_INFO) {

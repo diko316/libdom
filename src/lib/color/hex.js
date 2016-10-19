@@ -2,21 +2,20 @@
 
 var RGBA = require("./rgba.js"),
     OBJECT = require("../object.js"),
-    CONSTANTS = require("./constants.js"),
     EXPORTS = module.exports = OBJECT.assign({}, RGBA);
 
 function toHex(integer) {
-    var hex = integer.toString(16);
-    return hex.length < 1 ? '0' + hex : hex;
+    return (integer < 16 ? '0' : '') + integer.toString(16);
 }
 
 function toString(integer) {
-    var size = CONSTANTS.BYTE,
-        convert = toHex,
-        values = [
-            convert(integer & size),
-            convert((integer >> 8) & size),
-            convert((integer >> 16) & size)];
+    var convert = toHex,
+        values = RGBA.toArray(integer).slice(0, 3);
+    
+    values[0] = convert(values[0]);
+    values[1] = convert(values[1]);
+    values[2] = convert(values[2]);
+    
     return '#' + values.join('');
 }
 

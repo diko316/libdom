@@ -47,7 +47,9 @@
                 select: "select",
                 eachNodePreorder: "eachPreorder",
                 eachNodePostorder: "eachPostorder",
-                eachNodeLevelorder: "eachLevel"
+                eachNodeLevelorder: "eachLevel",
+                add: "add",
+                remove: "remove"
             });
             applyIf(EXPORTS, css = __webpack_require__(12), {
                 addClass: "add",
@@ -225,7 +227,7 @@
         var DETECTED = __webpack_require__(2), OBJECT = __webpack_require__(10), STRING = __webpack_require__(11), OBJECT_TYPE = "[object Object]", ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING[1101], ERROR_INVALID_DOM_NODE = STRING[1103], ERROR_INVALID_CSS_SELECTOR = STRING[1111], ERROR_INVALID_CALLBACK = STRING[1112], ERROR_INVALID_ELEMENT_CONFIG = STRING[1121], INVALID_DESCENDANT_NODE_TYPES = {
             9: 1,
             11: 1
-        }, STD_CONTAINS = notSupportedContains, EXPORTS = {
+        }, STD_CONTAINS = notSupportedContains, MANIPULATION_HELPERS = {}, EXPORTS = {
             contains: contains,
             is: isDom,
             isView: isDefaultView,
@@ -234,6 +236,7 @@
             eachLevel: levelTraverse,
             documentViewAccess: "defaultView",
             select: notSupportedQuerySelector,
+            helper: registerDomHelper,
             add: add,
             remove: remove,
             find: find
@@ -266,6 +269,16 @@
         }
         function ieContains(ancestor, descendant) {
             return ancestor.contains(descendant);
+        }
+        function registerDomHelper(name, handler) {
+            if (!OBJECT.string(name)) {
+                throw new Error(STRING[1001]);
+            }
+            if (!(handler instanceof Function)) {
+                throw new Error(STRING[1011]);
+            }
+            MANIPULATION_HELPERS[":" + name] = handler;
+            return EXPORTS.chain;
         }
         function add(element, config, before) {
             var tagName, toInsert;
@@ -311,10 +324,11 @@
             }
             return OBJECT.string(config) ? config : false;
         }
-        function applyConfigToElement(element, config) {
-            var O = OBJECT, hasOwn = O.contains, assign = O.assign, isType = O.type, objectType = OBJECT_TYPE, string = "string";
-            var name, value, item;
+        function applyConfigToElement(element, config, usedFragment) {
+            var O = OBJECT, hasOwn = O.contains, isType = O.type, objectType = OBJECT_TYPE, me = applyConfigToElement, resolveTagName = getTagNameFromConfig, helper = MANIPULATION_HELPERS;
+            var name, value, item, access, childNodes, c, l, fragment, doc, created;
             if (isType(config, objectType)) {
+                childNodes = null;
                 main: for (name in config) {
                     if (hasOwn(name, config)) {
                         value = config[name];
@@ -323,30 +337,48 @@
                             continue main;
 
                           case "class":
-                            if (typeof value !== string) {
-                                continue main;
-                            }
                             name = "className";
                             break;
 
                           case "for":
-                            if (typeof value !== string) {
-                                continue main;
-                            }
                             name = "htmlFor";
                             break;
 
-                          case "style":
-                            item = element.style;
-                            if (typeof value === string) {
-                                item.cssText = value;
-                            } else if (isType(value, objectType)) {
-                                assign(item, value);
-                            }
+                          case "childNodes":
+                          case "innerHTML":
+                          case "html":
+                            childNodes = value;
                             continue main;
-
-                          case "childNodes":                        }
+                        }
+                        access = ":" + name;
+                        if (access in helper) {
+                            helper[name](element, value);
+                            continue;
+                        }
                         element[name] = value;
+                    }
+                }
+                if (O.string(childNodes)) {
+                    element.innerHTML = childNodes;
+                } else {
+                    if (isType(childNodes, objectType)) {
+                        childNodes = [ childNodes ];
+                    }
+                    if (childNodes instanceof Array) {
+                        doc = element.ownerDocument;
+                        fragment = usedFragment === true ? doc.createDocumentFragment() : element;
+                        for (c = -1, l = childNodes.length; l--; ) {
+                            item = childNodes[++c];
+                            if (isType(item, objectType)) {
+                                created = doc.createElement(resolveTagName(item) || "div");
+                                me(created, item, true);
+                                fragment.appendChild(created);
+                            }
+                        }
+                        if (fragment !== element) {
+                            element.appendChild(fragment);
+                        }
+                        doc = fragment = created = null;
                     }
                 }
                 item = null;
@@ -514,7 +546,7 @@
         module.exports = EXPORTS.chain = EXPORTS;
     }, function(module, exports) {
         "use strict";
-        var O = Object.prototype, hasOwn = O.hasOwnProperty;
+        var O = Object.prototype, hasOwn = O.hasOwnProperty, toString = O.toString, ie8TypeObject = toString.call(undefined) === "[object Object]";
         function assign(target, source) {
             var has = hasOwn;
             var name;
@@ -529,7 +561,10 @@
             return hasOwn.call(obj, name);
         }
         function isType(obj, type) {
-            return O.toString.call(obj) === type;
+            return toString.call(obj) === type;
+        }
+        function ieType(obj, type) {
+            return (obj === null ? "[object Null]" : obj === void 0 ? "[object Undefined]" : toString.call(obj)) === type;
         }
         function isNumber(number) {
             return typeof number === "number" && isFinite(number);
@@ -540,7 +575,7 @@
         module.exports = {
             MAX_BIT_INT: 4294967295,
             assign: assign,
-            type: isType,
+            type: ie8TypeObject ? ieType : isType,
             contains: contains,
             number: isNumber,
             string: isString
@@ -552,6 +587,8 @@
             stylize: stylize,
             addWord: addWord,
             removeWord: removeWord,
+            1001: "Invalid [name] parameter.",
+            1011: "Invalid [handler] parameter.",
             1101: "Invalid DOM [element] parameter.",
             1102: "Invalid [dom] Object parameter.",
             1103: "Invalid DOM [node] parameter.",
@@ -955,6 +992,8 @@
             function ieGetStyleValue(style, name) {
                 return style.getAttribute(name);
             }
+            DOM.helper("className", addClass);
+            DOM.helper("style", applyStyle);
             CSS_INFO = DETECTED && DETECTED.css;
             if (CSS_INFO) {
                 EXPORTS.computedStyle = CSS_INFO.w3cStyle ? w3cGetCurrentStyle : CSS_INFO.ieStyle ? ieGetCurrentStyle : computedStyleNotSupported;
@@ -1098,9 +1137,7 @@
         "use strict";
         var RGBA = __webpack_require__(16), OBJECT = __webpack_require__(10), CONSTANTS = __webpack_require__(17), EXPORTS = module.exports = OBJECT.assign({}, RGBA);
         function toString(integer) {
-            var values = RGBA.toArray(integer);
-            values.splice(3, 1);
-            return "rgb(" + values.join(",") + ")";
+            return "rgb(" + RGBA.toArray(integer).slice(0, 3).join(",") + ")";
         }
         function toInteger(r, g, b) {
             return RGBA.toInteger(r, g, b, CONSTANTS.PERCENT);
@@ -1109,7 +1146,7 @@
         EXPORTS.toInteger = toInteger;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var OBJECT = __webpack_require__(10), FORMAT = __webpack_require__(14), CONSTANTS = __webpack_require__(17), BYTE = CONSTANTS.BYTE, BYTE_PERCENT = CONSTANTS.BYTE_PERCENT, BYTE_HUE = CONSTANTS.BYTE_HUE, PERCENT = CONSTANTS.PERCENT, HUE = 360, SATURATION = PERCENT, LUMINOSITY = PERCENT;
+        var OBJECT = __webpack_require__(10), FORMAT = __webpack_require__(14), BYTE = 255, BYTE_PERCENT = 127, BYTE_HUE = 511, PERCENT = 100, HUE = 360, SATURATION = PERCENT, LUMINOSITY = PERCENT;
         function hue2rgb(p, q, t) {
             t = (t + 1) % 1;
             switch (true) {
@@ -1125,8 +1162,8 @@
             return p;
         }
         function itemize(value, index, format) {
-            var F = FORMAT, M = Math, min = 0, max = index > 2 ? PERCENT : BYTE;
-            value = F.format(value, format);
+            var M = Math, min = 0, max = index > 2 ? PERCENT : BYTE;
+            value = FORMAT.format(value, format);
             return M.max(min, M.min(max, value));
         }
         function toArray(integer) {
@@ -1199,21 +1236,20 @@
         "use strict";
         var HSLA = __webpack_require__(18), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, HSLA);
         function toString(integer) {
-            var values = HSLA.toArray(integer);
+            var values = HSLA.toArray(integer).slice(0, 3);
             values[1] += "%";
             values[2] += "%";
-            values.splice(3, 1);
             return "hsl(" + values.join(",") + ")";
         }
         EXPORTS.toString = toString;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var OBJECT = __webpack_require__(10), CONSTANTS = __webpack_require__(17), FORMAT = __webpack_require__(14), BYTE_PERCENT = CONSTANTS.BYTE_PERCENT, BYTE_HUE = CONSTANTS.BYTE_HUE, PERCENT = CONSTANTS.PERCENT;
+        var OBJECT = __webpack_require__(10), FORMAT = __webpack_require__(14), BYTE = 255, BYTE_PERCENT = 127, BYTE_HUE = 511, HUE = 360, PERCENT = 100;
         function itemize(value, index, format) {
-            var F = FORMAT, M = Math, C = CONSTANTS, percent = PERCENT, parse = parseFloat, min = 0, max = index < 1 ? C.HUE : percent;
+            var F = FORMAT, M = Math, percent = PERCENT, parse = parseFloat, min = 0, max = index < 1 ? HUE : percent;
             switch (format) {
               case F.HEX:
-                value = parseInt(value, 16) / C.BYTE * max;
+                value = parseInt(value, 16) / BYTE * max;
                 break;
 
               case F.NUMBER:
@@ -1255,13 +1291,15 @@
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var RGBA = __webpack_require__(16), OBJECT = __webpack_require__(10), CONSTANTS = __webpack_require__(17), EXPORTS = module.exports = OBJECT.assign({}, RGBA);
+        var RGBA = __webpack_require__(16), OBJECT = __webpack_require__(10), EXPORTS = module.exports = OBJECT.assign({}, RGBA);
         function toHex(integer) {
-            var hex = integer.toString(16);
-            return hex.length < 1 ? "0" + hex : hex;
+            return (integer < 16 ? "0" : "") + integer.toString(16);
         }
         function toString(integer) {
-            var size = CONSTANTS.BYTE, convert = toHex, values = [ convert(integer & size), convert(integer >> 8 & size), convert(integer >> 16 & size) ];
+            var convert = toHex, values = RGBA.toArray(integer).slice(0, 3);
+            values[0] = convert(values[0]);
+            values[1] = convert(values[1]);
+            values[2] = convert(values[2]);
             return "#" + values.join("");
         }
         EXPORTS.toString = toString;

@@ -39,7 +39,10 @@ applyIf(EXPORTS,
             
             'eachNodePreorder': 'eachPreorder',
             'eachNodePostorder': 'eachPostorder',
-            'eachNodeLevelorder': 'eachLevel'
+            'eachNodeLevelorder': 'eachLevel',
+            
+            'add': 'add',
+            'remove': 'remove'
         });
 
 applyIf(EXPORTS,

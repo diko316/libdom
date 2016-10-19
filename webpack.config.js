@@ -11,8 +11,8 @@ var PATH = require('path'),
     sourcePath = PATH.join(buildDirectory, 'src'),
     hasOwn = Object.prototype.hasOwnProperty,
     entry = {},
-    //DISABLE_HOT_IE = true,
-    DISABLE_HOT_IE = false,
+    DISABLE_HOT_IE = true,
+    //DISABLE_HOT_IE = false,
     plugins = [
             new webpack.DefinePlugin({
                 LIB_NAME: JSON.stringify(libName),

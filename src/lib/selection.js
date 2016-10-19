@@ -80,8 +80,6 @@ function attributeUnselectable(element, selectable) {
 }
 
 
-
-
 function selectionNotSupported() {
     throw new Error(STRING[2005]);
 }

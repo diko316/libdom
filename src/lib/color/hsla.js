@@ -1,26 +1,27 @@
 'use strict';
 
 var OBJECT = require("../object.js"),
-    CONSTANTS = require("./constants"),
     FORMAT = require("./format.js"),
     
-    BYTE_PERCENT = CONSTANTS.BYTE_PERCENT,
-    BYTE_HUE = CONSTANTS.BYTE_HUE,
-    PERCENT = CONSTANTS.PERCENT;
+    BYTE = 255,
+    BYTE_PERCENT = 127,
+    BYTE_HUE = 511,
+    
+    HUE = 360,
+    PERCENT = 100;
     
 function itemize(value, index, format) {
     var F = FORMAT,
         M = Math,
-        C = CONSTANTS,
         percent = PERCENT,
         parse = parseFloat,
         min = 0,
         max = index < 1 ?
-                C.HUE : percent;
+                HUE : percent;
     
     switch (format) {
     case F.HEX:
-        value = (parseInt(value, 16) / C.BYTE) * max;
+        value = (parseInt(value, 16) / BYTE) * max;
         break;
     
     case F.NUMBER:

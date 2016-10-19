@@ -1,7 +1,9 @@
 'use strict';
 
 var O = Object.prototype,
-    hasOwn = O.hasOwnProperty;
+    hasOwn = O.hasOwnProperty,
+    toString = O.toString,
+    ie8TypeObject = toString.call(undefined) === '[object Object]';
 
 function assign(target, source) {
     var has = hasOwn;
@@ -20,8 +22,17 @@ function contains(obj, name) {
 }
 
 function isType(obj, type) {
-    return O.toString.call(obj) === type;
+    return toString.call(obj) === type;
 }
+
+function ieType(obj, type) {
+    return (obj === null ? 
+                '[object Null]' :
+                obj === void(0) ?
+                    '[object Undefined]' :
+                    toString.call(obj)) === type;
+}
+
 
 function isNumber(number) {
     return typeof number === 'number' && isFinite(number);
@@ -36,7 +47,8 @@ function isString(string) {
 module.exports = {
     MAX_BIT_INT: 4294967295,
     assign: assign,
-    type: isType,
+    type: ie8TypeObject ?
+                ieType : isType,
     contains: contains,
     number: isNumber,
     string: isString

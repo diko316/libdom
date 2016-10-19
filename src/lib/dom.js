@@ -16,6 +16,7 @@ var DETECTED = require("./detect.js"),
     ERROR_INVALID_ELEMENT_CONFIG = STRING[1121],
     INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 },
     STD_CONTAINS = notSupportedContains,
+    MANIPULATION_HELPERS = {},
     EXPORTS = {
         contains: contains,
         is: isDom,
@@ -26,12 +27,16 @@ var DETECTED = require("./detect.js"),
         documentViewAccess: 'defaultView',
         select: notSupportedQuerySelector,
         
+        helper: registerDomHelper,
+        
         add: add,
         remove: remove,
         find: find
     };
     
 var DOM_INFO;
+
+
 
 /**
  * node contains...
@@ -72,6 +77,23 @@ function w3cContains(ancestor, descendant) {
 
 function ieContains(ancestor, descendant) {
     return ancestor.contains(descendant);
+}
+
+/**
+ * DOM Manipulation helper
+ */
+function registerDomHelper(name, handler) {
+    
+    if (!OBJECT.string(name)) {
+        throw new Error(STRING[1001]);
+    }
+    
+    if (!(handler instanceof Function)) {
+        throw new Error(STRING[1011]);
+    }
+    
+    MANIPULATION_HELPERS[':' + name] = handler;
+    return EXPORTS.chain;
 }
 
 /**
@@ -136,50 +158,87 @@ function getTagNameFromConfig(config) {
     return OBJECT.string(config) ? config : false;
 }
 
-function applyConfigToElement(element, config) {
+function applyConfigToElement(element, config, usedFragment) {
     var O = OBJECT,
         hasOwn = O.contains,
-        assign = O.assign,
         isType = O.type,
         objectType = OBJECT_TYPE,
-        string = 'string';
+        me = applyConfigToElement,
+        resolveTagName = getTagNameFromConfig,
+        helper = MANIPULATION_HELPERS;
         
-    var name, value, item;
+    var name, value, item, access, childNodes, c, l, fragment, doc, created;
     
     if (isType(config, objectType)) {
+        childNodes = null;
+        
+        // apply attributes
         main: for (name in config) {
             if (hasOwn(name, config)) {
                 value = config[name];
                 
                 switch (name) {
-                case 'tagName': continue main;
+                case 'tagName':
+                    continue main;
+                
                 case 'class':
-                    if (typeof value !== string) {
-                        continue main;
-                    }
                     name = 'className';
                     break;
                 
                 case 'for':
-                    if (typeof value !== string) {
-                        continue main;
-                    }
                     name = 'htmlFor';
                     break;
-                
-                case 'style':
-                    item = element.style;
-                    if (typeof value === string) {
-                        item.cssText = value;
-                    }
-                    else if (isType(value, objectType)) {
-                        assign(item, value);
-                    }
-                    continue main;
-                
                 case 'childNodes':
+                case 'innerHTML':
+                case 'html':
+                    childNodes = value;
+                    continue main;
                 }
+                
+                access = ':' + name;
+                
+                if (access in helper) {
+                    helper[name](element, value);
+                    continue;
+                }
+                
                 element[name] = value;
+            }
+        }
+        
+        // apply childNodes
+        if (O.string(childNodes)) {
+            element.innerHTML = childNodes;
+        }
+        
+        // fragment
+        else {
+            if (isType(childNodes, objectType)) {
+                childNodes = [childNodes];
+            }
+            
+            if (childNodes instanceof Array) {
+                doc = element.ownerDocument;
+                fragment = usedFragment === true ?
+                                doc.createDocumentFragment() :
+                                element;
+                
+                for (c = -1, l = childNodes.length; l--;) {
+                    item = childNodes[++c];
+                    if (isType(item, objectType)) {
+                        created = doc.createElement(
+                                        resolveTagName(item) || 'div');
+                        // configure
+                        me(created, item, true);
+                        fragment.appendChild(created);
+                    }
+                }
+                
+                if (fragment !== element) {
+                    element.appendChild(fragment);
+                }
+                
+                doc = fragment = created = null;
             }
         }
         item = null;

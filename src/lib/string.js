@@ -9,6 +9,9 @@ var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
         stylize: stylize,
         addWord: addWord,
         removeWord: removeWord,
+        
+        1001: "Invalid [name] parameter.",
+        1011: "Invalid [handler] parameter.",
     
         1101: "Invalid DOM [element] parameter.",
         1102: "Invalid [dom] Object parameter.",
