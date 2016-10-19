@@ -1,7 +1,7 @@
 {
   "name": "libdom",
-  "version": "0.0.7",
-  "description": "Browser library that normalizes DOM operations",
+  "version": "0.0.8",
+  "description": "Lean Browser Library for typical DOM operations",
   "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
