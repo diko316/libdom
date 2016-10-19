@@ -45,8 +45,8 @@ case "compressed":
     console.log("** build compressed-production");
     
     // replace entry name
-    entry[libName + '.min'] = entry.libdom;
-    delete entry.libdom;
+    entry[libName + '.min'] = entry[libName];
+    delete entry[libName];
     
     // replace with minified plugin
     plugins[1] = new ExtractTextPlugin('styles.min.css');
