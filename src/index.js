@@ -105,5 +105,5 @@ if (detect) {
 
 
 
-module.exports = global[LIB_NAME] = EXPORTS;
+module.exports = global[LIB_NAME] = EXPORTS['default'] = EXPORTS;
 
