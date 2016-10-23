@@ -1,6 +1,6 @@
 'use strict';
 
-var OBJECT = require("../object.js"),
+var CORE = require("libcore"),
     FORMAT = require("./format.js"),
 
     BYTE = 255,
@@ -98,7 +98,7 @@ function toInteger(r, g, b, a) {
         h /= 6;
     }
     
-    if (!OBJECT.number(a)) {
+    if (!CORE.number(a)) {
         a = PERCENT;
     }
     

@@ -1,7 +1,7 @@
 'use strict';
 
-var DETECTED = require("./detect.js"),
-    OBJECT = require("./object.js"),
+var CORE = require("libcore"),
+    DETECTED = require("./detect.js"),
     STRING = require("./string.js"),
     DOM = require("./dom.js"),
     CSS = require("./css.js"),
@@ -160,7 +160,7 @@ function translateBox(element, x, y, right, bottom, width, height, target) {
         x = x[0];
     }
     
-    if (!OBJECT.type(target, '[object Object]')) {
+    if (!CORE.object(target)) {
         target = {};
     }
     
@@ -258,7 +258,7 @@ function translateBox(element, x, y, right, bottom, width, height, target) {
 
 function scroll(dom, x, y) {
     var setter = arguments.length > 1,
-        isNumber = OBJECT.number,
+        isNumber = CORE.number,
         stop = SCROLL_TOP,
         sleft = SCROLL_LEFT;
     var current, window;
@@ -334,7 +334,7 @@ function pageBox(dom) {
 function visible(element, visibility, displayed) {
     var style = null,
         css = CSS,
-        isString = OBJECT.string,
+        isString = CORE.string,
         len = arguments.length,
         attached = isViewable(element) === ELEMENT_VIEW;
     

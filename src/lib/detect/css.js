@@ -2,6 +2,7 @@
 
 
 var WINDOW = global,
+    CORE = require("libcore"),
     DOC = WINDOW.document,
     DIV = DOC.createElement('div'),
     STYLE = DIV.style,
@@ -30,18 +31,15 @@ try {
     STYLE.color = RGBA;
     color = STYLE.color;
     
-    if (typeof color === 'string') {
+    if (CORE.string(color)) {
         color = color.replace(/[ \r\n\t\s]+/g, '').toLowerCase();
     }
 
     if (RGBA === color) {
         EXPORTS.alphaColor = true;
-        console.log('alpha color supported!');
     }
 }
 catch (e) {}
-
-console.log('supports alpha color: ', EXPORTS.alphaColor);
 
 // detect transition
 for (l = TRANSITION_SUPPORT.length; l--;) {

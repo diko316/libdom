@@ -1,6 +1,6 @@
 'use strict';
 
-var OBJECT = require("./object.js"),
+var CORE = require("libcore"),
     STRING = require("./string.js"),
     DETECTED = require("./detect.js"),
     DOM = require("./dom.js"),
@@ -91,10 +91,10 @@ function removeClass(element) {
 }
 
 function applyStyle(element, style, value) {
-    var O = OBJECT,
-        string = O.string,
-        number = O.number,
-        hasOwn = O.contains,
+    var C = CORE,
+        string = C.string,
+        number = C.number,
+        hasOwn = C.contains,
         color = COLOR,
         set = SET_STYLE,
         setOpacity = SET_OPACITY,
@@ -125,7 +125,7 @@ function applyStyle(element, style, value) {
             }
         }
         
-        if (!O.type(style, '[object Object]')) {
+        if (!C.object(style)) {
             throw new Error(STRING[1141]);
         }
 
@@ -271,7 +271,7 @@ function computedStyleNotSupported() {
 
 function w3cGetCurrentStyle(element, list) {
     var camel = STRING.stylize,
-        isString = OBJECT.string;
+        isString = CORE.string;
     var style, c, l, name, value, values, access;
     
     if (!DOM.is(element, 1)) {
@@ -307,7 +307,7 @@ function w3cGetCurrentStyle(element, list) {
 function ieGetCurrentStyle(element, list) {
     var dimensionRe = DIMENSION_RE,
         boxRe = BOX_RE,
-        isString = OBJECT.string,
+        isString = CORE.string,
         camel = STRING.stylize,
         getOpacity = GET_OPACITY,
         pixelSize = ieGetPixelSize;
@@ -462,18 +462,18 @@ function opacityNotSupported() {
 
 function ieGetOpacity(style) {
     var M = Math,
-        O = OBJECT,
+        C = CORE,
         opacityRe = IE_ALPHA_OPACITY_RE,
         filter = style.filter;
     var m;
     
-    if (O.string(filter) && opacityRe.test(filter)) {
+    if (C.string(filter) && opacityRe.test(filter)) {
         m = filter.match(opacityRe);
         m = parseFloat(m[1]);
         
         return M.max(1,
                     M.min(100,
-                        O.number(m) ? m : 100)) / 100;
+                        C.number(m) ? m : 100)) / 100;
     }
     
     return 1;
@@ -481,12 +481,12 @@ function ieGetOpacity(style) {
 
 function ieSetOpacity(style, opacity) {
     var M = Math,
-        O = OBJECT;
+        C = CORE;
     
-    if (O.string(opacity)) {
+    if (C.string(opacity)) {
         opacity = parseFloat(opacity);
     }
-    if (O.number(opacity)) {
+    if (C.number(opacity)) {
         style.filter = IE_ALPHA_OPACITY_TEMPLATE.
                                 replace(IE_ALPHA_OPACITY_TEMPLATE_RE,
                                     M.min(100,
@@ -499,18 +499,18 @@ function ieSetOpacity(style, opacity) {
 function w3cGetOpacity(style) {
     var opacity = parseFloat(style.opacity);
     
-    return OBJECT.number(opacity) ? opacity : 1;
+    return CORE.number(opacity) ? opacity : 1;
 }
 
 function w3cSetOpacity(style, opacity) {
     var M = Math,
-        O = OBJECT;
+        C = CORE;
     
-    if (O.string(opacity)) {
+    if (C.string(opacity)) {
         opacity = parseFloat(opacity);
     }
     
-    if (O.number(opacity)) {
+    if (C.number(opacity)) {
         style.opacity = M.min(1,
                             M.max(0, opacity)).toFixed(2);
     }
@@ -525,9 +525,6 @@ function w3cSetStyleValue(style, name, value) {
     }
     else {
         style[name] = value;
-        //style.setProperty(name,
-        //                    value,
-        //                    style.getPropertyPriority(name) || '');
     }
 }
 

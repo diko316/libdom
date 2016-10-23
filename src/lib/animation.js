@@ -1,8 +1,7 @@
 'use strict';
 
 var STRING =  require("./string.js"),
-    OBJECT = require("./object.js"),
-    ARRAY = require("./array.js"),
+    CORE = require("libcore"),
     EASING = require("./easing.js"),
     COLOR = require("./color.js"),
     CSS = require("./css.js"),
@@ -38,8 +37,8 @@ function animate(handler, from, to, type, duration) {
     var M = Math,
         string = STRING,
         easing = EASING,
-        O = OBJECT,
-        oType = O.type,
+        C = CORE,
+        isObject = C.object,
         list = SESSIONS,
         defaultInterval = EXPORTS.interval,
         clear = clearInterval,
@@ -65,15 +64,14 @@ function animate(handler, from, to, type, duration) {
     
     function update(updates, initialValues, animationType) {
         var specs = displacements,
-            type = oType,
-            signature = '[object Object]';
+            typeObject = isObject;
         
         if (interval) {
-            if (!type(updates, signature)) {
+            if (!typeObject(updates)) {
                 throw new Error(string[1152]);
             }
             
-            if (!type(initialValues, signature)) {
+            if (!typeObject(initialValues)) {
                 initialValues = specs[3];
             }
             applyDisplacements(specs, initialValues, updates, animationType);
@@ -117,13 +115,13 @@ function animate(handler, from, to, type, duration) {
         throw new Error(string[1151]);
     }
     
-    if (!oType(from, '[object Object]') || !oType(to, '[object Object]')) {
+    if (!isObject(from) || !isObject(to)) {
         throw new Error(string[1152]);
     }
     
     // prepare displacements
-    type = O.contains(easing, type) ? easing[type] : easing.linear;
-    duration = (O.number(duration) && duration > 0 ? duration : 1) * 1000;
+    type = C.contains(easing, type) ? easing[type] : easing.linear;
+    duration = (C.number(duration) && duration > 0 ? duration : 1) * 1000;
     frames = M.max(10, M.round(duration / defaultInterval));
     
     displacements = [[], [], [], from, control];
@@ -138,16 +136,15 @@ function animate(handler, from, to, type, duration) {
 }
 
 function validValue(value) {
-    var O = OBJECT;
-    if (O.string(value)) {
+    var C = CORE;
+    if (C.string(value)) {
         value = parseFloat(value);
     }
-    return O.number(value) && value;
+    return C.number(value) && value;
 }
 
 function applyDisplacements(session, from, to) {
-    var hasOwn = OBJECT.contains,
-        indexOf = ARRAY.lastIndexOf,
+    var hasOwn = CORE.contains,
         format = validValue,
         names = session[0],
         sourceValues = session[1],
@@ -167,7 +164,7 @@ function applyDisplacements(session, from, to) {
             continue;
         }
             
-        index = indexOf(names, name);
+        index = names.indexOf(name);
         source = hasOwn(from, name) && format(from[name]);
         
         // create from source if did not exist
@@ -193,7 +190,7 @@ function applyDisplacements(session, from, to) {
 }
 
 function hasAnimationType(type) {
-    return OBJECT.contains(EASING, type);
+    return CORE.contains(EASING, type);
 }
 
 /**
@@ -315,9 +312,9 @@ function createStyleDefaults(element, names) {
 }
 
 function createElementValues(styles) {
-    var O = OBJECT,
-        hasOwn = O.contains,
-        number = O.number,
+    var C = CORE,
+        hasOwn = C.contains,
+        number = C.number,
         boxRe = BOX_RE,
         cssValue = CSS.unitValue,
         dimensionRe = DIMENSION_RE,

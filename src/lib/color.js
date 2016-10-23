@@ -1,6 +1,6 @@
 'use strict';
 
-var OBJECT = require("./object.js"),
+var CORE = require("libcore"),
     FORMAT = require("./color/format.js"),
     COLOR_RE =
     /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/,
@@ -39,14 +39,13 @@ function preParseValue(str) {
 
 
 function parseColorStringType(str) {
-    var O = OBJECT,
-        list = TO_COLOR,
+    var list = TO_COLOR,
         m = str.match(COLOR_RE),
         type = m[1];
         
     var items, isHex, item;
     
-    if (!O.contains(list, type)) {
+    if (!CORE.contains(list, type)) {
         type = 'hex';
     }
     
@@ -131,13 +130,13 @@ function parseColorString(str) {
 
 function toColorString(colorValue, type) {
     var list = TO_COLOR,
-        O = OBJECT;
+        C = CORE;
     
     if (arguments.length < 2) {
         type = 'hex';
     }
     
-    if (!O.contains(list, type) || !O.number(colorValue)) {
+    if (!C.contains(list, type) || !C.number(colorValue)) {
         return null;
     }
     

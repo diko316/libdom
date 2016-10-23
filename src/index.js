@@ -1,6 +1,7 @@
 'use strict';
 
-var detect = require("./lib/detect.js"),
+var CORE = require('libcore'),
+    detect = require("./lib/detect.js"),
     EXPORTS = {
         version: LIB_VERSION,
         info: detect
@@ -11,8 +12,9 @@ function notBrowser() {
     throw new Error("Unable to proceed, not running in a browser.");
 }
 
+
 function applyIf(api, moduleObject, access) {
-    var hasOwn = Object.prototype.hasOwnProperty,
+    var hasOwn = CORE.contains,
         handler = detect ? false : notBrowser;
     var name;
     

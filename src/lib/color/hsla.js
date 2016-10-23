@@ -1,6 +1,6 @@
 'use strict';
 
-var OBJECT = require("../object.js"),
+var CORE = require("libcore"),
     FORMAT = require("./format.js"),
     
     BYTE = 255,
@@ -42,7 +42,7 @@ function itemize(value, index, format) {
 function toInteger(h, s, l, a) {
     var psize = BYTE_PERCENT;
     
-    if (!OBJECT.number(a)) {
+    if (!CORE.number(a)) {
         a = PERCENT;
     }
     

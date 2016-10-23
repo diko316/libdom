@@ -1,8 +1,8 @@
 'use strict';
 
 var RGBA = require("./rgba.js"),
-    OBJECT = require("../object.js"),
-    EXPORTS = module.exports = OBJECT.assign({}, RGBA);
+    CORE = require("libcore"),
+    EXPORTS = module.exports = CORE.assign({}, RGBA);
 
 function toHex(integer) {
     return (integer < 16 ? '0' : '') + integer.toString(16);

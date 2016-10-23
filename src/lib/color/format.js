@@ -11,7 +11,7 @@ var EXPORTS = module.exports = {
 function convert2Number(value, format) {
     var parse = parseFloat,
         F = EXPORTS;
-    //console.log('format: ', format);
+    
     switch (format) {
     case F.HEX:
         return parseInt(value, 16) || 0;
@@ -20,7 +20,6 @@ function convert2Number(value, format) {
         return parse(value) || 0;
 
     case F.PERCENT:
-        //console.log('value: ', value, ' = ', (parse(value) || 1) * 100);
         return Math.round((parse(value) || 1) * 100);
     }
     return 0;

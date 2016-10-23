@@ -1,9 +1,8 @@
 'use strict';
 
-var DETECTED = require("./detect.js"),
-    OBJECT = require("./object.js"),
+var CORE = require("libcore"),
+    DETECTED = require("./detect.js"),
     STRING = require("./string.js"),
-    OBJECT_TYPE = '[object Object]',
     
     ORDER_TYPE_PREORDER = 1,
     ORDER_TYPE_POSTORDER = 2,
@@ -84,7 +83,7 @@ function ieContains(ancestor, descendant) {
  */
 function registerDomHelper(name, handler) {
     
-    if (!OBJECT.string(name)) {
+    if (!CORE.string(name)) {
         throw new Error(STRING[1001]);
     }
     
@@ -114,7 +113,7 @@ function add(element, config, before) {
     
     toInsert = config;
     
-    if (OBJECT.type(config, OBJECT_TYPE)) {
+    if (CORE.object(config)) {
         toInsert = element.ownerDocument.createElement(tagName);
         applyConfigToElement(toInsert, config);
     }
@@ -151,25 +150,26 @@ function find(element, node) {
 }
 
 function getTagNameFromConfig(config) {
-    if (OBJECT.type(config, OBJECT_TYPE)) {
+    var C = CORE;
+    
+    if (C.object(config)) {
         config = config.tagName;
     }
     
-    return OBJECT.string(config) ? config : false;
+    return C.string(config) ? config : false;
 }
 
 function applyConfigToElement(element, config, usedFragment) {
-    var O = OBJECT,
-        hasOwn = O.contains,
-        isType = O.type,
-        objectType = OBJECT_TYPE,
+    var C = CORE,
+        hasOwn = C.contains,
+        isObject= C.object,
         me = applyConfigToElement,
         resolveTagName = getTagNameFromConfig,
         helper = MANIPULATION_HELPERS;
         
     var name, value, item, access, childNodes, c, l, fragment, doc, created;
     
-    if (isType(config, objectType)) {
+    if (isObject(config)) {
         childNodes = null;
         
         // apply attributes
@@ -207,13 +207,13 @@ function applyConfigToElement(element, config, usedFragment) {
         }
         
         // apply childNodes
-        if (O.string(childNodes)) {
+        if (C.string(childNodes)) {
             element.innerHTML = childNodes;
         }
         
         // fragment
         else {
-            if (isType(childNodes, objectType)) {
+            if (isObject(childNodes)) {
                 childNodes = [childNodes];
             }
             
@@ -225,7 +225,7 @@ function applyConfigToElement(element, config, usedFragment) {
                 
                 for (c = -1, l = childNodes.length; l--;) {
                     item = childNodes[++c];
-                    if (isType(item, objectType)) {
+                    if (isObject(item)) {
                         created = doc.createElement(
                                         resolveTagName(item) || 'div');
                         // configure
@@ -246,7 +246,7 @@ function applyConfigToElement(element, config, usedFragment) {
 }
 
 function findChild(element, node, nodeType) {
-    var isNumber = OBJECT.number;
+    var isNumber = CORE.number;
     var index, counter, any;
     
     if (isDom(node, 1, 3, 4, 7, 8) && node.parentNode === element) {
@@ -279,7 +279,7 @@ function noArrayQuerySelectorAll(dom, selector) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
     
-    if (!OBJECT.string(selector)) {
+    if (!CORE.string(selector)) {
         throw new Error(ERROR_INVALID_CSS_SELECTOR);
     }
     
@@ -299,7 +299,7 @@ function toArrayQuerySelectorAll(dom, selector) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
     
-    if (!OBJECT.string(selector)) {
+    if (!CORE.string(selector)) {
         throw new Error(ERROR_INVALID_CSS_SELECTOR);
     }
 
@@ -427,7 +427,7 @@ function orderTraverse(element, callback, orderType, context) {
  * is node
  */
 function isDom(node) {
-    var isNumber = OBJECT.number;
+    var isNumber = CORE.number;
     
     var type, c, len, items, match, matched;
     

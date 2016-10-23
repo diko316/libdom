@@ -1,7 +1,7 @@
 'use strict';
 
-var INFO = require("./detect.js"),
-    OBJECT = require("./object.js"),
+var CORE = require("libcore"),
+    INFO = require("./detect.js"),
     STRING = require("./string.js"),
     DOM = require("./dom.js"),
     EVENTS = null,
@@ -23,7 +23,7 @@ function listen(observable, type, handler, context) {
     var last = EVENTS;
     var current;
     
-    if (!OBJECT.string(type)) {
+    if (!CORE.string(type)) {
         throw new Error(ERROR_INVALID_TYPE);
     }
     
@@ -58,7 +58,7 @@ function listen(observable, type, handler, context) {
 function unlisten(observable, type, handler, context) {
     var found, len;
     
-    if (!OBJECT.string(type)) {
+    if (!CORE.string(type)) {
         throw new Error(ERROR_INVALID_TYPE);
     }
     
@@ -87,7 +87,7 @@ function unlisten(observable, type, handler, context) {
 
 function dispatch(observable, type, defaults) {
     
-    if (!OBJECT.string(type)) {
+    if (!CORE.string(type)) {
         throw new Error(ERROR_INVALID_TYPE);
     }
     
@@ -198,7 +198,7 @@ function w3cUnlisten(observable, type, listener) {
 }
 
 function w3cDispatch(observable, type, properties) {
-    var hasOwn = OBJECT.contains,
+    var hasOwn = CORE.contains,
         event = global.document.createEvent("Event");
     var name;
     
@@ -259,7 +259,7 @@ function ieUnlisten(observable, type, listener) {
 }
 
 function ieDispatch(observable, type, properties) {
-    var hasOwn = OBJECT.contains,
+    var hasOwn = CORE.contains,
         event = global.document.createEventObject();
     var name, node;
     
