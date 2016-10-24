@@ -6,6 +6,7 @@ var STRING =  require("./string.js"),
     COLOR = require("./color.js"),
     CSS = require("./css.js"),
     DIMENSION = require("./dimension.js"),
+    SESSION_ACCESS = '__animate_session',
     BOX_POSITION = {
         left: 0,
         top: 1,
@@ -197,52 +198,52 @@ function hasAnimationType(type) {
  * CSS animation
  */
 function animateStyle(element, styles, type) {
-    var values = createElementValues(styles);
+    var access = SESSION_ACCESS,
+        stat = [[], {}, [], {}];
+    //var values = createElementValues(styles);
+    
     var session, sessionId, animateObject,
         names, defaults, animateValues, staticValues;
         
-        //animate = [element],
-        //handler = createAnimationObject(animate);
+    CORE.each(styles, eachElementValues, stat);
+    
+    names = stat[0];
+    animateValues = stat[1];
+    staticValues = stat[3];
         
-    if (values) {
-        names = values[0];
-        animateValues = values[1];
-        staticValues = values[2];
+    // has animation
+    if (names.length) {
+        sessionId = element.getAttribute(access);
+        defaults = createStyleDefaults(element, names);
         
-        
-        // has animation
-        if (names) {
-            sessionId = element.__animate_session;
-            defaults = createStyleDefaults(element, names);
+        // create
+        if (!sessionId) {
+            animateObject = {
+                node: element
+            };
             
-            // create
-            if (!sessionId) {
-                animateObject = {
-                    node: element
-                };
-                
-                session = animate(createElementHandler(animateObject),
-                                                defaults,
-                                                animateValues,
-                                                type);
-                
-                animateObject.id = sessionId = session.session;
-                
-                element.__animate_session = sessionId;
-                
-            }
-            // update
-            else {
-                
-                session = SESSIONS[sessionId][4];
-                session.update(animateValues, defaults, type);
-                
-            }
+            session = animate(createElementHandler(animateObject),
+                                            defaults,
+                                            animateValues,
+                                            type);
+            
+            animateObject.id = sessionId = session.session;
+            
+            element.setAttribute(access, sessionId);
+            
         }
-        
-        if (staticValues) {
-            CSS.style(element, staticValues);
+        // update
+        else {
+            
+            session = SESSIONS[sessionId][4];
+            session.update(animateValues, defaults, type);
+            
         }
+    }
+    
+    if (stat[2].length) {
+        console.log('static ', stat);
+        CSS.style(element, staticValues);
     }
     
 }
@@ -265,7 +266,7 @@ function createElementHandler(animate) {
         CSS.style(node, values);
         
         if (last) {
-            delete node.__animate_session;
+            node.removeAttribute(SESSION_ACCESS);
             session.node = null;
             delete session.node;
         }
@@ -311,58 +312,42 @@ function createStyleDefaults(element, names) {
     return values;
 }
 
-function createElementValues(styles) {
-    var C = CORE,
-        hasOwn = C.contains,
-        number = C.number,
-        boxRe = BOX_RE,
-        cssValue = CSS.unitValue,
-        dimensionRe = DIMENSION_RE,
-        colorRe = COLOR_RE,
-        parseColor = COLOR.parse,
-        animateNames = [],
-        len = 0,
-        animateValues = {},
-        staticValues = {},
-        hasStaticValues = false;
-    var name, raw, value;
+
+function eachElementValues(value, name) {
+    /*jshint validthis:true */
+    var stat = this,
+        names = stat[0],
+        values = stat[1],
+        snames = stat[2],
+        statics = stat[3],
+        raw = value;
     
-    for (name in styles) {
-        if (hasOwn(styles, name)) {
-            value = raw = styles[name];
-            
-            // opacity
-            if (name === 'opacity') {
-                value = parseFloat(raw);
-                
-            }
-            // box and dimension
-            else if (boxRe.test(name) || dimensionRe.test(name)) {
-                value = cssValue(raw);
-            }
-            // color
-            else if (colorRe.test(name)) {
-                value = parseColor(raw);
-                if (value === null) {
-                    value = false;
-                }
-            }
-            
-            if (number(value)) {
-                animateNames[len++] = name;
-                animateValues[name] = value;
-            }
-            else if (value !== false) {
-                hasStaticValues = true;
-                staticValues[name] = value;
-            }
+    // opacity
+    if (name === 'opacity') {
+        value = parseFloat(raw);
+        
+    }
+    // box and dimension
+    else if (BOX_RE.test(name) || DIMENSION_RE.test(name)) {
+        value = CSS.unitValue(raw);
+        
+    }
+    // color
+    else if (COLOR_RE.test(name)) {
+        value = COLOR.parse(raw);
+        if (value === null) {
+            value = false;
         }
     }
     
-    return (!!len || hasStaticValues) && [len ? animateNames : null,
-                                        len ? animateValues : null,
-                                        hasStaticValues ? staticValues : null];
-
+    if (CORE.number(value)) {
+        names[names.length] = name;
+        values[name] = value;
+    }
+    else if (value !== false) {
+        snames[snames.length] = name;
+        statics[name] = value;
+    }
 }
 
 

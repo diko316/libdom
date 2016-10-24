@@ -19,12 +19,9 @@ function applyIf(api, moduleObject, access) {
     var name;
     
     for (name in access) {
-        if (hasOwn.call(access, name)) {
-            
+        if (hasOwn(access, name)) {
             api[name] = handler || moduleObject[access[name]];
-            
         }
-        
     }
 }
 

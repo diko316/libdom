@@ -1,6 +1,6 @@
 {
   "name": "libdom",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "Lean Browser Library for typical DOM operations",
   "main": "dist/index.js",
   "scripts": {

@@ -35,7 +35,7 @@
                 var hasOwn = CORE.contains, handler = detect ? false : notBrowser;
                 var name;
                 for (name in access) {
-                    if (hasOwn.call(access, name)) {
+                    if (hasOwn(access, name)) {
                         api[name] = handler || moduleObject[access[name]];
                     }
                 }
@@ -1053,12 +1053,10 @@
 
                               case isNumber && dimensionRe.test(name):
                                 value = "" + value + "px";
-                                isNumber = !(isScalar = true);
                                 break;
 
                               case isNumber && colorRe.test(name):
                                 value = color.stringify(value, primaryColorUnit);
-                                isNumber = !(isScalar = true);
                                 break;
 
                               default:
@@ -2319,7 +2317,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var STRING = __webpack_require__(17), CORE = __webpack_require__(2), EASING = __webpack_require__(30), COLOR = __webpack_require__(19), CSS = __webpack_require__(18), DIMENSION = __webpack_require__(27), BOX_POSITION = {
+        var STRING = __webpack_require__(17), CORE = __webpack_require__(2), EASING = __webpack_require__(30), COLOR = __webpack_require__(19), CSS = __webpack_require__(18), DIMENSION = __webpack_require__(27), SESSION_ACCESS = "__animate_session", BOX_POSITION = {
             left: 0,
             top: 1,
             right: 2,
@@ -2429,30 +2427,30 @@
             return CORE.contains(EASING, type);
         }
         function animateStyle(element, styles, type) {
-            var values = createElementValues(styles);
+            var access = SESSION_ACCESS, stat = [ [], {}, [], {} ];
             var session, sessionId, animateObject, names, defaults, animateValues, staticValues;
-            if (values) {
-                names = values[0];
-                animateValues = values[1];
-                staticValues = values[2];
-                if (names) {
-                    sessionId = element.__animate_session;
-                    defaults = createStyleDefaults(element, names);
-                    if (!sessionId) {
-                        animateObject = {
-                            node: element
-                        };
-                        session = animate(createElementHandler(animateObject), defaults, animateValues, type);
-                        animateObject.id = sessionId = session.session;
-                        element.__animate_session = sessionId;
-                    } else {
-                        session = SESSIONS[sessionId][4];
-                        session.update(animateValues, defaults, type);
-                    }
+            CORE.each(styles, eachElementValues, stat);
+            names = stat[0];
+            animateValues = stat[1];
+            staticValues = stat[3];
+            if (names.length) {
+                sessionId = element.getAttribute(access);
+                defaults = createStyleDefaults(element, names);
+                if (!sessionId) {
+                    animateObject = {
+                        node: element
+                    };
+                    session = animate(createElementHandler(animateObject), defaults, animateValues, type);
+                    animateObject.id = sessionId = session.session;
+                    element.setAttribute(access, sessionId);
+                } else {
+                    session = SESSIONS[sessionId][4];
+                    session.update(animateValues, defaults, type);
                 }
-                if (staticValues) {
-                    CSS.style(element, staticValues);
-                }
+            }
+            if (stat[2].length) {
+                console.log("static ", stat);
+                CSS.style(element, staticValues);
             }
         }
         function createElementHandler(animate) {
@@ -2461,7 +2459,7 @@
                 DIMENSION.translate(node, values.left, values.top, values.right, values.bottom, values.width, values.height, values);
                 CSS.style(node, values);
                 if (last) {
-                    delete node.__animate_session;
+                    node.removeAttribute(SESSION_ACCESS);
                     session.node = null;
                     delete session.node;
                 }
@@ -2489,32 +2487,25 @@
             }
             return values;
         }
-        function createElementValues(styles) {
-            var C = CORE, hasOwn = C.contains, number = C.number, boxRe = BOX_RE, cssValue = CSS.unitValue, dimensionRe = DIMENSION_RE, colorRe = COLOR_RE, parseColor = COLOR.parse, animateNames = [], len = 0, animateValues = {}, staticValues = {}, hasStaticValues = false;
-            var name, raw, value;
-            for (name in styles) {
-                if (hasOwn(styles, name)) {
-                    value = raw = styles[name];
-                    if (name === "opacity") {
-                        value = parseFloat(raw);
-                    } else if (boxRe.test(name) || dimensionRe.test(name)) {
-                        value = cssValue(raw);
-                    } else if (colorRe.test(name)) {
-                        value = parseColor(raw);
-                        if (value === null) {
-                            value = false;
-                        }
-                    }
-                    if (number(value)) {
-                        animateNames[len++] = name;
-                        animateValues[name] = value;
-                    } else if (value !== false) {
-                        hasStaticValues = true;
-                        staticValues[name] = value;
-                    }
+        function eachElementValues(value, name) {
+            var stat = this, names = stat[0], values = stat[1], snames = stat[2], statics = stat[3], raw = value;
+            if (name === "opacity") {
+                value = parseFloat(raw);
+            } else if (BOX_RE.test(name) || DIMENSION_RE.test(name)) {
+                value = CSS.unitValue(raw);
+            } else if (COLOR_RE.test(name)) {
+                value = COLOR.parse(raw);
+                if (value === null) {
+                    value = false;
                 }
             }
-            return (!!len || hasStaticValues) && [ len ? animateNames : null, len ? animateValues : null, hasStaticValues ? staticValues : null ];
+            if (CORE.number(value)) {
+                names[names.length] = name;
+                values[name] = value;
+            } else if (value !== false) {
+                snames[snames.length] = name;
+                statics[name] = value;
+            }
         }
         module.exports = EXPORTS;
     }, function(module, exports) {

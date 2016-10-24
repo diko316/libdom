@@ -612,7 +612,6 @@ if (DIMENSION_INFO) {
     getOffset = boundingRect ? rectOffset : manualOffset;
                         
     getSize = boundingRect ? rectSize : manualSize;
-    //getBox = boundingRect ? rectBox : manualBox;
 }
 
 

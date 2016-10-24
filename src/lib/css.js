@@ -99,6 +99,7 @@ function applyStyle(element, style, value) {
         set = SET_STYLE,
         setOpacity = SET_OPACITY,
         colorRe = COLOR_RE,
+        
         parse = parseCSSText,
         dimensionRe = DIMENSION_RE,
         primaryColorUnit = EXPORTS.colorUnit,
@@ -155,12 +156,10 @@ function applyStyle(element, style, value) {
                 
                 case isNumber && dimensionRe.test(name):
                     value = '' + value + 'px';
-                    isNumber = !(isScalar = true);
                     break;
                 
                 case isNumber && colorRe.test(name):
                     value = color.stringify(value, primaryColorUnit);
-                    isNumber = !(isScalar = true);
                     break;
                 
                 default:
