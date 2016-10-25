@@ -15,18 +15,21 @@ function clicked(event) {
 }
 
 function noEnd(event, element) {
-    //console.log('fire!!!' + event.type);
-    main.dispatch(element, 'no-end', {
-        name: 'no-end'
+    //console.log('clicked !!!' + (event.target || event.srcElement).tagName);
+    main.dispatch((event.target || event.srcElement), 'no-end', {
+        name: 'no-end',
+        bubbles: true
     });
 }
 
+function onNoEnd(event) {
+    console.log('no-end ', (event.target || event.srcElement).tagName);
+}
 
-
-main.on(document, 'click', clicked);
-main.on(document.body, 'mousedown', noEnd);
-main.on(document.body, 'mouseup', noEnd);
-main.on(document.body, 'click', noEnd);
+main.on(document, 'click', noEnd);
+//main.on(document.body, 'mousedown', noEnd);
+//main.on(document.body, 'mouseup', noEnd);
+//main.on(document.body, 'click', noEnd);
 
 
 main.on(document.body, 'contextmenu', function (event) {
@@ -34,7 +37,7 @@ main.on(document.body, 'contextmenu', function (event) {
     main.purge(document.body);
 });
 
-main.on(document, 'no-end', function (event) {
-    console.log('no-end ', event);
-});
-
+main.on(document, 'no-end', onNoEnd);
+main.on(document.documentElement, 'no-end', onNoEnd);
+main.on(document.body, 'no-end', onNoEnd);
+main.on(document.getElementById('buang'), 'no-end', onNoEnd);

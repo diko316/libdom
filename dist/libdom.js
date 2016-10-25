@@ -24,7 +24,7 @@
         (function(global) {
             "use strict";
             var CORE = __webpack_require__(2), detect = __webpack_require__(9), EXPORTS = {
-                version: "0.0.9",
+                version: "0.1.0",
                 info: detect
             };
             var css, event, dimension, selection;
@@ -1621,7 +1621,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), INFO = __webpack_require__(9), STRING = __webpack_require__(17), DOM = __webpack_require__(16), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_CUSTOM_TYPE_EVENT = "propertychange", EXPORTS = module.exports = {
+            var CORE = __webpack_require__(2), INFO = __webpack_require__(9), STRING = __webpack_require__(17), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychanged", EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
@@ -1774,17 +1774,28 @@
                 return onEvent;
             }
             function ieListen(observable, type, handler, context) {
-                var isCustomEvent = ieTestCustomEvent(observable, type);
-                var listener = isCustomEvent ? ieCreateCustomHandler(type, handler, context) : ieCreateHandler(handler, context);
-                observable.attachEvent("on" + (isCustomEvent ? IE_CUSTOM_TYPE_EVENT : type), listener);
+                var listener;
+                if (ieTestCustomEvent(observable, type)) {
+                    listener = ieCreateCustomHandler(type, handler, context);
+                    observable.attachEvent("on" + IE_BUBBLE_EVENT, listener);
+                    observable.attachEvent("on" + IE_NO_BUBBLE_EVENT, listener);
+                } else {
+                    listener = ieCreateHandler(handler, context);
+                    observable.attachEvent("on" + type, listener);
+                }
                 return [ observable, type, handler, context, listener ];
             }
             function ieUnlisten(observable, type, listener) {
-                observable.detachEvent("on" + (listener.customType ? IE_CUSTOM_TYPE_EVENT : type), listener);
+                if (listener.customType) {
+                    observable.detachEvent("on" + IE_BUBBLE_EVENT, listener);
+                    observable.detachEvent("on" + IE_NO_BUBBLE_EVENT, listener);
+                } else {
+                    observable.detachEvent("on" + type, listener);
+                }
             }
             function ieDispatch(observable, type, properties) {
                 var hasOwn = CORE.contains, event = global.document.createEventObject();
-                var name, node;
+                var name;
                 for (name in properties) {
                     if (hasOwn(properties, name) && !(name in event)) {
                         event[name] = properties[name];
@@ -1792,23 +1803,13 @@
                 }
                 if (ieTestCustomEvent(observable, type)) {
                     event.customType = type;
-                    type = IE_CUSTOM_TYPE_EVENT;
+                    type = properties.bubbles ? IE_BUBBLE_EVENT : IE_NO_BUBBLE_EVENT;
                 }
                 name = "on" + type;
-                if (DOM.is(observable, 1) && properties.bubbles !== false) {
-                    for (node = observable; node; node = node.parentNode) {
-                        node.fireEvent(name, event);
-                        if (event.cancelBubble) {
-                            break;
-                        }
-                    }
-                } else {
-                    observable.fireEvent(name, event);
-                }
+                observable.fireEvent(name, event);
                 if (properties.cancelable === false) {
                     event.returnValue = true;
                 }
-                node = null;
                 return event;
             }
             function ieObservable(observable) {
