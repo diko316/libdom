@@ -24,7 +24,7 @@
         (function(global) {
             "use strict";
             var CORE = __webpack_require__(2), detect = __webpack_require__(9), EXPORTS = {
-                version: "0.1.0",
+                version: "0.1.1",
                 info: detect
             };
             var css, event, dimension, selection;
@@ -61,7 +61,9 @@
                 on: "on",
                 un: "un",
                 purge: "purge",
-                dispatch: "fire"
+                dispatch: "fire",
+                normalizeEvent: "normalize",
+                setEventNormalizer: "setNormalizer"
             });
             applyIf(EXPORTS, dimension = __webpack_require__(27), {
                 offset: "offset",
@@ -1621,11 +1623,13 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), INFO = __webpack_require__(9), STRING = __webpack_require__(17), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychanged", EXPORTS = module.exports = {
+            var CORE = __webpack_require__(2), INFO = __webpack_require__(9), STRING = __webpack_require__(17), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychanged", NORMALIZER_NAMES = [], NORMALIZERS = {}, KEYBOARD_EVENT_RE = /^key/, MOUSE_EVENT_RE = /^(mouse|click|contextmenu)/, EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
-                purge: purge
+                purge: purge,
+                normalize: getEventObjectValues,
+                setNormalizer: registerEventObjectNormalizer
             };
             var RESOLVE, LISTEN, UNLISTEN, DISPATCH, EVENT_INFO, IS_CAPABLE, SUBJECT;
             function listen(observable, type, handler, context) {
@@ -1862,6 +1866,81 @@
                 }
                 return false;
             }
+            function getEventObjectValues(event, properties) {
+                var list = NORMALIZERS, isString = CORE.string, result = {};
+                var c, l, access, name, value;
+                if (!(properties instanceof Array)) {
+                    properties = NORMALIZER_NAMES;
+                }
+                for (c = -1, l = properties.length; l--; ) {
+                    name = properties[++c];
+                    if (isString(name)) {
+                        value = name in event ? event[name] : void 0;
+                        access = ":" + name;
+                        if (access in list) {
+                            value = list[access](event, value, result);
+                        }
+                        result[name] = value;
+                    }
+                }
+                return result;
+            }
+            function registerEventObjectNormalizer(name, handler) {
+                var list = NORMALIZERS, names = NORMALIZER_NAMES, access = ":" + name;
+                if (!(access in list)) {
+                    names[names.length] = name;
+                }
+                list[access] = handler;
+                return EXPORTS;
+            }
+            function normalizeCharCode(event) {
+                var isNumber = CORE.number;
+                var value;
+                if (KEYBOARD_EVENT_RE.test(event.type)) {
+                    console.log("keycode: ", event.keyCode, " charCode: ", event.charCode);
+                    if (isNumber(value = event.charCode)) {
+                        return value;
+                    } else if (isNumber(value = event.keyCode)) {
+                        return value;
+                    }
+                }
+                return 0;
+            }
+            function normalizeKeyCode(event) {
+                var isNumber = CORE.number;
+                var value;
+                if (KEYBOARD_EVENT_RE.test(event.type)) {
+                    if (isNumber(value = event.keyCode)) {
+                        return value;
+                    } else if (isNumber(value = event.which)) {
+                        return value;
+                    } else if (isNumber(value = event.charCode)) {
+                        return value;
+                    }
+                }
+                return 0;
+            }
+            function normalizeButton(event) {
+                var isNumber = CORE.number;
+                var button;
+                if (MOUSE_EVENT_RE.test(event.type)) {
+                    if (isNumber(button = event.which)) {
+                        return button;
+                    } else if (isNumber(button = event.button)) {
+                        switch (true) {
+                          case button & 1:
+                            return 1;
+
+                          case button & 2:
+                            return 3;
+
+                          case button & 4:
+                            return 2;
+                        }
+                    }
+                }
+                return 0;
+            }
             function onBeforeUnload() {
                 if (!PAGE_UNLOADED) {
                     PAGE_UNLOADED = true;
@@ -1892,6 +1971,9 @@
                 }
                 if (IS_CAPABLE) {
                     SUBJECT = global;
+                    registerEventObjectNormalizer("button", normalizeButton);
+                    registerEventObjectNormalizer("charCode", normalizeCharCode);
+                    registerEventObjectNormalizer("keyCode", normalizeKeyCode);
                     listen(SUBJECT, "beforeunload", onBeforeUnload);
                     listen(SUBJECT, "unload", onBeforeUnload);
                     SUBJECT = null;

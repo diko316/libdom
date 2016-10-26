@@ -11,11 +11,17 @@ var CORE = require("libcore"),
     ERROR_INVALID_HANDLER = STRING[1133],
     IE_BUBBLE_EVENT = 'beforeupdate',
     IE_NO_BUBBLE_EVENT = 'propertychanged',
+    NORMALIZER_NAMES = [],
+    NORMALIZERS = {},
+    KEYBOARD_EVENT_RE = /^key/,
+    MOUSE_EVENT_RE = /^(mouse|click|contextmenu)/,
     EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
-                purge: purge
+                purge: purge,
+                normalize: getEventObjectValues,
+                setNormalizer: registerEventObjectNormalizer
             };
 var RESOLVE, LISTEN, UNLISTEN, DISPATCH, EVENT_INFO, IS_CAPABLE, SUBJECT;
 
@@ -367,6 +373,106 @@ function ieTestCustomEvent(observable, type) {
     
 }
 
+/**
+ * get normalized value of event object
+ */
+function getEventObjectValues(event, properties) {
+    var list = NORMALIZERS,
+        isString = CORE.string,
+        result = {};
+    var c, l, access, name, value;
+    
+    if (!(properties instanceof Array)) {
+        properties = NORMALIZER_NAMES;
+    }
+    
+    for (c = -1, l = properties.length; l--;) {
+        name = properties[++c];
+        if (isString(name)) {
+            value = name in event ? event[name] : void(0);
+            access = ':' + name;
+            
+            if (access in list) {
+                value = list[access](event, value, result);
+            }
+            
+            result[name] = value;
+        }
+    }
+    
+    return result;
+}
+
+function registerEventObjectNormalizer(name, handler) {
+    var list = NORMALIZERS,
+        names = NORMALIZER_NAMES,
+        access = ':' + name;
+    
+    if (!(access in list)) {
+        names[names.length] = name;
+    }
+    
+    list[access] = handler;
+    
+    return EXPORTS;
+}
+
+/**
+ * event object normalizers 
+ */
+function normalizeCharCode(event) {
+    var isNumber = CORE.number;
+    var value;
+    
+    if (KEYBOARD_EVENT_RE.test(event.type))  {
+        console.log('keycode: ', event.keyCode, ' charCode: ', event.charCode);
+        if (isNumber(value = event.charCode)) {
+            
+            return value;
+        }
+        else if (isNumber(value = event.keyCode)) {
+            return value;
+        }
+    }
+    return 0;
+}
+
+function normalizeKeyCode(event) {
+    var isNumber = CORE.number;
+    var value;
+    
+    if (KEYBOARD_EVENT_RE.test(event.type))  {
+        if (isNumber(value = event.keyCode)) {
+            return value;
+        }
+        else if (isNumber(value = event.which)) {
+            return value;
+        }
+        else if (isNumber(value = event.charCode)) {
+            return value;
+        }
+    }
+    return 0;
+}
+
+function normalizeButton(event) {
+    var isNumber = CORE.number;
+    var button;
+    
+    if (MOUSE_EVENT_RE.test(event.type)) {
+        if (isNumber(button = event.which)) {
+            return button;
+        }
+        else if (isNumber(button = event.button)) {
+            switch (true) {
+            case button & 1: return 1;
+            case button & 2: return 3;
+            case button & 4: return 2;
+            }
+        }
+    }
+    return 0;
+}
 
 /**
  * purge after page has unloaded
@@ -407,8 +513,18 @@ if (EVENT_INFO) {
     default:
         IS_CAPABLE = false;
     }
+    
+    // postprocess event handlers if platform is capable of L2 events
     if (IS_CAPABLE) {
         SUBJECT = global;
+        
+        // register event object normalizers
+        registerEventObjectNormalizer('button', normalizeButton);
+        registerEventObjectNormalizer('charCode', normalizeCharCode);
+        registerEventObjectNormalizer('keyCode', normalizeKeyCode);
+        
+        
+        // register destructors
         listen(SUBJECT, 'beforeunload', onBeforeUnload);
         listen(SUBJECT, 'unload', onBeforeUnload);
         SUBJECT = null;

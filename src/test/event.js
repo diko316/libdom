@@ -26,6 +26,10 @@ function onNoEnd(event) {
     console.log('no-end ', (event.target || event.srcElement).tagName);
 }
 
+function onKey(event) {
+    console.log(event.type, ' ', main.normalizeEvent(event).charCode);
+}
+
 main.on(document, 'click', noEnd);
 //main.on(document.body, 'mousedown', noEnd);
 //main.on(document.body, 'mouseup', noEnd);
@@ -41,3 +45,7 @@ main.on(document, 'no-end', onNoEnd);
 main.on(document.documentElement, 'no-end', onNoEnd);
 main.on(document.body, 'no-end', onNoEnd);
 main.on(document.getElementById('buang'), 'no-end', onNoEnd);
+
+main.on(document, 'keydown', onKey);
+main.on(document, 'keypress', onKey);
+main.on(document, 'keyup', onKey);
