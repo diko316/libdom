@@ -23,11 +23,12 @@ function noEnd(event, element) {
 }
 
 function onNoEnd(event) {
-    console.log('no-end ', (event.target || event.srcElement).tagName);
+    //console.log('no-end ', (event.target || event.srcElement).tagName);
 }
 
 function onKey(event) {
-    console.log(event.type, ' ', main.normalizeEvent(event).charCode);
+    main.normalizeEvent(event);
+    //console.log(event.type, ' ', main.normalizeEvent(event).charCode);
 }
 
 main.on(document, 'click', noEnd);

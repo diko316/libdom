@@ -15,6 +15,153 @@ var CORE = require("libcore"),
     NORMALIZERS = {},
     KEYBOARD_EVENT_RE = /^key/,
     MOUSE_EVENT_RE = /^(mouse|click|contextmenu)/,
+    
+/**
+ * taken from
+ * https://dvcs.w3.org/hg/dom3events/raw-file/tip/html/Note-KeyProps.html
+ * Specs:
+ *  https://w3c.github.io/uievents-code/#key-alphanumeric-writing-system
+ *
+ *  Mapping:
+ *      code, [..,[keycode, charcode]]
+ */
+    
+    KEY_CODES = [
+        "Backspace",
+            8,      0,
+        "Tab",
+            9,      0,
+        "Enter",
+            13,     13,
+            13,     0,
+        
+        // functional keys
+        "Shift",
+            16,     0,
+        "Control",
+            17,     0,
+        "Alt",
+            18,     0,
+        
+        "CapsLock",
+            20,     0,
+        "Escape",
+            27,     0,
+            
+        // Writing
+        "Space",
+            32,     32,
+            0,      32,
+            32,     0,
+            
+        "Digit1",
+            49,     33,
+            49,     0,
+            33,     33,
+            33,     0,
+        "Digit2",
+            50,     34,
+            50,     0,
+            34,     34,
+            34,     0,
+        "Digit3",
+            51,     35,
+            51,     0,
+            35,     35,
+            35,     0,
+        "Digit4",
+            52,     36,
+            52,     0,
+            36,     36,
+            36,     0,
+        
+        // control pad
+        "Pause",
+            19,     0,
+        "PageUp",
+            33,     0,
+        "End",
+            35,     0,
+        "Home",
+            36,     0,
+        "Insert",
+            45,     0,
+            
+        
+        
+        // number pad
+        "NumpadMultiply",
+            106,    106,
+            0,      106,
+            106,    0,
+        "NumpadAdd",
+            107,    107,
+            0,      107,
+            107,    0,
+        "NumpadSubtract",
+            109,    109,
+            0,      109,
+            109,    0,
+        "NumpadDecimal",
+            110,    110,
+            0,      110,
+            110,    0,
+        "NumpadDivide",
+            111,    111,
+            0,      111,
+            111,    0,
+        
+            
+        // function keys
+        "F1",
+            112,    0,
+        "F2",
+            113,    0,
+        "F3",
+            114,    0,
+        "F4",
+            115,    0,
+        "F5",
+            116,    0,
+        "F6",
+            117,    0,
+        "F7",
+            118,    0,
+        "F8",
+            119,    0,
+        "F9",
+            120,    0,
+        "F10",
+            121,    0,
+        "F11",
+            122,    0,
+        "F12",
+            123,    0,
+        "F13",
+            124,    0,
+        "F14",
+            125,    0,
+        "F15",
+            126,    0,
+        "F16",
+            127,    0,
+        "F17",
+            128,    0,
+        "F18",
+            129,    0,
+        "F19",
+            130,    0,
+        "F20",
+            131,    0,
+        "F21",
+            132,    0,
+        "F22",
+            133,    0,
+        "F23",
+            134,    0,
+        "F24",
+            135,    0
+    ],
     EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
@@ -420,12 +567,13 @@ function registerEventObjectNormalizer(name, handler) {
 /**
  * event object normalizers 
  */
-function normalizeCharCode(event) {
+function normalizeCode(event) {
     var isNumber = CORE.number;
     var value;
     
     if (KEYBOARD_EVENT_RE.test(event.type))  {
-        console.log('keycode: ', event.keyCode, ' charCode: ', event.charCode);
+        console.log(event.type, ' keycode: ', event.keyCode, ' charCode: ', event.charCode, 'which', event.which, ' event: ', event);
+        
         if (isNumber(value = event.charCode)) {
             
             return value;
@@ -519,9 +667,9 @@ if (EVENT_INFO) {
         SUBJECT = global;
         
         // register event object normalizers
-        registerEventObjectNormalizer('button', normalizeButton);
-        registerEventObjectNormalizer('charCode', normalizeCharCode);
-        registerEventObjectNormalizer('keyCode', normalizeKeyCode);
+        //registerEventObjectNormalizer('button', normalizeButton);
+        registerEventObjectNormalizer('code', normalizeCode);
+        //registerEventObjectNormalizer('keyCode', normalizeKeyCode);
         
         
         // register destructors
