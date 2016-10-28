@@ -61,9 +61,7 @@
                 on: "on",
                 un: "un",
                 purge: "purge",
-                dispatch: "fire",
-                normalizeEvent: "normalize",
-                setEventNormalizer: "setNormalizer"
+                dispatch: "fire"
             });
             applyIf(EXPORTS, dimension = __webpack_require__(27), {
                 offset: "offset",
@@ -1623,13 +1621,11 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), INFO = __webpack_require__(9), STRING = __webpack_require__(17), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychanged", NORMALIZER_NAMES = [], NORMALIZERS = {}, KEYBOARD_EVENT_RE = /^key/, MOUSE_EVENT_RE = /^(mouse|click|contextmenu)/, KEY_CODES = [ "Backspace", 8, 0, "Tab", 9, 0, "Enter", 13, 13, 13, 0, "Shift", 16, 0, "Control", 17, 0, "Alt", 18, 0, "CapsLock", 20, 0, "Escape", 27, 0, "Space", 32, 32, 0, 32, 32, 0, "Digit1", 49, 33, 49, 0, 33, 33, 33, 0, "Digit2", 50, 34, 50, 0, 34, 34, 34, 0, "Digit3", 51, 35, 51, 0, 35, 35, 35, 0, "Digit4", 52, 36, 52, 0, 36, 36, 36, 0, "Pause", 19, 0, "PageUp", 33, 0, "End", 35, 0, "Home", 36, 0, "Insert", 45, 0, "NumpadMultiply", 106, 106, 0, 106, 106, 0, "NumpadAdd", 107, 107, 0, 107, 107, 0, "NumpadSubtract", 109, 109, 0, 109, 109, 0, "NumpadDecimal", 110, 110, 0, 110, 110, 0, "NumpadDivide", 111, 111, 0, 111, 111, 0, "F1", 112, 0, "F2", 113, 0, "F3", 114, 0, "F4", 115, 0, "F5", 116, 0, "F6", 117, 0, "F7", 118, 0, "F8", 119, 0, "F9", 120, 0, "F10", 121, 0, "F11", 122, 0, "F12", 123, 0, "F13", 124, 0, "F14", 125, 0, "F15", 126, 0, "F16", 127, 0, "F17", 128, 0, "F18", 129, 0, "F19", 130, 0, "F20", 131, 0, "F21", 132, 0, "F22", 133, 0, "F23", 134, 0, "F24", 135, 0 ], EXPORTS = module.exports = {
+            var CORE = __webpack_require__(2), INFO = __webpack_require__(9), STRING = __webpack_require__(17), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychanged", EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
-                purge: purge,
-                normalize: getEventObjectValues,
-                setNormalizer: registerEventObjectNormalizer
+                purge: purge
             };
             var RESOLVE, LISTEN, UNLISTEN, DISPATCH, EVENT_INFO, IS_CAPABLE, SUBJECT;
             function listen(observable, type, handler, context) {
@@ -1866,81 +1862,6 @@
                 }
                 return false;
             }
-            function getEventObjectValues(event, properties) {
-                var list = NORMALIZERS, isString = CORE.string, result = {};
-                var c, l, access, name, value;
-                if (!(properties instanceof Array)) {
-                    properties = NORMALIZER_NAMES;
-                }
-                for (c = -1, l = properties.length; l--; ) {
-                    name = properties[++c];
-                    if (isString(name)) {
-                        value = name in event ? event[name] : void 0;
-                        access = ":" + name;
-                        if (access in list) {
-                            value = list[access](event, value, result);
-                        }
-                        result[name] = value;
-                    }
-                }
-                return result;
-            }
-            function registerEventObjectNormalizer(name, handler) {
-                var list = NORMALIZERS, names = NORMALIZER_NAMES, access = ":" + name;
-                if (!(access in list)) {
-                    names[names.length] = name;
-                }
-                list[access] = handler;
-                return EXPORTS;
-            }
-            function normalizeCode(event) {
-                var isNumber = CORE.number;
-                var value;
-                if (KEYBOARD_EVENT_RE.test(event.type)) {
-                    console.log(event.type, " keycode: ", event.keyCode, " charCode: ", event.charCode, "which", event.which, " event: ", event);
-                    if (isNumber(value = event.charCode)) {
-                        return value;
-                    } else if (isNumber(value = event.keyCode)) {
-                        return value;
-                    }
-                }
-                return 0;
-            }
-            function normalizeKeyCode(event) {
-                var isNumber = CORE.number;
-                var value;
-                if (KEYBOARD_EVENT_RE.test(event.type)) {
-                    if (isNumber(value = event.keyCode)) {
-                        return value;
-                    } else if (isNumber(value = event.which)) {
-                        return value;
-                    } else if (isNumber(value = event.charCode)) {
-                        return value;
-                    }
-                }
-                return 0;
-            }
-            function normalizeButton(event) {
-                var isNumber = CORE.number;
-                var button;
-                if (MOUSE_EVENT_RE.test(event.type)) {
-                    if (isNumber(button = event.which)) {
-                        return button;
-                    } else if (isNumber(button = event.button)) {
-                        switch (true) {
-                          case button & 1:
-                            return 1;
-
-                          case button & 2:
-                            return 3;
-
-                          case button & 4:
-                            return 2;
-                        }
-                    }
-                }
-                return 0;
-            }
             function onBeforeUnload() {
                 if (!PAGE_UNLOADED) {
                     PAGE_UNLOADED = true;
@@ -1971,7 +1892,6 @@
                 }
                 if (IS_CAPABLE) {
                     SUBJECT = global;
-                    registerEventObjectNormalizer("code", normalizeCode);
                     listen(SUBJECT, "beforeunload", onBeforeUnload);
                     listen(SUBJECT, "unload", onBeforeUnload);
                     SUBJECT = null;

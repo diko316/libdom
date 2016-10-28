@@ -60,9 +60,7 @@ applyIf(EXPORTS,
             'on': 'on',
             'un': 'un',
             'purge': 'purge',
-            'dispatch': 'fire',
-            'normalizeEvent': 'normalize',
-            'setEventNormalizer': 'setNormalizer'
+            'dispatch': 'fire'
         });
 
 applyIf(EXPORTS,

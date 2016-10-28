@@ -27,8 +27,22 @@ function onNoEnd(event) {
 }
 
 function onKey(event) {
-    main.normalizeEvent(event);
-    //console.log(event.type, ' ', main.normalizeEvent(event).charCode);
+    //main.normalizeEvent(event);
+    //console.log(event.type, ' ', main.normalizeEvent(event).charCode, ' data: ', event.data);
+    console.log(
+                //' which: ', event.which,
+                //' keyCode: ', event.keyCode,
+                //' charCode: ', event.charCode,
+                //' shift: ', event.shiftKey,
+                ' [which/keyCode]: ', event.keyCode || event.which,
+                ' combo: ',
+                    (event.keyCode || event.which) + ', ' +
+                    (event.charCode) + ',   ' +
+                    (event.shiftKey) + ',',
+                event.type, ',',
+                    event.keyCode
+                );
+    //console.log(event);
 }
 
 main.on(document, 'click', noEnd);
