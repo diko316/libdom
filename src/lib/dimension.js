@@ -176,6 +176,7 @@ function translateBox(element, x, y, right, bottom, width, height, target) {
     // resolve position
     switch (currentDimension.position) {
     case 'relative':
+    /* falls through */
     case 'absolute':
     case 'fixed':
         
@@ -196,7 +197,7 @@ function translateBox(element, x, y, right, bottom, width, height, target) {
             
             if (hasLeft) {
                 target.left = typeof x === NUMBER ? (
-                                    parse(currentDimension.left || 0) +
+                                    (parse(currentDimension.left) || 0) +
                                     (x - diff[0])
                                 ) + 'px' :
                                 x;
@@ -204,7 +205,7 @@ function translateBox(element, x, y, right, bottom, width, height, target) {
             }
             else if (hasRight) {
                 target.right = typeof right === NUMBER ? (
-                                    parse(currentDimension.right || 0) +
+                                    (parse(currentDimension.right) || 0) +
                                     (right - diff[2])
                                 ) + 'px' :
                                 right;
@@ -212,14 +213,14 @@ function translateBox(element, x, y, right, bottom, width, height, target) {
             
             if (hasTop) {
                 target.top = typeof y === NUMBER ? (
-                                    parse(currentDimension.top || 0) +
+                                    (parse(currentDimension.top) || 0) +
                                     (y - diff[1])
                                 ) + 'px' :
                                 y;
             }
             else if (hasBottom) {
                 target.bottom = typeof right === NUMBER ? (
-                                    parse(currentDimension.bottom || 0) +
+                                    (parse(currentDimension.bottom) || 0) +
                                     (bottom - diff[3])
                                 ) + 'px' :
                                 bottom;
@@ -461,6 +462,7 @@ function rectOffset(element, boundingRect) {
 
 function manualOffset(element) {
     var root = global.document[IE_PAGE_STAT_ACCESS],
+        body = root.body,
         css = CSS,
         
         top = OFFSET_TOP,
@@ -498,15 +500,17 @@ function manualOffset(element) {
                             
         }
     }
-
-    for (parent = element.parentNode; parent; parent = parent.parentNode) {
+    
+    parent = element.parentNode;
+    
+    for (; parent && parent !== body; parent = parent.parentNode) {
         if (parent.nodeType === 1 && parent !== root) {
             x += parent[sleft] || 0;
             y += parent[stop] || 0;
         }
     }
     
-    root = parent = null;
+    root = parent = body = null;
     return [
         x,
         y,
@@ -540,22 +544,22 @@ function iePageScrollOffset(window) {
     return offset;
 }
 
-function getZoomFactor(window) {
+function getZoomFactor() {
     var factor = 1;
-    var rect, body;
-    
-    if (boundingRect) {
-        body = window.document.body;
-        
-        // rect is only in physical pixel size in IE before version 8 
-        rect = body[BOUNDING_RECT]();
-
-        // the zoom level is always an integer percent value
-        factor = Math.round(
-                    (rect.right - rect.left / body[OFFSET_WIDTH]) * 100) / 100;
-    }
-    
-    body = null;
+    //var rect, body;
+    //
+    //if (boundingRect) {
+    //    body = window.document.body;
+    //    
+    //    // rect is only in physical pixel size in IE before version 8 
+    //    rect = body[BOUNDING_RECT]();
+    //
+    //    // the zoom level is always an integer percent value
+    //    factor = Math.round(
+    //                (rect.right - rect.left / body[OFFSET_WIDTH]) * 100) / 100;
+    //}
+    //
+    //body = null;
     
     return factor;
 }
@@ -608,8 +612,13 @@ if (DIMENSION_INFO) {
                         ieScreenSize;
 
     boundingRect = DIMENSION_INFO.rectmethod && BOUNDING_RECT;
-
+    
+    //if (IEVERSION && IEVERSION < 9) {
+    //    getOffset = manualOffset;
+    //}
+    //else {
     getOffset = boundingRect ? rectOffset : manualOffset;
+    //}
                         
     getSize = boundingRect ? rectSize : manualSize;
 }

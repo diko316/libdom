@@ -5,6 +5,8 @@ var RGBA = require("./rgba.js"),
     EXPORTS = module.exports = CORE.assign({}, RGBA);
 
 function toHex(integer) {
+    var M = Math;
+    integer = M.max(0, M.min(integer, 255));
     return (integer < 16 ? '0' : '') + integer.toString(16);
 }
 

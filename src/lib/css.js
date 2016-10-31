@@ -404,6 +404,7 @@ function ieGetPixelSize(element, style, property, fontSize) {
 function ieGetPositionStyle(element, style) {
     var parent = element.offsetParent,
         parentStyle = parent.currentStyle,
+        ieAdjust = DETECTED.browser.ieVersion < 9,
         parse = parseFloat,
         
         ptop = PADDING_TOP,
@@ -420,11 +421,31 @@ function ieGetPositionStyle(element, style) {
         bottom = parent[cheight] - element[OFFSET_HEIGHT],
         width = element[cwidth],
         height = element[cheight];
+    var node, nodeStyle;
         
     switch (style.position) {
     case 'relative':
         left -= (parse(parentStyle[pleft]) || 0);
         top -= (parse(parentStyle[ptop]) || 0);
+        
+        if (ieAdjust) {
+            node = element.parentNode;
+            
+            for (; node !== parent; node = node.parentNode) {
+                nodeStyle = node.currentStyle;
+                if (nodeStyle.position === 'static') {
+                    left -= (parse(nodeStyle.paddingLeft) || 0) +
+                            (parse(nodeStyle.borderLeftWidth) || 0);
+                    top -= (parse(nodeStyle.paddingTop) || 0) +
+                            (parse(nodeStyle.borderTopWidth) || 0);
+                }
+            }
+            
+            if (parent === element.ownerDocument.body) {
+                left -= parse(parentStyle.marginLeft) || 0;
+                top -= parse(parentStyle.marginTop) || 0;
+            }
+        }
         
     /* falls through */
     case 'absolute':
@@ -432,6 +453,7 @@ function ieGetPositionStyle(element, style) {
         left -= (parse(parentStyle.borderLeftWidth) || 0);
         top -= (parse(parentStyle.borderTopWidth) || 0);
     }
+
     
     right -= left;
     bottom -= top;
@@ -450,6 +472,10 @@ function ieGetPositionStyle(element, style) {
         width: width,
         height: height
     };
+}
+
+function ieGetOffsetParent() {
+    
 }
 
 /**
@@ -537,6 +563,7 @@ function ieSetStyleValue(style, name, value) {
     }
     else {
         //style.setAttribute(name, value);
+        //console.log(name, '=', value);
         style[name] = value;
     }
 }

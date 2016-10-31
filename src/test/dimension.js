@@ -10,7 +10,7 @@ console.log('box: ',
     main.box(subject)
 );
 
-console.log('relocate to 0,0 offset and resize to 150x300');
+//console.log('relocate to 0,0 offset and resize to 150x300');
 main.box(subject, 0, 0, 150, 300);
 
 
