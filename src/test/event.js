@@ -27,6 +27,8 @@ function noEnd(event, element) {
 }
 
 function onNoEnd(event) {
+    
+    console.log('no-end event type: ', event.type);
     //console.log('no-end ', (event.target || event.srcElement).tagName);
 }
 

@@ -2132,6 +2132,7 @@
                     var event = global.event;
                     if (event.customType === type) {
                         CORE.run(MIDDLEWARE_PREFIX + "dispatch", [ type, event ]);
+                        event.type = type;
                         return handler.call(context, event, event.target || event.srcElement);
                     }
                 }
