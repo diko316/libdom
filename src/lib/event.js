@@ -226,7 +226,7 @@ function w3cDispatch(observable, type, properties) {
     var name;
     
     event.initEvent(type,
-            properties.bubbles !== false,
+            properties.bubbles === true,
             properties.cancelable !== false);
     
     for (name in properties) {
@@ -305,7 +305,7 @@ function ieDispatch(observable, type, properties) {
     
     if (ieTestCustomEvent(observable, type)) {
         event.customType = type;
-        type = properties.bubbles ?
+        type = properties.bubbles === true ?
                     IE_BUBBLE_EVENT : IE_NO_BUBBLE_EVENT;
     }
     

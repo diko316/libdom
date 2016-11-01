@@ -2052,7 +2052,7 @@
             function w3cDispatch(observable, type, properties) {
                 var hasOwn = CORE.contains, event = global.document.createEvent("Event");
                 var name;
-                event.initEvent(type, properties.bubbles !== false, properties.cancelable !== false);
+                event.initEvent(type, properties.bubbles === true, properties.cancelable !== false);
                 for (name in properties) {
                     if (hasOwn(properties, name) && !(name in event)) {
                         event[name] = properties[name];
@@ -2102,7 +2102,7 @@
                 }
                 if (ieTestCustomEvent(observable, type)) {
                     event.customType = type;
-                    type = properties.bubbles ? IE_BUBBLE_EVENT : IE_NO_BUBBLE_EVENT;
+                    type = properties.bubbles === true ? IE_BUBBLE_EVENT : IE_NO_BUBBLE_EVENT;
                 }
                 name = "on" + type;
                 observable.fireEvent(name, event);
