@@ -1902,7 +1902,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), INFO = __webpack_require__(11), STRING = __webpack_require__(19), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychanged", EXPORTS = module.exports = {
+            var CORE = __webpack_require__(2), INFO = __webpack_require__(11), STRING = __webpack_require__(19), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], MIDDLEWARE_PREFIX = "libdom.event.", IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychanged", EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
@@ -1911,7 +1911,7 @@
             var RESOLVE, LISTEN, UNLISTEN, DISPATCH, EVENT_INFO, IS_CAPABLE, SUBJECT;
             function listen(observable, type, handler, context) {
                 var last = EVENTS;
-                var current;
+                var current, args;
                 if (!CORE.string(type)) {
                     throw new Error(ERROR_INVALID_TYPE);
                 }
@@ -1925,6 +1925,14 @@
                 if (typeof context === "undefined") {
                     context = null;
                 }
+                args = [ observable, type, handler, context ];
+                CORE.run(MIDDLEWARE_PREFIX + "listen", args);
+                observable = args[0];
+                type = args[1];
+                handler = args[2];
+                context = args[3];
+                args.splice(0, 4);
+                args = null;
                 current = LISTEN(observable, type, handler, context);
                 current.unlisten = createUnlistener(current);
                 current.head = last;
@@ -1936,7 +1944,7 @@
                 return current.unlisten;
             }
             function unlisten(observable, type, handler, context) {
-                var found, len;
+                var found, len, args;
                 if (!CORE.string(type)) {
                     throw new Error(ERROR_INVALID_TYPE);
                 }
@@ -1950,6 +1958,14 @@
                 if (typeof context === "undefined") {
                     context = null;
                 }
+                args = [ observable, type, handler, context ];
+                CORE.run(MIDDLEWARE_PREFIX + "unlisten", args);
+                observable = args[0];
+                type = args[1];
+                handler = args[2];
+                context = args[3];
+                args.splice(0, 4);
+                args = null;
                 found = filter(observable, type, handler, context);
                 for (len = found.length; len--; ) {
                     found[len].unlisten();
@@ -2050,7 +2066,7 @@
             }
             function w3cCreateHandler(handler, context) {
                 function onEvent(event) {
-                    CORE.run("libdom.event.dispatch", [ event.type, event ]);
+                    CORE.run(MIDDLEWARE_PREFIX + "dispatch", [ event.type, event ]);
                     return handler.call(context, event, event.target);
                 }
                 return onEvent;
@@ -2106,7 +2122,7 @@
             function ieCreateHandler(handler, context) {
                 function onEvent() {
                     var event = global.event;
-                    CORE.run("libdom.event.dispatch", [ event.type, event ]);
+                    CORE.run(MIDDLEWARE_PREFIX + "dispatch", [ event.type, event ]);
                     return handler.call(context, event, event.target || event.srcElement);
                 }
                 return onEvent;
@@ -2115,7 +2131,7 @@
                 function onEvent() {
                     var event = global.event;
                     if (event.customType === type) {
-                        CORE.run("libdom.event.dispatch", [ type, event ]);
+                        CORE.run(MIDDLEWARE_PREFIX + "dispatch", [ type, event ]);
                         return handler.call(context, event, event.target || event.srcElement);
                     }
                 }
