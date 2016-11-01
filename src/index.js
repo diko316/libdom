@@ -2,29 +2,17 @@
 
 var CORE = require('libcore'),
     detect = require("./lib/detect.js"),
+    rehash = CORE.rehash,
     EXPORTS = {
         env: CORE.env,
         info: detect
     };
 var css, event, dimension, selection;
 
-
-function applyIf(api, moduleObject, access) {
-    var hasOwn = CORE.contains;
-    var name;
-    
-    for (name in access) {
-        if (hasOwn(access, name)) {
-            api[name] = moduleObject[access[name]];
-        }
-    }
-}
-
-
 if (detect) {
 
     // dom structure
-    applyIf(EXPORTS,
+    rehash(EXPORTS,
             require("./lib/dom.js"),
             {
                 'is': 'is',
@@ -41,7 +29,7 @@ if (detect) {
                 'remove': 'remove'
             });
     
-    applyIf(EXPORTS,
+    rehash(EXPORTS,
             css = require("./lib/css.js"),
             {
                 'addClass': 'add',
@@ -51,7 +39,7 @@ if (detect) {
             });
     
     
-    applyIf(EXPORTS,
+    rehash(EXPORTS,
             event = require("./lib/event.js"),
             {
                 'on': 'on',
@@ -60,7 +48,7 @@ if (detect) {
                 'dispatch': 'fire'
             });
     
-    applyIf(EXPORTS,
+    rehash(EXPORTS,
             dimension = require("./lib/dimension.js"),
             {
                 'offset': 'offset',
@@ -70,7 +58,7 @@ if (detect) {
                 'screen': 'screen'
             });
     
-    applyIf(EXPORTS,
+    rehash(EXPORTS,
             selection = require("./lib/selection.js"),
             {
                 'highlight': 'select',
@@ -78,14 +66,14 @@ if (detect) {
                 'clearHighlight': 'clear'
             });
     
-    applyIf(EXPORTS,
+    rehash(EXPORTS,
             require("./lib/color.js"),
             {
                 'parseColor': 'parse',
                 'formatColor': 'stringify'
             });
     
-    applyIf(EXPORTS,
+    rehash(EXPORTS,
             require("./lib/animation.js"),
             {
                 'eachDisplacement': 'each',
