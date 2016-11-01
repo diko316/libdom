@@ -103,7 +103,7 @@
         OBJECT.assign(EXPORTS, PROCESSOR);
         TYPE.chain = OBJECT.chain = ARRAY.chain = PROCESSOR.chain = EXPORTS;
         EXPORTS.Promise = __webpack_require__(10);
-        module.exports = EXPORTS;
+        module.exports = EXPORTS["default"] = EXPORTS;
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
