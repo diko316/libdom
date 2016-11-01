@@ -613,12 +613,8 @@ if (DIMENSION_INFO) {
 
     boundingRect = DIMENSION_INFO.rectmethod && BOUNDING_RECT;
     
-    //if (IEVERSION && IEVERSION < 9) {
-    //    getOffset = manualOffset;
-    //}
-    //else {
     getOffset = boundingRect ? rectOffset : manualOffset;
-    //}
+    
                         
     getSize = boundingRect ? rectSize : manualSize;
 }

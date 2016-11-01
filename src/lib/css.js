@@ -474,10 +474,6 @@ function ieGetPositionStyle(element, style) {
     };
 }
 
-function ieGetOffsetParent() {
-    
-}
-
 /**
  * opacity
  */
