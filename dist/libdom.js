@@ -24,7 +24,7 @@
         (function(global) {
             "use strict";
             var CORE = __webpack_require__(2), detect = __webpack_require__(12), EXPORTS = {
-                version: "0.1.1",
+                version: "0.1.2",
                 info: detect
             };
             var css, event, dimension, selection;
@@ -86,7 +86,7 @@
             if (detect) {
                 css.chain = event.chain = dimension.chain = selection.chain = EXPORTS;
             }
-            module.exports = global["libdom"] = EXPORTS["default"] = EXPORTS;
+            module.exports = global.libdom = EXPORTS["default"] = EXPORTS;
         }).call(exports, function() {
             return this;
         }());
@@ -807,7 +807,6 @@
                     ie8: ieVersion === 8
                 };
             }
-            global.core = CORE;
             module.exports = EXPORTS;
             ROOT = null;
         }).call(exports, function() {

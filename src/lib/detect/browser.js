@@ -17,8 +17,6 @@ if (ENV.browser) {
     };
 }
 
-global.core = CORE;
-
 module.exports = EXPORTS;
 
 ROOT = null;

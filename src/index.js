@@ -3,7 +3,6 @@
 var CORE = require('libcore'),
     detect = require("./lib/detect.js"),
     EXPORTS = {
-        version: LIB_VERSION,
         info: detect
     };
 var css, event, dimension, selection;
@@ -104,5 +103,5 @@ if (detect) {
 
 
 
-module.exports = global[LIB_NAME] = EXPORTS['default'] = EXPORTS;
+module.exports = global.libdom = EXPORTS['default'] = EXPORTS;
 
