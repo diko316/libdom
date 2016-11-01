@@ -1,10 +1,14 @@
 'use strict';
 
-var main = global.libdom;
+var main = global.libdom,
+    CORE = require("libcore");
 
 console.log('testing: ', main);
 
-
+CORE.register('libdom.event.dispatch',
+        function (type, event) {
+            console.log('event dispatched ', type, event);
+        });
 
 
 function clicked(event) {

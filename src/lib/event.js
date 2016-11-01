@@ -229,6 +229,7 @@ function w3cObservable(observable) {
 
 function w3cCreateHandler(handler, context) {
     function onEvent(event) {
+        CORE.run('libdom.event.dispatch', [event.type, event]);
         return handler.call(context, event, event.target);
     }
     return onEvent;
@@ -310,6 +311,7 @@ function ieObservable(observable) {
 function ieCreateHandler(handler, context) {
     function onEvent() {
         var event = global.event;
+        CORE.run('libdom.event.dispatch', [event.type, event]);
         return handler.call(context, event, event.target || event.srcElement);
     }
     return onEvent;
@@ -319,6 +321,7 @@ function ieCreateCustomHandler(type, handler, context) {
     function onEvent() {
         var event = global.event;
         if (event.customType === type) {
+            CORE.run('libdom.event.dispatch', [type, event]);
             return handler.call(context,
                                 event,
                                 event.target || event.srcElement);

@@ -97,9 +97,6 @@ if (detect) {
         dimension.chain =
         selection.chain = EXPORTS;
 }
-else {
-    //throw new Error("Unable to proceed, not running in a browser.");
-}
 
 module.exports = global.libdom = EXPORTS['default'] = EXPORTS;
 

@@ -82,7 +82,7 @@
                     animateStyle: "style"
                 });
                 css.chain = event.chain = dimension.chain = selection.chain = EXPORTS;
-            } else {}
+            }
             module.exports = global.libdom = EXPORTS["default"] = EXPORTS;
         }).call(exports, function() {
             return this;
@@ -2050,6 +2050,7 @@
             }
             function w3cCreateHandler(handler, context) {
                 function onEvent(event) {
+                    CORE.run("libdom.event.dispatch", [ event.type, event ]);
                     return handler.call(context, event, event.target);
                 }
                 return onEvent;
@@ -2105,6 +2106,7 @@
             function ieCreateHandler(handler, context) {
                 function onEvent() {
                     var event = global.event;
+                    CORE.run("libdom.event.dispatch", [ event.type, event ]);
                     return handler.call(context, event, event.target || event.srcElement);
                 }
                 return onEvent;
@@ -2113,6 +2115,7 @@
                 function onEvent() {
                     var event = global.event;
                     if (event.customType === type) {
+                        CORE.run("libdom.event.dispatch", [ type, event ]);
                         return handler.call(context, event, event.target || event.srcElement);
                     }
                 }
