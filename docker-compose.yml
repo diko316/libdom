@@ -16,7 +16,6 @@ services:
       - "3000:3000"
       
   libdom_builder:
-    build: .
     image: libdom:latest
     container_name: "libdom-builder"
     command: bin/autosync-builds.sh
