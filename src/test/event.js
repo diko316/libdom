@@ -5,6 +5,11 @@ var main = global.libdom,
 
 console.log('testing: ', main);
 
+CORE.middleware('libdom.event').register('listen',
+        function () {
+            console.log('event listen ', arguments);
+        });
+
 CORE.register('libdom.event.dispatch',
         function (type, event) {
             console.log('event dispatched ', type, event);

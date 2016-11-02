@@ -635,10 +635,10 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var TYPE = __webpack_require__(6), G = global, NAME_RE = /^(([^\.]+\.)?(before|after)\:)?([a-zA-Z0-9\_\-\.]+)$/, POSITION_BEFORE = 1, POSITION_AFTER = 2, RUNNERS = {}, NAMESPACES = {}, EXPORTS = {
+            var TYPE = __webpack_require__(6), G = global, NAME_RE = /^(([^\.]+\.)*)((before|after)\:)?([a-zA-Z0-9\_\-\.]+)$/, POSITION_BEFORE = 1, POSITION_AFTER = 2, RUNNERS = {}, NAMESPACES = {}, EXPORTS = {
                 register: set,
                 run: run,
-                middlewares: middlewareNamespace,
+                middleware: middlewareNamespace,
                 setAsync: G.setImmediate,
                 clearAsync: G.clearImmediate
             };
@@ -692,11 +692,11 @@
             }
             function parseName(name) {
                 var match = TYPE.string(name) && name.match(NAME_RE);
-                var position, prefix;
+                var position, namespace;
                 if (match) {
-                    prefix = match[1];
-                    position = prefix && match[3] === "before" ? POSITION_BEFORE : POSITION_AFTER;
-                    return [ position, (prefix ? match[2] : "") + match[3] ];
+                    namespace = match[1];
+                    position = match[4] === "before" ? POSITION_BEFORE : POSITION_AFTER;
+                    return [ position, (namespace || "") + match[5] ];
                 }
                 return void 0;
             }
@@ -705,7 +705,7 @@
                 var access;
                 if (TYPE.string(name)) {
                     access = name + ".";
-                    if (!(list in access)) {
+                    if (!(access in list)) {
                         list[access] = {
                             run: createRunInNamespace(access),
                             register: createRegisterInNamespace(access)
@@ -723,6 +723,7 @@
             }
             function createRegisterInNamespace(ns) {
                 function nsRun(name, handler) {
+                    console.log("registering: ", ns + name);
                     return set(ns + name, handler);
                 }
                 return nsRun;
@@ -2132,7 +2133,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), INFO = __webpack_require__(12), STRING = __webpack_require__(20), EVENTS = null, PAGE_UNLOADED = false, IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], MIDDLEWARE_PREFIX = "libdom.event.", IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychanged", EXPORTS = module.exports = {
+            var CORE = __webpack_require__(2), INFO = __webpack_require__(12), STRING = __webpack_require__(20), EVENTS = null, PAGE_UNLOADED = false, MIDDLEWARE = CORE.middleware("libdom.event"), IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_ON = "on", IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychanged", EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
@@ -2156,7 +2157,7 @@
                     context = null;
                 }
                 args = [ observable, type, handler, context ];
-                C.run(MIDDLEWARE_PREFIX + "listen", args);
+                MIDDLEWARE.run("listen", args);
                 observable = args[0];
                 type = args[1];
                 handler = args[2];
@@ -2190,7 +2191,7 @@
                     context = null;
                 }
                 args = [ observable, type, handler, context ];
-                C.run(MIDDLEWARE_PREFIX + "unlisten", args);
+                MIDDLEWARE.run("unlisten", args);
                 observable = args[0];
                 type = args[1];
                 handler = args[2];
@@ -2297,29 +2298,31 @@
             }
             function w3cCreateHandler(handler, context) {
                 function onEvent(event) {
-                    CORE.run(MIDDLEWARE_PREFIX + "dispatch", [ event.type, event ]);
+                    MIDDLEWARE.run("dispatch", [ event.type, event ]);
                     return handler.call(context, event, event.target);
                 }
                 return onEvent;
             }
             function ieListen(observable, type, handler, context) {
+                var on = IE_ON;
                 var listener;
                 if (ieTestCustomEvent(observable, type)) {
                     listener = ieCreateCustomHandler(type, handler, context);
-                    observable.attachEvent("on" + IE_BUBBLE_EVENT, listener);
-                    observable.attachEvent("on" + IE_NO_BUBBLE_EVENT, listener);
+                    observable.attachEvent(on + IE_BUBBLE_EVENT, listener);
+                    observable.attachEvent(on + IE_NO_BUBBLE_EVENT, listener);
                 } else {
                     listener = ieCreateHandler(handler, context);
-                    observable.attachEvent("on" + type, listener);
+                    observable.attachEvent(on + type, listener);
                 }
                 return [ observable, type, handler, context, listener ];
             }
             function ieUnlisten(observable, type, listener) {
+                var on = IE_ON;
                 if (listener.customType) {
-                    observable.detachEvent("on" + IE_BUBBLE_EVENT, listener);
-                    observable.detachEvent("on" + IE_NO_BUBBLE_EVENT, listener);
+                    observable.detachEvent(on + IE_BUBBLE_EVENT, listener);
+                    observable.detachEvent(on + IE_NO_BUBBLE_EVENT, listener);
                 } else {
-                    observable.detachEvent("on" + type, listener);
+                    observable.detachEvent(on + type, listener);
                 }
             }
             function ieDispatch(observable, type, properties) {
@@ -2334,7 +2337,7 @@
                     event.customType = type;
                     type = properties.bubbles === true ? IE_BUBBLE_EVENT : IE_NO_BUBBLE_EVENT;
                 }
-                name = "on" + type;
+                name = IE_ON + type;
                 observable.fireEvent(name, event);
                 if (properties.cancelable === false) {
                     event.returnValue = true;
@@ -2353,7 +2356,7 @@
             function ieCreateHandler(handler, context) {
                 function onEvent() {
                     var event = global.event;
-                    CORE.run(MIDDLEWARE_PREFIX + "dispatch", [ event.type, event ]);
+                    MIDDLEWARE.run("dispatch", [ event.type, event ]);
                     return handler.call(context, event, event.target || event.srcElement);
                 }
                 return onEvent;
@@ -2362,7 +2365,7 @@
                 function onEvent() {
                     var event = global.event;
                     if (event.customType === type) {
-                        CORE.run(MIDDLEWARE_PREFIX + "dispatch", [ type, event ]);
+                        MIDDLEWARE.run("dispatch", [ type, event ]);
                         event.type = type;
                         return handler.call(context, event, event.target || event.srcElement);
                     }
@@ -2381,7 +2384,7 @@
                     if (access in list) {
                         return list[access];
                     }
-                    ontype = "on" + type;
+                    ontype = IE_ON + type;
                     element = observable.cloneNode(false);
                     supported = ontype in element;
                     if (!supported) {

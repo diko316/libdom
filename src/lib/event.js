@@ -5,11 +5,12 @@ var CORE = require("libcore"),
     STRING = require("./string.js"),
     EVENTS = null,
     PAGE_UNLOADED = false,
+    MIDDLEWARE = CORE.middleware('libdom.event'),
     IE_CUSTOM_EVENTS = {},
     ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131],
     ERROR_INVALID_TYPE = STRING[1132],
     ERROR_INVALID_HANDLER = STRING[1133],
-    MIDDLEWARE_PREFIX = 'libdom.event.',
+    IE_ON = 'on',
     IE_BUBBLE_EVENT = 'beforeupdate',
     IE_NO_BUBBLE_EVENT = 'propertychanged',
     EXPORTS = module.exports = {
@@ -44,7 +45,7 @@ function listen(observable, type, handler, context) {
     }
     
     args = [observable, type, handler, context];
-    C.run(MIDDLEWARE_PREFIX + 'listen', args);
+    MIDDLEWARE.run('listen', args);
     
     observable = args[0];
     type = args[1];
@@ -91,7 +92,7 @@ function unlisten(observable, type, handler, context) {
     }
     
     args = [observable, type, handler, context];
-    C.run(MIDDLEWARE_PREFIX + 'unlisten', args);
+    MIDDLEWARE.run('unlisten', args);
     
     observable = args[0];
     type = args[1];
@@ -254,7 +255,7 @@ function w3cObservable(observable) {
 
 function w3cCreateHandler(handler, context) {
     function onEvent(event) {
-        CORE.run(MIDDLEWARE_PREFIX + 'dispatch', [event.type, event]);
+        MIDDLEWARE.run('dispatch', [event.type, event]);
         return handler.call(context, event, event.target);
     }
     return onEvent;
@@ -265,31 +266,32 @@ function w3cCreateHandler(handler, context) {
  * ie events
  */
 function ieListen(observable, type, handler, context) {
+    var on = IE_ON;
     var listener;
     
     // listen to bubble
     if (ieTestCustomEvent(observable, type)) {
         listener = ieCreateCustomHandler(type, handler, context);
-        observable.attachEvent('on' + IE_BUBBLE_EVENT, listener);
-        observable.attachEvent('on' + IE_NO_BUBBLE_EVENT, listener);
+        observable.attachEvent(on + IE_BUBBLE_EVENT, listener);
+        observable.attachEvent(on + IE_NO_BUBBLE_EVENT, listener);
 
     }
     else {
         listener = ieCreateHandler(handler, context);
-        observable.attachEvent('on' + type, listener);
+        observable.attachEvent(on + type, listener);
     }
     
     return [observable, type, handler, context, listener];
 }
 
 function ieUnlisten(observable, type, listener) {
-
+    var on = IE_ON;
     if (listener.customType) {
-        observable.detachEvent('on' + IE_BUBBLE_EVENT, listener);
-        observable.detachEvent('on' + IE_NO_BUBBLE_EVENT, listener);
+        observable.detachEvent(on + IE_BUBBLE_EVENT, listener);
+        observable.detachEvent(on + IE_NO_BUBBLE_EVENT, listener);
     }
     else {
-        observable.detachEvent('on' + type, listener);
+        observable.detachEvent(on + type, listener);
     }
 
 }
@@ -311,7 +313,7 @@ function ieDispatch(observable, type, properties) {
                     IE_BUBBLE_EVENT : IE_NO_BUBBLE_EVENT;
     }
     
-    name = 'on' + type;
+    name = IE_ON + type;
     observable.fireEvent(name, event);
     
     // set to not cancel if not cancelable
@@ -336,7 +338,7 @@ function ieObservable(observable) {
 function ieCreateHandler(handler, context) {
     function onEvent() {
         var event = global.event;
-        CORE.run(MIDDLEWARE_PREFIX + 'dispatch', [event.type, event]);
+        MIDDLEWARE.run('dispatch', [event.type, event]);
         return handler.call(context, event, event.target || event.srcElement);
     }
     return onEvent;
@@ -346,7 +348,7 @@ function ieCreateCustomHandler(type, handler, context) {
     function onEvent() {
         var event = global.event;
         if (event.customType === type) {
-            CORE.run(MIDDLEWARE_PREFIX + 'dispatch', [type, event]);
+            MIDDLEWARE.run('dispatch', [type, event]);
             event.type = type;
             return handler.call(context,
                                 event,
@@ -377,7 +379,7 @@ function ieTestCustomEvent(observable, type) {
             return list[access];
         }
 
-        ontype = 'on' + type;
+        ontype = IE_ON + type;
         element = observable.cloneNode(false);
         supported = ontype in element;
         if (!supported) {
