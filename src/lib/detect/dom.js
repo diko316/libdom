@@ -1,9 +1,7 @@
 'use strict';
 
-var DETECTED = require("./browser.js"),
-    DOCUMENT = global.document,
-    ROOT = DOCUMENT.documentElement,
-    ieVersion = DETECTED.ieVersion;
+var DOCUMENT = global.document,
+    ROOT = DOCUMENT.documentElement;
 
 module.exports = {
     compare: !!ROOT.compareDocumentPosition,
@@ -13,7 +11,7 @@ module.exports = {
                     DOCUMENT.parentWindow ?
                         'parentWindow' : null,
     querySelectorAll: !!DOCUMENT.querySelectorAll,
-    listToArray: ieVersion === 0 || ieVersion > 8
+    listToArray: ROOT.childNodes instanceof Object
 };
 
 DOCUMENT = ROOT = null;

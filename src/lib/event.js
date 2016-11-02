@@ -21,14 +21,15 @@ var CORE = require("libcore"),
 var RESOLVE, LISTEN, UNLISTEN, DISPATCH, EVENT_INFO, IS_CAPABLE, SUBJECT;
 
 function listen(observable, type, handler, context) {
-    var last = EVENTS;
+    var last = EVENTS,
+        C = CORE;
     var current, args;
     
-    if (!CORE.string(type)) {
+    if (!C.string(type)) {
         throw new Error(ERROR_INVALID_TYPE);
     }
     
-    if (!(handler instanceof Function)) {
+    if (!C.method(handler)) {
         throw new Error(ERROR_INVALID_HANDLER);
     }
     
@@ -43,7 +44,7 @@ function listen(observable, type, handler, context) {
     }
     
     args = [observable, type, handler, context];
-    CORE.run(MIDDLEWARE_PREFIX + 'listen', args);
+    C.run(MIDDLEWARE_PREFIX + 'listen', args);
     
     observable = args[0];
     type = args[1];
@@ -68,13 +69,14 @@ function listen(observable, type, handler, context) {
 }
 
 function unlisten(observable, type, handler, context) {
+    var C = CORE;
     var found, len, args;
     
-    if (!CORE.string(type)) {
+    if (!C.string(type)) {
         throw new Error(ERROR_INVALID_TYPE);
     }
     
-    if (!(handler instanceof Function)) {
+    if (!C.method(handler)) {
         throw new Error(ERROR_INVALID_HANDLER);
     }
     
@@ -89,7 +91,7 @@ function unlisten(observable, type, handler, context) {
     }
     
     args = [observable, type, handler, context];
-    CORE.run(MIDDLEWARE_PREFIX + 'unlisten', args);
+    C.run(MIDDLEWARE_PREFIX + 'unlisten', args);
     
     observable = args[0];
     type = args[1];
@@ -240,12 +242,12 @@ function w3cDispatch(observable, type, properties) {
 }
 
 function w3cObservable(observable) {
-    var F = Function;
+    var isFunction = CORE.method;
     
     return observable && typeof observable === 'object' &&
-            observable.addEventListener instanceof F &&
-            observable.removeEventListener instanceof F &&
-            observable.dispatchEvent instanceof F ?
+            isFunction(observable.addEventListener) &&
+            isFunction(observable.removeEventListener) &&
+            isFunction(observable.dispatchEvent) ?
                 observable : false;
 
 }

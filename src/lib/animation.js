@@ -112,7 +112,7 @@ function animate(handler, from, to, type, duration) {
         
     }
     
-    if (!(handler instanceof Function)) {
+    if (!C.method(handler)) {
         throw new Error(string[1151]);
     }
     
@@ -242,7 +242,6 @@ function animateStyle(element, styles, type) {
     }
     
     if (stat[2].length) {
-        console.log('static ', stat);
         CSS.style(element, staticValues);
     }
     

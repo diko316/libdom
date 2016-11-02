@@ -142,7 +142,7 @@ function translateBox(element, x, y, right, bottom, width, height, target) {
     }
     
     // resolve parameters
-    if (x instanceof Array) {
+    if (CORE.array(x)) {
         target = y;
         if (x.length > 4) {
             height = 5 in x ? x[5] : null;

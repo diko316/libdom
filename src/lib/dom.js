@@ -82,12 +82,12 @@ function ieContains(ancestor, descendant) {
  * DOM Manipulation helper
  */
 function registerDomHelper(name, handler) {
-    
-    if (!CORE.string(name)) {
+    var C = CORE;
+    if (!C.string(name)) {
         throw new Error(STRING[1001]);
     }
     
-    if (!(handler instanceof Function)) {
+    if (!C.method(handler)) {
         throw new Error(STRING[1011]);
     }
     
@@ -217,7 +217,7 @@ function applyConfigToElement(element, config, usedFragment) {
                 childNodes = [childNodes];
             }
             
-            if (childNodes instanceof Array) {
+            if (C.array(childNodes)) {
                 doc = element.ownerDocument;
                 fragment = usedFragment === true ?
                                 doc.createDocumentFragment() :
@@ -334,7 +334,7 @@ function orderTraverse(element, callback, orderType, context) {
         throw new Error(ERROR_INVALID_DOM);
     }
     
-    if (!(callback instanceof Function)) {
+    if (!CORE.method(callback)) {
         throw new Error(ERROR_INVALID_CALLBACK);
     }
     
@@ -443,10 +443,8 @@ function isDom(node) {
             
             for (c = 0; len--;) {
                 match = items[++c];
-                if (isNumber(match)) {
-                    if (type === match) {
-                        return true;
-                    }
+                if (type === match) {
+                    return true;
                 }
             }
             

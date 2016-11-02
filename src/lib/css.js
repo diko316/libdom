@@ -280,7 +280,7 @@ function w3cGetCurrentStyle(element, list) {
     style = global.getComputedStyle(element);
     
     values = {};
-    if (!(list instanceof Array)) {
+    if (!CORE.array(list)) {
         list = SLICE.call(arguments, 1);
     }
     for (c = -1, l = list.length; l--;) {
@@ -305,8 +305,9 @@ function w3cGetCurrentStyle(element, list) {
 
 function ieGetCurrentStyle(element, list) {
     var dimensionRe = DIMENSION_RE,
+        C = CORE,
         boxRe = BOX_RE,
-        isString = CORE.string,
+        isString = C.string,
         camel = STRING.stylize,
         getOpacity = GET_OPACITY,
         pixelSize = ieGetPixelSize;
@@ -322,7 +323,7 @@ function ieGetCurrentStyle(element, list) {
     dimension = false;
     values = {};
     
-    if (!(list instanceof Array)) {
+    if (!C.array(list)) {
         list = SLICE.call(arguments, 1);
     }
     
