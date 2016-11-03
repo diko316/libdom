@@ -748,7 +748,9 @@
     }, function(module, exports, __webpack_require__) {
         "use strict";
         var TYPE = __webpack_require__(6), OBJECT = __webpack_require__(7);
-        function create() {}
+        function create() {
+            return new Registry();
+        }
         function Registry() {
             this.data = {};
         }
