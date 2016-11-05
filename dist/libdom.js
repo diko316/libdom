@@ -30,6 +30,10 @@
             var css, event, dimension, selection;
             if (detect) {
                 rehash(EXPORTS, __webpack_require__(19), {
+                    xmlEncode: "xmlEncode",
+                    xmlDecode: "xmlDecode"
+                });
+                rehash(EXPORTS, __webpack_require__(20), {
                     is: "is",
                     isView: "isView",
                     contains: "contains",
@@ -50,7 +54,8 @@
                     on: "on",
                     un: "un",
                     purge: "purge",
-                    dispatch: "fire"
+                    dispatch: "fire",
+                    destructor: "ondestroy"
                 });
                 rehash(EXPORTS, dimension = __webpack_require__(30), {
                     offset: "offset",
@@ -780,6 +785,9 @@
                 }
                 return this;
             },
+            exists: function(name) {
+                return OBJECT.contains(this.data, name);
+            },
             clear: function() {
                 OBJECT.clear(this.data);
                 return this;
@@ -1087,11 +1095,140 @@
             return this;
         }());
     }, function(module, exports, __webpack_require__) {
+        (function(global) {
+            "use strict";
+            var CORE = __webpack_require__(2), SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/, CAMEL_RE = /[^a-z]+[a-z]/gi, STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/, HTML_ESCAPE_CHARS_RE = /[^\u0021-\u007e]|[\u003e\u003c\&\"\']/g, TEXTAREA = global.document.createElement("textarea"), EXPORTS = {
+                camelize: camelize,
+                stylize: stylize,
+                addWord: addWord,
+                removeWord: removeWord,
+                xmlEncode: htmlescape,
+                xmlDecode: htmlunescape,
+                1001: "Invalid [name] parameter.",
+                1011: "Invalid [handler] parameter.",
+                1101: "Invalid DOM [element] parameter.",
+                1102: "Invalid [dom] Object parameter.",
+                1103: "Invalid DOM [node] parameter.",
+                1104: "Invalid DOM [document] parameter.",
+                1111: "Invalid CSS [selector] parameter.",
+                1112: "Invalid tree traverse [callback] parameter.",
+                1121: "Invalid DOM Element [config] parameter.",
+                1131: "Invalid [observable] parameter.",
+                1132: "Invalid Event [type] parameter.",
+                1133: "Invalid Event [handler] parameter.",
+                1141: "Invalid [style] Rule parameter.",
+                1151: "Invalid Animation [handler] parameter.",
+                1152: "Invalid Animation [displacements] parameter.",
+                2001: "Style Attribute manipulation is not supported",
+                2002: "Computed style is not supported by this browser.",
+                2003: "CSS Selector query form DOM is not supported.",
+                2004: "DOM position comparison is not supported.",
+                2005: "DOM selection not supported.",
+                2006: "CSS Opacity is not supported by this browser"
+            };
+            function camelize(str) {
+                return str.replace(CAMEL_RE, onCamelizeMatch);
+            }
+            function onCamelizeMatch(all) {
+                return all[all.length - 1].toUpperCase();
+            }
+            function onStylizeMatch(all, match) {
+                var found = match.toLowerCase(), len = found.length;
+                if (found === "moz") {
+                    found = "Moz";
+                }
+                return found + all.substring(len, all.length);
+            }
+            function stylize(str) {
+                return camelize(str).replace(STYLIZE_RE, onStylizeMatch);
+            }
+            function addWord(str, items) {
+                var isString = CORE.string, c = -1, l = items.length;
+                var cl, name;
+                str = str.split(SEPARATE_RE);
+                cl = str.length;
+                for (;l--; ) {
+                    name = items[++c];
+                    if (isString(name) && str.indexOf(name) === -1) {
+                        str[cl++] = name;
+                    }
+                }
+                return str.join(" ");
+            }
+            function removeWord(str, items) {
+                var c = -1, l = items.length;
+                var cl, total, name;
+                str = str.split(SEPARATE_RE);
+                total = str.length;
+                for (;l--; ) {
+                    name = items[++c];
+                    for (cl = total; cl--; ) {
+                        if (name === str[cl]) {
+                            str.splice(cl, 1);
+                            total--;
+                        }
+                    }
+                }
+                return str.join(" ");
+            }
+            function htmlunescape(str) {
+                var textarea = TEXTAREA;
+                var value = "";
+                if (textarea) {
+                    textarea.innerHTML = str;
+                    value = textarea.value;
+                }
+                textarea = null;
+                return value;
+            }
+            function htmlescape(str) {
+                return str.replace(HTML_ESCAPE_CHARS_RE, htmlescapeCallback);
+            }
+            function htmlescapeCallback(chr) {
+                var code = chr.charCodeAt(0).toString(16);
+                var value;
+                switch (code) {
+                  case "26":
+                    value = "amp";
+                    break;
+
+                  case "22":
+                    value = "quot";
+                    break;
+
+                  case "27":
+                    value = "apos";
+                    break;
+
+                  case "3C":
+                  case "3c":
+                    value = "lt";
+                    break;
+
+                  case "3E":
+                  case "3e":
+                    value = "gt";
+                    break;
+
+                  default:
+                    value = "#x" + code;
+                }
+                return "&" + value + ";";
+            }
+            function onDestroy() {
+                TEXTAREA = null;
+            }
+            CORE.register("libdom.event.global-destroy", onDestroy);
+            module.exports = EXPORTS;
+        }).call(exports, function() {
+            return this;
+        }());
+    }, function(module, exports, __webpack_require__) {
         "use strict";
-        var CORE = __webpack_require__(2), DETECTED = __webpack_require__(12), STRING = __webpack_require__(20), ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING[1101], ERROR_INVALID_DOM_NODE = STRING[1103], ERROR_INVALID_CSS_SELECTOR = STRING[1111], ERROR_INVALID_CALLBACK = STRING[1112], ERROR_INVALID_ELEMENT_CONFIG = STRING[1121], INVALID_DESCENDANT_NODE_TYPES = {
+        var CORE = __webpack_require__(2), DETECTED = __webpack_require__(12), STRING = __webpack_require__(19), ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING[1101], ERROR_INVALID_DOM_NODE = STRING[1103], ERROR_INVALID_CSS_SELECTOR = STRING[1111], ERROR_INVALID_CALLBACK = STRING[1112], ERROR_INVALID_ELEMENT_CONFIG = STRING[1121], INVALID_DESCENDANT_NODE_TYPES = {
             9: 1,
             11: 1
-        }, STD_CONTAINS = notSupportedContains, MANIPULATION_HELPERS = {}, EXPORTS = {
+        }, STD_CONTAINS = notSupportedContains, DOM_ATTRIBUTE_RE = /(^\_|[^a-zA-Z\_])/, MANIPULATION_HELPERS = CORE.createRegistry(), EXPORTS = {
             contains: contains,
             is: isDom,
             isView: isDefaultView,
@@ -1142,7 +1279,7 @@
             if (!C.method(handler)) {
                 throw new Error(STRING[1011]);
             }
-            MANIPULATION_HELPERS[":" + name] = handler;
+            MANIPULATION_HELPERS.set(name, handler);
             return EXPORTS.chain;
         }
         function add(element, config, before) {
@@ -1190,49 +1327,70 @@
             }
             return C.string(config) ? config : false;
         }
+        function applyAttributeToElement(value, name) {
+            var element = this, helper = MANIPULATION_HELPERS;
+            switch (name) {
+              case "class":
+                name = "className";
+                break;
+
+              case "for":
+                name = "htmlFor";
+                break;
+            }
+            if (helper.exists(name)) {
+                helper(name)(element, value);
+            } else if (DOM_ATTRIBUTE_RE.test(name)) {
+                element.setAttribute(name, value);
+            } else {
+                element[name] = value;
+            }
+            element = null;
+        }
         function applyConfigToElement(element, config, usedFragment) {
-            var C = CORE, hasOwn = C.contains, isObject = C.object, me = applyConfigToElement, resolveTagName = getTagNameFromConfig, helper = MANIPULATION_HELPERS;
-            var name, value, item, access, childNodes, c, l, fragment, doc, created;
+            var C = CORE, hasOwn = C.contains, isObject = C.object, me = applyConfigToElement, resolveTagName = getTagNameFromConfig, applyAttribute = applyAttributeToElement, htmlEncodeChild = false, childNodes = null;
+            var name, value, item, c, l, fragment, doc, created;
             if (isObject(config)) {
                 childNodes = null;
                 main: for (name in config) {
-                    if (hasOwn(name, config)) {
+                    if (hasOwn(config, name)) {
                         value = config[name];
                         switch (name) {
                           case "tagName":
                             continue main;
 
-                          case "class":
-                            name = "className";
-                            break;
-
-                          case "for":
-                            name = "htmlFor";
-                            break;
+                          case "text":
+                          case "childText":
+                          case "innerText":
+                            htmlEncodeChild = true;
 
                           case "childNodes":
                           case "innerHTML":
                           case "html":
                             childNodes = value;
                             continue main;
-                        }
-                        access = ":" + name;
-                        if (access in helper) {
-                            helper[name](element, value);
+
+                          case "attributes":
+                            if (isObject(value)) {
+                                C.each(value, applyAttribute, element);
+                            }
                             continue;
                         }
-                        element[name] = value;
+                        applyAttribute.call(element, value, name);
                     }
                 }
                 if (C.string(childNodes)) {
+                    if (htmlEncodeChild) {
+                        childNodes = STRING.xmlEncode(childNodes);
+                    }
                     element.innerHTML = childNodes;
-                } else {
+                } else if (!htmlEncodeChild) {
                     if (isObject(childNodes)) {
                         childNodes = [ childNodes ];
                     }
                     if (C.array(childNodes)) {
                         doc = element.ownerDocument;
-                        fragment = usedFragment === true ? doc.createDocumentFragment() : element;
+                        fragment = usedFragment === true ? element : doc.createDocumentFragment();
                         for (c = -1, l = childNodes.length; l--; ) {
                             item = childNodes[++c];
                             if (isObject(item)) {
@@ -1409,84 +1567,9 @@
         }
         module.exports = EXPORTS.chain = EXPORTS;
     }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var CORE = __webpack_require__(2), SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/, CAMEL_RE = /[^a-z]+[a-z]/gi, STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/, EXPORTS = {
-            camelize: camelize,
-            stylize: stylize,
-            addWord: addWord,
-            removeWord: removeWord,
-            1001: "Invalid [name] parameter.",
-            1011: "Invalid [handler] parameter.",
-            1101: "Invalid DOM [element] parameter.",
-            1102: "Invalid [dom] Object parameter.",
-            1103: "Invalid DOM [node] parameter.",
-            1104: "Invalid DOM [document] parameter.",
-            1111: "Invalid CSS [selector] parameter.",
-            1112: "Invalid tree traverse [callback] parameter.",
-            1121: "Invalid DOM Element [config] parameter.",
-            1131: "Invalid [observable] parameter.",
-            1132: "Invalid Event [type] parameter.",
-            1133: "Invalid Event [handler] parameter.",
-            1141: "Invalid [style] Rule parameter.",
-            1151: "Invalid Animation [handler] parameter.",
-            1152: "Invalid Animation [displacements] parameter.",
-            2001: "Style Attribute manipulation is not supported",
-            2002: "Computed style is not supported by this browser.",
-            2003: "CSS Selector query form DOM is not supported.",
-            2004: "DOM position comparison is not supported.",
-            2005: "DOM selection not supported.",
-            2006: "CSS Opacity is not supported by this browser"
-        };
-        function camelize(str) {
-            return str.replace(CAMEL_RE, onCamelizeMatch);
-        }
-        function onCamelizeMatch(all) {
-            return all[all.length - 1].toUpperCase();
-        }
-        function onStylizeMatch(all, match) {
-            var found = match.toLowerCase(), len = found.length;
-            if (found === "moz") {
-                found = "Moz";
-            }
-            return found + all.substring(len, all.length);
-        }
-        function stylize(str) {
-            return camelize(str).replace(STYLIZE_RE, onStylizeMatch);
-        }
-        function addWord(str, items) {
-            var isString = CORE.string, c = -1, l = items.length;
-            var cl, name;
-            str = str.split(SEPARATE_RE);
-            cl = str.length;
-            for (;l--; ) {
-                name = items[++c];
-                if (isString(name) && str.indexOf(name) === -1) {
-                    str[cl++] = name;
-                }
-            }
-            return str.join(" ");
-        }
-        function removeWord(str, items) {
-            var c = -1, l = items.length;
-            var cl, total, name;
-            str = str.split(SEPARATE_RE);
-            total = str.length;
-            for (;l--; ) {
-                name = items[++c];
-                for (cl = total; cl--; ) {
-                    if (name === str[cl]) {
-                        str.splice(cl, 1);
-                        total--;
-                    }
-                }
-            }
-            return str.join(" ");
-        }
-        module.exports = EXPORTS;
-    }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), STRING = __webpack_require__(20), DETECTED = __webpack_require__(12), DOM = __webpack_require__(19), COLOR = __webpack_require__(22), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", CLIENT_WIDTH = "clientWidth", CLIENT_HEIGHT = "clientHeight", COLOR_RE = /[Cc]olor$/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, BOX_RE = /(top|bottom|left|right|width|height)$/, DIMENSION_RE = /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size|Radius)$/, IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i, IE_ALPHA_OPACITY_TEMPLATE = "alpha(opacity=$opacity)", IE_ALPHA_OPACITY_TEMPLATE_RE = /\$opacity/, GET_OPACITY = opacityNotSupported, SET_OPACITY = opacityNotSupported, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
+            var CORE = __webpack_require__(2), STRING = __webpack_require__(19), DETECTED = __webpack_require__(12), DOM = __webpack_require__(20), COLOR = __webpack_require__(22), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", CLIENT_WIDTH = "clientWidth", CLIENT_HEIGHT = "clientHeight", COLOR_RE = /[Cc]olor$/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, BOX_RE = /(top|bottom|left|right|width|height)$/, DIMENSION_RE = /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size|Radius)$/, IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i, IE_ALPHA_OPACITY_TEMPLATE = "alpha(opacity=$opacity)", IE_ALPHA_OPACITY_TEMPLATE_RE = /\$opacity/, GET_OPACITY = opacityNotSupported, SET_OPACITY = opacityNotSupported, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
                 add: addClass,
                 remove: removeClass,
                 computedStyle: computedStyleNotSupported,
@@ -2141,11 +2224,12 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), INFO = __webpack_require__(12), STRING = __webpack_require__(20), EVENTS = null, PAGE_UNLOADED = false, MIDDLEWARE = CORE.middleware("libdom.event"), IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_ON = "on", IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychanged", EXPORTS = module.exports = {
+            var CORE = __webpack_require__(2), INFO = __webpack_require__(12), STRING = __webpack_require__(19), EVENTS = null, PAGE_UNLOADED = false, MIDDLEWARE = CORE.middleware("libdom.event"), IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_ON = "on", IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychanged", EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
-                purge: purge
+                purge: purge,
+                ondestroy: addDestructor
             };
             var RESOLVE, LISTEN, UNLISTEN, DISPATCH, EVENT_INFO, IS_CAPABLE, SUBJECT;
             function listen(observable, type, handler, context) {
@@ -2408,7 +2492,13 @@
             function onBeforeUnload() {
                 if (!PAGE_UNLOADED) {
                     PAGE_UNLOADED = true;
+                    MIDDLEWARE.run("global-destroy", []);
                     purge();
+                }
+            }
+            function addDestructor(handler) {
+                if (CORE.method(handler)) {
+                    MIDDLEWARE.register("global-destroy", handler);
                 }
             }
             RESOLVE = LISTEN = UNLISTEN = DISPATCH;
@@ -2447,7 +2537,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), DETECTED = __webpack_require__(12), STRING = __webpack_require__(20), DOM = __webpack_require__(19), CSS = __webpack_require__(21), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", BOUNDING_RECT = "getBoundingClientRect", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getScreenSize = null, EXPORTS = {
+            var CORE = __webpack_require__(2), DETECTED = __webpack_require__(12), STRING = __webpack_require__(19), DOM = __webpack_require__(20), CSS = __webpack_require__(21), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", BOUNDING_RECT = "getBoundingClientRect", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getScreenSize = null, EXPORTS = {
                 offset: offset,
                 size: size,
                 box: box,
@@ -2755,7 +2845,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(12), STRING = __webpack_require__(20), DOM = __webpack_require__(19), DIMENSION = __webpack_require__(30), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
+            var DETECTED = __webpack_require__(12), STRING = __webpack_require__(19), DOM = __webpack_require__(20), DIMENSION = __webpack_require__(30), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
                 select: select,
                 clear: clear,
                 unselectable: unselectable
@@ -2855,7 +2945,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var STRING = __webpack_require__(20), CORE = __webpack_require__(2), EASING = __webpack_require__(33), COLOR = __webpack_require__(22), CSS = __webpack_require__(21), DIMENSION = __webpack_require__(30), SESSION_ACCESS = "__animate_session", BOX_POSITION = {
+        var STRING = __webpack_require__(19), CORE = __webpack_require__(2), EASING = __webpack_require__(33), COLOR = __webpack_require__(22), CSS = __webpack_require__(21), DIMENSION = __webpack_require__(30), SESSION_ACCESS = "__animate_session", BOX_POSITION = {
             left: 0,
             top: 1,
             right: 2,

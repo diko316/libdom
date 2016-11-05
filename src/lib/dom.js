@@ -15,7 +15,8 @@ var CORE = require("libcore"),
     ERROR_INVALID_ELEMENT_CONFIG = STRING[1121],
     INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 },
     STD_CONTAINS = notSupportedContains,
-    MANIPULATION_HELPERS = {},
+    DOM_ATTRIBUTE_RE = /(^\_|[^a-zA-Z\_])/,
+    MANIPULATION_HELPERS = CORE.createRegistry(),
     EXPORTS = {
         contains: contains,
         is: isDom,
@@ -91,7 +92,8 @@ function registerDomHelper(name, handler) {
         throw new Error(STRING[1011]);
     }
     
-    MANIPULATION_HELPERS[':' + name] = handler;
+    MANIPULATION_HELPERS.set(name, handler);
+    
     return EXPORTS.chain;
 }
 
@@ -159,60 +161,100 @@ function getTagNameFromConfig(config) {
     return C.string(config) ? config : false;
 }
 
+
+function applyAttributeToElement(value, name) {
+    /* jshint validthis:true */
+    var element = this,
+        helper = MANIPULATION_HELPERS;
+    
+    // rename attributes
+    switch (name) {
+    case 'class':
+        name = 'className';
+        break;
+    
+    case 'for':
+        name = 'htmlFor';
+        break;
+    }
+    
+    if (helper.exists(name)) {
+        helper(name)(element, value);
+    }
+    else if (DOM_ATTRIBUTE_RE.test(name)) {
+        element.setAttribute(name, value);
+    }
+    else {
+        element[name] = value;
+    }
+    
+    element = null;
+    
+}
+
 function applyConfigToElement(element, config, usedFragment) {
     var C = CORE,
         hasOwn = C.contains,
         isObject= C.object,
         me = applyConfigToElement,
         resolveTagName = getTagNameFromConfig,
-        helper = MANIPULATION_HELPERS;
+        applyAttribute = applyAttributeToElement,
+        htmlEncodeChild = false,
+        childNodes = null;
         
-    var name, value, item, access, childNodes, c, l, fragment, doc, created;
+    var name, value, item, c, l, fragment, doc, created;
     
     if (isObject(config)) {
         childNodes = null;
         
         // apply attributes
         main: for (name in config) {
-            if (hasOwn(name, config)) {
+            if (hasOwn(config, name)) {
                 value = config[name];
                 
+                // apply non-attributes if found
                 switch (name) {
                 case 'tagName':
                     continue main;
                 
-                case 'class':
-                    name = 'className';
-                    break;
-                
-                case 'for':
-                    name = 'htmlFor';
-                    break;
+                case 'text':
+                case 'childText':
+                case 'innerText':
+                    htmlEncodeChild = true;
+                    
+                /* falls through */
                 case 'childNodes':
                 case 'innerHTML':
                 case 'html':
                     childNodes = value;
                     continue main;
-                }
                 
-                access = ':' + name;
-                
-                if (access in helper) {
-                    helper[name](element, value);
+                case 'attributes':
+                    if (isObject(value)) {
+                        C.each(value, applyAttribute, element);
+                    }
                     continue;
                 }
                 
-                element[name] = value;
+                applyAttribute.call(element, value, name);
+
             }
         }
         
         // apply childNodes
         if (C.string(childNodes)) {
+            
+            // convert
+            if (htmlEncodeChild) {
+                childNodes = STRING.xmlEncode(childNodes);
+            }
+
             element.innerHTML = childNodes;
         }
         
         // fragment
-        else {
+        else if (!htmlEncodeChild) {
+            
             if (isObject(childNodes)) {
                 childNodes = [childNodes];
             }
@@ -220,11 +262,12 @@ function applyConfigToElement(element, config, usedFragment) {
             if (C.array(childNodes)) {
                 doc = element.ownerDocument;
                 fragment = usedFragment === true ?
-                                doc.createDocumentFragment() :
-                                element;
+                                element :
+                                doc.createDocumentFragment();
                 
                 for (c = -1, l = childNodes.length; l--;) {
                     item = childNodes[++c];
+
                     if (isObject(item)) {
                         created = doc.createElement(
                                         resolveTagName(item) || 'div');

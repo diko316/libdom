@@ -17,7 +17,8 @@ var CORE = require("libcore"),
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
-                purge: purge
+                purge: purge,
+                ondestroy: addDestructor
             };
 var RESOLVE, LISTEN, UNLISTEN, DISPATCH, EVENT_INFO, IS_CAPABLE, SUBJECT;
 
@@ -404,8 +405,15 @@ function ieTestCustomEvent(observable, type) {
 function onBeforeUnload() {
     if (!PAGE_UNLOADED) {
         PAGE_UNLOADED = true;
-        
+        // call middleware
+        MIDDLEWARE.run('global-destroy', []);
         purge();
+    }
+}
+
+function addDestructor(handler) {
+    if (CORE.method(handler)) {
+        MIDDLEWARE.register('global-destroy', handler);
     }
 }
 
@@ -448,6 +456,5 @@ if (EVENT_INFO) {
         SUBJECT = null;
     }
 }
-
 
 EXPORTS.chain = EXPORTS;

@@ -10,6 +10,13 @@ var CORE = require('libcore'),
 var css, event, dimension, selection;
 
 if (detect) {
+    
+    rehash(EXPORTS,
+            require("./lib/string.js"),
+            {
+                "xmlEncode": "xmlEncode",
+                "xmlDecode": "xmlDecode"
+            });
 
     // dom structure
     rehash(EXPORTS,
@@ -45,7 +52,8 @@ if (detect) {
                 'on': 'on',
                 'un': 'un',
                 'purge': 'purge',
-                'dispatch': 'fire'
+                'dispatch': 'fire',
+                "destructor": "ondestroy"
             });
     
     rehash(EXPORTS,

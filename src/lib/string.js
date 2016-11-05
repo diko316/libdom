@@ -5,11 +5,16 @@ var CORE = require("libcore"),
     SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
     CAMEL_RE = /[^a-z]+[a-z]/ig,
     STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/,
+    HTML_ESCAPE_CHARS_RE = /[^\u0021-\u007e]|[\u003e\u003c\&\"\']/g,
+    TEXTAREA = global.document.createElement('textarea'),
     EXPORTS = {
         camelize: camelize,
         stylize: stylize,
         addWord: addWord,
         removeWord: removeWord,
+        
+        xmlEncode: htmlescape,
+        xmlDecode: htmlunescape,
         
         1001: "Invalid [name] parameter.",
         1011: "Invalid [handler] parameter.",
@@ -110,6 +115,50 @@ function removeWord(str, items) {
     return str.join(' ');    
 }
 
+function htmlunescape(str) {
+    var textarea = TEXTAREA;
+    var value = '';
+    if (textarea) {
+        textarea.innerHTML = str;
+        value = textarea.value;
+    }
+    textarea = null;
+    return value;
+}
 
+function htmlescape(str) {
+    return str.replace(HTML_ESCAPE_CHARS_RE, htmlescapeCallback);
+}
+
+function htmlescapeCallback(chr) {
+    var code = chr.charCodeAt(0).toString(16);
+    var value;
+    switch (code) {
+    case '26': value = 'amp';
+        break;
+    case '22': value = 'quot';
+        break;
+    case '27': value = 'apos';
+        break;
+    case '3C':
+    case '3c': value = 'lt';
+        break;
+    case '3E':
+    case '3e': value = 'gt';
+        break;
+    default:
+        value = '#x' + code;
+    }
+    return '&' + value + ';';
+}
+
+
+// register destructor
+function onDestroy() {
+    TEXTAREA = null;
+}
+
+
+CORE.register("libdom.event.global-destroy", onDestroy);
 
 module.exports = EXPORTS;
