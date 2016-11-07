@@ -33,6 +33,8 @@ if (detect) {
                 'eachNodeLevelorder': 'eachLevel',
                 
                 'add': 'add',
+                'move': 'move',
+                'replace': 'replace',
                 'remove': 'remove'
             });
     

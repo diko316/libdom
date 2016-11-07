@@ -2,6 +2,7 @@
 
 var CORE = require("libcore"),
     DETECTED = require("./detect.js"),
+    EVENT = require("./event.js"),
     STRING = require("./string.js"),
     
     ORDER_TYPE_PREORDER = 1,
@@ -16,6 +17,7 @@ var CORE = require("libcore"),
     INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 },
     STD_CONTAINS = notSupportedContains,
     DOM_ATTRIBUTE_RE = /(^\_|[^a-zA-Z\_])/,
+    EVENT_ATTRIBUTE_RE = /^on(\-?[a-zA-Z].+)?$/,
     MANIPULATION_HELPERS = CORE.createRegistry(),
     EXPORTS = {
         contains: contains,
@@ -30,6 +32,8 @@ var CORE = require("libcore"),
         helper: registerDomHelper,
         
         add: add,
+        replace: replace,
+        move: move,
         remove: remove,
         find: find
     };
@@ -102,26 +106,29 @@ function registerDomHelper(name, handler) {
  */
 
 function add(element, config, before) {
-    var tagName, toInsert;
+    var toInsert = null,
+        invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
+        is = isDom;
+    var tagName;
     
     if (!isDom(element, 1, 11)) {
         throw new Error(ERROR_INVALID_DOM);
     }
     
-    tagName = getTagNameFromConfig(config);
-    if (!tagName) {
-        throw new Error(ERROR_INVALID_ELEMENT_CONFIG);
+    if (is(config)) {
+        toInsert = config;
     }
-    
-    toInsert = config;
-    
-    if (CORE.object(config)) {
+    else if (CORE.object(config)) {
+        tagName = getTagNameFromConfig(config);
+        if (!tagName) {
+            throw new Error(invalidConfig);
+        }
         toInsert = element.ownerDocument.createElement(tagName);
         applyConfigToElement(toInsert, config);
     }
     
-    if (!isDom(toInsert)) {
-        throw new Error(ERROR_INVALID_ELEMENT_CONFIG);
+    if (!is(toInsert, 1, 3, 4, 7, 8)) {
+        throw new Error(invalidConfig);
     }
     
     element.insertBefore(toInsert, findChild(element, before));
@@ -130,18 +137,91 @@ function add(element, config, before) {
     
 }
 
-function remove(element) {
+function remove(node) {
     var parentNode;
-    if (!isDom(element, 1, 3, 4, 7, 8)) {
+    if (!isDom(node, 1, 3, 4, 7, 8)) {
+        throw new Error(ERROR_INVALID_DOM_NODE);
+    }
+    
+    // unset child events
+    if (node.nodeType === 1) {
+        postOrderTraverse(node, purgeEventsFrom);
+    }
+    
+    parentNode = node.parentNode;
+    if (parentNode) {
+        parentNode.removeChild(node);
+    }
+    parentNode = null;
+    return node;
+}
+
+function move(nodes, element) {
+    var is = isDom,
+        invalidDom = ERROR_INVALID_DOM_NODE,
+        created = false;
+    var c, l, fragment;
+    
+    if (!is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
     
-    parentNode = element.parentNode;
-    if (parentNode) {
-        parentNode.removeChild(element);
+    if (is(nodes, 1, 3, 4, 7, 8)) {
+        nodes = [nodes];
+        created = true;
     }
-    parentNode = null;
+    
+    if (!CORE.array(nodes)) {
+        throw new Error(invalidDom);
+    }
+    
+    fragment = element.ownerDocument.createDocumentFragment();
+    for (c = -1, l = nodes.length; l--;) {
+        fragment.appendChild(nodes[++c]);
+    }
+    element.appendChild(fragment);
+    
+    if (created) {
+        nodes.splice(0, nodes.length);
+    }
+    fragment = null;
     return element;
+}
+
+function replace(node, config) {
+    var toInsert = null,
+        invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
+        is = isDom;
+    var tagName;
+    
+    if (!is(node, 1, 3, 4, 7, 8) || !node.parentNode) {
+        throw new Error(ERROR_INVALID_DOM_NODE);
+    }
+    
+    if (is(config)) {
+        toInsert = config;
+    }
+    else if (CORE.object(config)) {
+        tagName = getTagNameFromConfig(config);
+        if (!tagName) {
+            throw new Error(invalidConfig);
+        }
+        toInsert = node.ownerDocument.createElement(tagName);
+        applyConfigToElement(toInsert, config);
+    }
+    
+    if (!is(toInsert, 1, 3, 4, 7, 8)) {
+        throw new Error(invalidConfig);
+    }
+    
+    node.parentNode.replaceChild(toInsert, node);
+    purgeEventsFrom(node);
+    
+    return toInsert;
+}
+
+function purgeEventsFrom(element) {
+    EVENT.purge(element);
 }
 
 function find(element, node) {
@@ -155,7 +235,7 @@ function getTagNameFromConfig(config) {
     var C = CORE;
     
     if (C.object(config)) {
-        config = config.tagName;
+        config = config.tagName || config.nodeNode || config.tag;
     }
     
     return C.string(config) ? config : false;
@@ -165,7 +245,9 @@ function getTagNameFromConfig(config) {
 function applyAttributeToElement(value, name) {
     /* jshint validthis:true */
     var element = this,
+        C = CORE,
         helper = MANIPULATION_HELPERS;
+    var listen;
     
     // rename attributes
     switch (name) {
@@ -178,7 +260,17 @@ function applyAttributeToElement(value, name) {
         break;
     }
     
-    if (helper.exists(name)) {
+    if (EVENT_ATTRIBUTE_RE.test(name)) {
+        listen = name.substring(name.charAt(2) === '-' ? 3 : 2, name.length);
+        
+        if (listen === 'on' && C.object(value)) {
+            C.each(value, applyEventAttribute, element);
+        }
+        else {
+            applyEventAttribute.call(element, value, listen);
+        }
+    }
+    else if (helper.exists(name)) {
         helper(name)(element, value);
     }
     else if (DOM_ATTRIBUTE_RE.test(name)) {
@@ -190,6 +282,17 @@ function applyAttributeToElement(value, name) {
     
     element = null;
     
+}
+
+function applyEventAttribute(handler, name) {
+    /* jshint validthis:true */
+    var element = this;
+    
+    if (CORE.method(handler)) {
+        EVENT.on(element, name, handler);
+    }
+    
+    element = null;
 }
 
 function applyConfigToElement(element, config, usedFragment) {
@@ -215,6 +318,8 @@ function applyConfigToElement(element, config, usedFragment) {
                 // apply non-attributes if found
                 switch (name) {
                 case 'tagName':
+                case 'nodeName':
+                case 'tag':
                     continue main;
                 
                 case 'text':
