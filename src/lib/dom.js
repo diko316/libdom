@@ -17,6 +17,21 @@ var CORE = require("libcore"),
     INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 },
     STD_CONTAINS = notSupportedContains,
     DOM_ATTRIBUTE_RE = /(^\_|[^a-zA-Z\_])/,
+    DOM_ATTRIBUTE_LIST = [
+        'nodeType',
+        'nodeValue',
+        'ownerDocument',
+        'tagName',
+        'attributes',
+        'parentNode',
+        'childNodes',
+        'firstChild',
+        'lastChild',
+        'previousSibling',
+        'nextSibling',
+        'sourceIndex',
+        'type'
+    ],
     EVENT_ATTRIBUTE_RE = /^on(\-?[a-zA-Z].+)?$/,
     MANIPULATION_HELPERS = CORE.createRegistry(),
     EXPORTS = {
@@ -228,7 +243,6 @@ function replace(node, config) {
     
     node.parentNode.replaceChild(toInsert, node);
     
-    
     return toInsert;
 }
 
@@ -285,7 +299,8 @@ function applyAttributeToElement(value, name) {
     else if (helper.exists(name)) {
         helper(name)(element, value);
     }
-    else if (DOM_ATTRIBUTE_RE.test(name)) {
+    else if (DOM_ATTRIBUTE_RE.test(name) ||
+            DOM_ATTRIBUTE_LIST.indexOf(name) !== -1) {
         element.setAttribute(name, value);
     }
     else {

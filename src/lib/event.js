@@ -257,7 +257,7 @@ function w3cObservable(observable) {
 function w3cCreateHandler(handler, context) {
     function onEvent(event) {
         MIDDLEWARE.run('dispatch', [event.type, event]);
-        return handler.call(context, event, event.target);
+        return handler.call(context, event);
     }
     return onEvent;
 }
@@ -339,8 +339,9 @@ function ieObservable(observable) {
 function ieCreateHandler(handler, context) {
     function onEvent() {
         var event = global.event;
+        iePolyfillEvent(event);
         MIDDLEWARE.run('dispatch', [event.type, event]);
-        return handler.call(context, event, event.target || event.srcElement);
+        return handler.call(context, event);
     }
     return onEvent;
 }
@@ -348,12 +349,11 @@ function ieCreateHandler(handler, context) {
 function ieCreateCustomHandler(type, handler, context) {
     function onEvent() {
         var event = global.event;
+        iePolyfillEvent(event);
         if (event.customType === type) {
             MIDDLEWARE.run('dispatch', [type, event]);
             event.type = type;
-            return handler.call(context,
-                                event,
-                                event.target || event.srcElement);
+            return handler.call(context, event);
         }
     }
     
@@ -362,7 +362,28 @@ function ieCreateCustomHandler(type, handler, context) {
     return onEvent;
 }
 
+function iePreventDefault() {
+    /* jshint validthis:true */
+    this.returnValue = false;
+}
 
+function ieStopPropagation() {
+    /* jshint validthis:true */
+    this.cancelBubble = true;
+}
+
+function iePolyfillEvent(eventObject) {
+    
+    eventObject.target = eventObject.target || eventObject.srcElement;
+    
+    if (!('preventDefault' in eventObject)) {
+        eventObject.preventDefault = iePreventDefault;
+    }
+    
+    if (!('stopPropagation' in eventObject)) {
+        eventObject.stopPropagation = ieStopPropagation;
+    }
+}
 
 function ieTestCustomEvent(observable, type) {
     var supported = false,

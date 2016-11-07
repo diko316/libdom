@@ -1244,7 +1244,7 @@
         var CORE = __webpack_require__(2), DETECTED = __webpack_require__(12), EVENT = __webpack_require__(21), STRING = __webpack_require__(19), ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING[1101], ERROR_INVALID_DOM_NODE = STRING[1103], ERROR_INVALID_CSS_SELECTOR = STRING[1111], ERROR_INVALID_CALLBACK = STRING[1112], ERROR_INVALID_ELEMENT_CONFIG = STRING[1121], INVALID_DESCENDANT_NODE_TYPES = {
             9: 1,
             11: 1
-        }, STD_CONTAINS = notSupportedContains, DOM_ATTRIBUTE_RE = /(^\_|[^a-zA-Z\_])/, EVENT_ATTRIBUTE_RE = /^on(\-?[a-zA-Z].+)?$/, MANIPULATION_HELPERS = CORE.createRegistry(), EXPORTS = {
+        }, STD_CONTAINS = notSupportedContains, DOM_ATTRIBUTE_RE = /(^\_|[^a-zA-Z\_])/, DOM_ATTRIBUTE_LIST = [ "nodeType", "nodeValue", "ownerDocument", "tagName", "attributes", "parentNode", "childNodes", "firstChild", "lastChild", "previousSibling", "nextSibling", "sourceIndex", "type" ], EVENT_ATTRIBUTE_RE = /^on(\-?[a-zA-Z].+)?$/, MANIPULATION_HELPERS = CORE.createRegistry(), EXPORTS = {
             contains: contains,
             is: isDom,
             isView: isDefaultView,
@@ -1427,7 +1427,7 @@
                 }
             } else if (helper.exists(name)) {
                 helper(name)(element, value);
-            } else if (DOM_ATTRIBUTE_RE.test(name)) {
+            } else if (DOM_ATTRIBUTE_RE.test(name) || DOM_ATTRIBUTE_LIST.indexOf(name) !== -1) {
                 element.setAttribute(name, value);
             } else {
                 element[name] = value;
@@ -1832,7 +1832,7 @@
             function w3cCreateHandler(handler, context) {
                 function onEvent(event) {
                     MIDDLEWARE.run("dispatch", [ event.type, event ]);
-                    return handler.call(context, event, event.target);
+                    return handler.call(context, event);
                 }
                 return onEvent;
             }
@@ -1889,22 +1889,39 @@
             function ieCreateHandler(handler, context) {
                 function onEvent() {
                     var event = global.event;
+                    iePolyfillEvent(event);
                     MIDDLEWARE.run("dispatch", [ event.type, event ]);
-                    return handler.call(context, event, event.target || event.srcElement);
+                    return handler.call(context, event);
                 }
                 return onEvent;
             }
             function ieCreateCustomHandler(type, handler, context) {
                 function onEvent() {
                     var event = global.event;
+                    iePolyfillEvent(event);
                     if (event.customType === type) {
                         MIDDLEWARE.run("dispatch", [ type, event ]);
                         event.type = type;
-                        return handler.call(context, event, event.target || event.srcElement);
+                        return handler.call(context, event);
                     }
                 }
                 onEvent.customType = true;
                 return onEvent;
+            }
+            function iePreventDefault() {
+                this.returnValue = false;
+            }
+            function ieStopPropagation() {
+                this.cancelBubble = true;
+            }
+            function iePolyfillEvent(eventObject) {
+                eventObject.target = eventObject.target || eventObject.srcElement;
+                if (!("preventDefault" in eventObject)) {
+                    eventObject.preventDefault = iePreventDefault;
+                }
+                if (!("stopPropagation" in eventObject)) {
+                    eventObject.stopPropagation = ieStopPropagation;
+                }
             }
             function ieTestCustomEvent(observable, type) {
                 var supported = false, list = IE_CUSTOM_EVENTS;

@@ -23,6 +23,7 @@ main.add(global.document.body, {
     {
         childNodes: [{
             tag: 'button',
+            name: 'button-name',
             type: 'submit',
             text: 'submit',
             onclick: function (event) {
