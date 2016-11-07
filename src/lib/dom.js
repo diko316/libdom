@@ -160,7 +160,7 @@ function move(nodes, element) {
     var is = isDom,
         invalidDom = ERROR_INVALID_DOM_NODE,
         created = false;
-    var c, l, fragment;
+    var c, l, fragment, newChild;
     
     if (!is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
@@ -177,14 +177,21 @@ function move(nodes, element) {
     
     fragment = element.ownerDocument.createDocumentFragment();
     for (c = -1, l = nodes.length; l--;) {
-        fragment.appendChild(nodes[++c]);
+        newChild = nodes[++c];
+        if (is(newChild, 1, 3, 4, 7, 8)) {
+            fragment.appendChild(newChild);
+        }
     }
     element.appendChild(fragment);
+    
+    newChild = null;
     
     if (created) {
         nodes.splice(0, nodes.length);
     }
+    
     fragment = null;
+    
     return element;
 }
 
@@ -214,8 +221,13 @@ function replace(node, config) {
         throw new Error(invalidConfig);
     }
     
+    // remove events before replacing it
+    if (node.nodeType === 1) {
+        postOrderTraverse(node, purgeEventsFrom);
+    }
+    
     node.parentNode.replaceChild(toInsert, node);
-    purgeEventsFrom(node);
+    
     
     return toInsert;
 }
