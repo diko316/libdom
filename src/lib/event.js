@@ -12,7 +12,7 @@ var CORE = require("libcore"),
     ERROR_INVALID_HANDLER = STRING[1133],
     IE_ON = 'on',
     IE_BUBBLE_EVENT = 'beforeupdate',
-    IE_NO_BUBBLE_EVENT = 'propertychanged',
+    IE_NO_BUBBLE_EVENT = 'propertychange',
     EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,

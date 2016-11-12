@@ -76,3 +76,16 @@ main.on(document.getElementById('buang'), 'no-end', onNoEnd);
 main.on(document, 'keydown', onKey);
 main.on(document, 'keypress', onKey);
 main.on(document, 'keyup', onKey);
+
+
+main.add(global.document.body, {
+    tagName: 'form',
+    id: 'buangxxxx',
+    name: 'buang'
+});
+
+
+main.dispatch(global.document.getElementById('buangxxxx'), 'libdom-test-buang', {});
+
+
+
