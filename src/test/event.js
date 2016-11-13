@@ -78,14 +78,37 @@ main.on(document, 'keypress', onKey);
 main.on(document, 'keyup', onKey);
 
 
-main.add(global.document.body, {
+var form = main.add(global.document.body, {
     tagName: 'form',
     id: 'buangxxxx',
-    name: 'buang'
+    action: 'data.json',
+    method: 'post',
+    enctype: 'multipart/form-data',
+    encoding: 'multipart/form-data',
+    childNodes: [{
+        tag: 'input',
+        type: 'hidden',
+        name: 'buang',
+        value: 'buang pud'
+    }]
 });
 
 
-main.dispatch(global.document.getElementById('buangxxxx'), 'libdom-test-buang', {});
+
+console.log('---------------------------------- custom events');
+
+main.on(global, 'load',
+    function () {
+        main.dispatch(form, 'libdom-test-buang', {});
+
+
+        main.dispatch(form, 'libdom-http-ready', {});
+    });
+
+main.on(form, 'libdom-http-ready',
+    function () {
+        console.log('ready?');
+    });
 
 
 

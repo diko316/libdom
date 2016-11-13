@@ -152,14 +152,14 @@ function add(element, config, before) {
     
 }
 
-function remove(node) {
+function remove(node, destroy) {
     var parentNode;
     if (!isDom(node, 1, 3, 4, 7, 8)) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
     
-    // unset child events
-    if (node.nodeType === 1) {
+    // unset child events by default
+    if (node.nodeType === 1 && destroy !== false) {
         postOrderTraverse(node, purgeEventsFrom);
     }
     
@@ -210,7 +210,7 @@ function move(nodes, element) {
     return element;
 }
 
-function replace(node, config) {
+function replace(node, config, destroy) {
     var toInsert = null,
         invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
         is = isDom;
@@ -236,8 +236,8 @@ function replace(node, config) {
         throw new Error(invalidConfig);
     }
     
-    // remove events before replacing it
-    if (node.nodeType === 1) {
+    // remove events before replacing it only if mandated
+    if (destroy === true && node.nodeType === 1) {
         postOrderTraverse(node, purgeEventsFrom);
     }
     

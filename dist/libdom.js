@@ -1550,12 +1550,12 @@
             element.insertBefore(toInsert, findChild(element, before));
             return toInsert;
         }
-        function remove(node) {
+        function remove(node, destroy) {
             var parentNode;
             if (!isDom(node, 1, 3, 4, 7, 8)) {
                 throw new Error(ERROR_INVALID_DOM_NODE);
             }
-            if (node.nodeType === 1) {
+            if (node.nodeType === 1 && destroy !== false) {
                 postOrderTraverse(node, purgeEventsFrom);
             }
             parentNode = node.parentNode;
@@ -1593,7 +1593,7 @@
             fragment = null;
             return element;
         }
-        function replace(node, config) {
+        function replace(node, config, destroy) {
             var toInsert = null, invalidConfig = ERROR_INVALID_ELEMENT_CONFIG, is = isDom;
             var tagName;
             if (!is(node, 1, 3, 4, 7, 8) || !node.parentNode) {
@@ -1612,7 +1612,7 @@
             if (!is(toInsert, 1, 3, 4, 7, 8)) {
                 throw new Error(invalidConfig);
             }
-            if (node.nodeType === 1) {
+            if (destroy === true && node.nodeType === 1) {
                 postOrderTraverse(node, purgeEventsFrom);
             }
             node.parentNode.replaceChild(toInsert, node);
