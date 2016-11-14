@@ -3,12 +3,11 @@
 
 var CORE = require("libcore"),
     SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
-    CAMEL_RE = /[^a-z]+[a-z]/ig,
     STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/,
     HTML_ESCAPE_CHARS_RE = /[^\u0021-\u007e]|[\u003e\u003c\&\"\']/g,
     TEXTAREA = global.document.createElement('textarea'),
     EXPORTS = {
-        camelize: camelize,
+        camelize: CORE.camelize,
         stylize: stylize,
         addWord: addWord,
         removeWord: removeWord,
@@ -52,28 +51,11 @@ var CORE = require("libcore"),
         
     };
 
-
-function camelize(str) {
-    return str.replace(CAMEL_RE, onCamelizeMatch);
-}
-
-function onCamelizeMatch(all) {
-    return all[all.length - 1].toUpperCase();
-}
-
-function onStylizeMatch(all, match) {
-    var found = match.toLowerCase(),
-        len = found.length;
-    
-    if (found === 'moz') {
-        found = 'Moz';
-    }
-    
-    return found + all.substring(len, all.length);
-}
-
 function stylize(str) {
-    return camelize(str).replace(STYLIZE_RE, onStylizeMatch);
+    str = CORE.camelize(str);
+    return STYLIZE_RE.test(str) ?
+                str.charAt(0).toUpperCase() + str.substring(1, str.length) :
+                str;
 }
 
 function addWord(str, items) {
