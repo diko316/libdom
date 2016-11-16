@@ -1,6 +1,6 @@
 {
   "name": "libdom",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Lean Browser Library for typical DOM operations",
   "main": "dist/index.js",
   "scripts": {
@@ -49,6 +49,6 @@
     "webpack-hot-middleware": "^2.12.2"
   },
   "dependencies": {
-    "libcore": "0.2.6"
+    "libcore": "0.2.7"
   }
 }
