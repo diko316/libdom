@@ -23,17 +23,17 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), detect = __webpack_require__(14), rehash = CORE.rehash, EXPORTS = {
+            var CORE = __webpack_require__(2), detect = __webpack_require__(13), rehash = CORE.rehash, EXPORTS = {
                 env: CORE.env,
                 info: detect
             };
             var css, event, dimension, selection;
             if (detect) {
-                rehash(EXPORTS, __webpack_require__(21), {
+                rehash(EXPORTS, __webpack_require__(20), {
                     xmlEncode: "xmlEncode",
                     xmlDecode: "xmlDecode"
                 });
-                rehash(EXPORTS, __webpack_require__(22), {
+                rehash(EXPORTS, __webpack_require__(21), {
                     is: "is",
                     isView: "isView",
                     contains: "contains",
@@ -46,36 +46,36 @@
                     replace: "replace",
                     remove: "remove"
                 });
-                rehash(EXPORTS, css = __webpack_require__(24), {
+                rehash(EXPORTS, css = __webpack_require__(23), {
                     addClass: "add",
                     removeClass: "remove",
                     computedStyle: "computedStyle",
                     stylize: "style"
                 });
-                rehash(EXPORTS, event = __webpack_require__(23), {
+                rehash(EXPORTS, event = __webpack_require__(22), {
                     on: "on",
                     un: "un",
                     purge: "purge",
                     dispatch: "fire",
                     destructor: "ondestroy"
                 });
-                rehash(EXPORTS, dimension = __webpack_require__(32), {
+                rehash(EXPORTS, dimension = __webpack_require__(31), {
                     offset: "offset",
                     size: "size",
                     box: "box",
                     scroll: "scroll",
                     screen: "screen"
                 });
-                rehash(EXPORTS, selection = __webpack_require__(33), {
+                rehash(EXPORTS, selection = __webpack_require__(32), {
                     highlight: "select",
                     noHighlight: "unselectable",
                     clearHighlight: "clear"
                 });
-                rehash(EXPORTS, __webpack_require__(25), {
+                rehash(EXPORTS, __webpack_require__(24), {
                     parseColor: "parse",
                     formatColor: "stringify"
                 });
-                rehash(EXPORTS, __webpack_require__(34), {
+                rehash(EXPORTS, __webpack_require__(33), {
                     eachDisplacement: "each",
                     animateStyle: "style"
                 });
@@ -99,9 +99,8 @@
         OBJECT.assign(EXPORTS, __webpack_require__(8));
         OBJECT.assign(EXPORTS, PROCESSOR);
         OBJECT.assign(EXPORTS, __webpack_require__(11));
-        OBJECT.assign(EXPORTS, __webpack_require__(12));
         PROCESSOR.chain = EXPORTS;
-        EXPORTS.Promise = __webpack_require__(13);
+        EXPORTS.Promise = __webpack_require__(12);
         module.exports = EXPORTS["default"] = EXPORTS;
     }, function(module, exports, __webpack_require__) {
         (function(global) {
@@ -533,7 +532,7 @@
             clone: clone,
             compare: compare,
             fillin: fillin,
-            urlFill: jsonFill,
+            fillJson: jsonFill,
             clear: clear
         };
     }, function(module, exports, __webpack_require__) {
@@ -1060,159 +1059,6 @@
             createRegistry: create
         };
     }, function(module, exports, __webpack_require__) {
-        "use strict";
-        var TYPE = __webpack_require__(7), OBJECT = __webpack_require__(6), NUMERIC_RE = /^([1-9][0-9]*|0)$/;
-        function eachPath(path, callback, arg1, arg2, arg3, arg4) {
-            var escape = "\\", dot = ".", buffer = [], bl = 0;
-            var c, l, chr, apply, last;
-            for (c = -1, l = path.length; l--; ) {
-                chr = path.charAt(++c);
-                apply = false;
-                last = !l;
-                switch (chr) {
-                  case escape:
-                    chr = "";
-                    if (l) {
-                        chr = path.charAt(++c);
-                        l--;
-                    }
-                    break;
-
-                  case dot:
-                    chr = "";
-                    apply = true;
-                    break;
-                }
-                if (chr) {
-                    buffer[bl++] = chr;
-                }
-                if (last || apply) {
-                    if (bl) {
-                        if (callback(buffer.join(""), last, arg1, arg2, arg3, arg4) === false) {
-                            return;
-                        }
-                        buffer.length = bl = 0;
-                    }
-                }
-            }
-        }
-        function isAccessible(subject, item) {
-            var type = TYPE;
-            switch (true) {
-              case type.object(subject):
-              case type.array(subject) && (!NUMERIC_RE.test(item) || item !== "length"):
-                if (!OBJECT.contains(subject, item)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        function findCallback(item, last, operation) {
-            var subject = operation[1];
-            if (!isAccessible(subject, item)) {
-                operation[0] = void 0;
-                return false;
-            }
-            operation[last ? 0 : 1] = subject[item];
-            return true;
-        }
-        function find(path, object) {
-            var operation = [ void 0, object ];
-            eachPath(path, findCallback, operation);
-            operation[1] = null;
-            return operation[0];
-        }
-        function clone(path, object, deep) {
-            return OBJECT.clone(find(path, object), deep);
-        }
-        function getItemsCallback(item, last, operation) {
-            operation[operation.length] = item;
-        }
-        function assign(path, subject, value, overwrite) {
-            var type = TYPE, has = OBJECT.contains, array = type.array, object = type.object, apply = type.assign, parent = subject, numericRe = NUMERIC_RE;
-            var items, c, l, item, name, numeric, property, isArray, temp;
-            if (object(parent) || array(parent)) {
-                eachPath(path, getItemsCallback, items = []);
-                if (items.length) {
-                    name = items[0];
-                    items.splice(0, 1);
-                    for (c = -1, l = items.length; l--; ) {
-                        item = items[++c];
-                        numeric = numericRe.test(item);
-                        if (has(parent, name)) {
-                            property = parent[name];
-                            isArray = array(property);
-                            if (!isArray && !object(property)) {
-                                if (numeric) {
-                                    property = [ property ];
-                                } else {
-                                    temp = property;
-                                    property = {};
-                                    property[""] = temp;
-                                }
-                            } else if (isArray && !numeric) {
-                                property = apply({}, property);
-                                delete property.length;
-                            }
-                        } else {
-                            property = numeric ? [] : {};
-                        }
-                        parent = parent[name] = property;
-                        name = item;
-                    }
-                    if (overwrite !== true && has(parent, name)) {
-                        property = parent[name];
-                        if (array(property)) {
-                            parent = property;
-                            name = parent.length;
-                        } else {
-                            parent = parent[name] = [ property ];
-                            name = 1;
-                        }
-                    }
-                    parent[name] = value;
-                    parent = value = property = temp = null;
-                    return true;
-                }
-            }
-            return false;
-        }
-        function removeCallback(item, last, operation) {
-            var subject = operation[0];
-            var isLength;
-            if (!isAccessible(subject, item)) {
-                return false;
-            }
-            if (last) {
-                if (TYPE.array(subject)) {
-                    isLength = item === "length";
-                    subject.splice(isLength ? 0 : item.toString(10), isLength ? subject.length : 1);
-                } else {
-                    delete subject[item];
-                }
-                operation[1] = true;
-            } else {
-                operation[0] = subject[item];
-            }
-        }
-        function remove(path, object) {
-            var operation = [ object, false ];
-            eachPath(path, removeCallback, operation);
-            operation[0] = null;
-            return operation[1];
-        }
-        function compare(path, object1, object2) {
-            return OBJECT.compare(find(path, object1), object1, object2);
-        }
-        module.exports = {
-            jsonFind: find,
-            jsonCompare: compare,
-            jsonClone: clone,
-            jsonEach: eachPath,
-            jsonSet: assign,
-            jsonUnset: remove
-        };
-    }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
             var TYPE = __webpack_require__(7), OBJECT = __webpack_require__(6), PROCESSOR = __webpack_require__(9), slice = Array.prototype.slice, G = global, INDEX_STATUS = 0, INDEX_DATA = 1, INDEX_PENDING = 2;
@@ -1383,15 +1229,15 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var browser = __webpack_require__(15), EXPORTS = false;
+        var browser = __webpack_require__(14), EXPORTS = false;
         if (browser) {
             EXPORTS = {
                 browser: browser,
-                event: __webpack_require__(16),
-                dom: __webpack_require__(17),
-                css: __webpack_require__(18),
-                dimension: __webpack_require__(19),
-                selection: __webpack_require__(20)
+                event: __webpack_require__(15),
+                dom: __webpack_require__(16),
+                css: __webpack_require__(17),
+                dimension: __webpack_require__(18),
+                selection: __webpack_require__(19)
             };
         }
         module.exports = EXPORTS;
@@ -1481,7 +1327,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(15), WINDOW = global.window, ieVersion = DETECTED.ieVersion;
+            var DETECTED = __webpack_require__(14), WINDOW = global.window, ieVersion = DETECTED.ieVersion;
             module.exports = {
                 screensize: typeof WINDOW.innerWidth !== "undefined",
                 pagescroll: typeof WINDOW.pageXOffset !== "undefined",
@@ -1625,7 +1471,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var CORE = __webpack_require__(2), DETECTED = __webpack_require__(14), EVENT = __webpack_require__(23), STRING = __webpack_require__(21), ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING[1101], ERROR_INVALID_DOM_NODE = STRING[1103], ERROR_INVALID_CSS_SELECTOR = STRING[1111], ERROR_INVALID_CALLBACK = STRING[1112], ERROR_INVALID_ELEMENT_CONFIG = STRING[1121], INVALID_DESCENDANT_NODE_TYPES = {
+        var CORE = __webpack_require__(2), DETECTED = __webpack_require__(13), EVENT = __webpack_require__(22), STRING = __webpack_require__(20), ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING[1101], ERROR_INVALID_DOM_NODE = STRING[1103], ERROR_INVALID_CSS_SELECTOR = STRING[1111], ERROR_INVALID_CALLBACK = STRING[1112], ERROR_INVALID_ELEMENT_CONFIG = STRING[1121], INVALID_DESCENDANT_NODE_TYPES = {
             9: 1,
             11: 1
         }, STD_CONTAINS = notSupportedContains, DOM_ATTRIBUTE_RE = /(^\_|[^a-zA-Z\_])/, DOM_ATTRIBUTE_LIST = [ "nodeType", "nodeValue", "ownerDocument", "tagName", "attributes", "parentNode", "childNodes", "firstChild", "lastChild", "previousSibling", "nextSibling", "sourceIndex", "type" ], EVENT_ATTRIBUTE_RE = /^on(\-?[a-zA-Z].+)?$/, MANIPULATION_HELPERS = CORE.createRegistry(), EXPORTS = {
@@ -1810,7 +1656,7 @@
                     applyEventAttribute.call(element, value, listen);
                 }
             } else if (helper.exists(name)) {
-                helper(name)(element, value);
+                helper.get(name)(element, value);
             } else if (DOM_ATTRIBUTE_RE.test(name) || DOM_ATTRIBUTE_LIST.indexOf(name) !== -1) {
                 element.setAttribute(name, value);
             } else {
@@ -2049,7 +1895,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), INFO = __webpack_require__(14), STRING = __webpack_require__(21), EVENTS = null, PAGE_UNLOADED = false, MIDDLEWARE = CORE.middleware("libdom.event"), IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_ON = "on", IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychange", EXPORTS = module.exports = {
+            var CORE = __webpack_require__(2), INFO = __webpack_require__(13), STRING = __webpack_require__(20), EVENTS = null, PAGE_UNLOADED = false, MIDDLEWARE = CORE.middleware("libdom.event"), IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_ON = "on", IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychange", EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
@@ -2379,7 +2225,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), STRING = __webpack_require__(21), DETECTED = __webpack_require__(14), DOM = __webpack_require__(22), COLOR = __webpack_require__(25), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", CLIENT_WIDTH = "clientWidth", CLIENT_HEIGHT = "clientHeight", COLOR_RE = /[Cc]olor$/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, BOX_RE = /(top|bottom|left|right|width|height)$/, DIMENSION_RE = /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size|Radius)$/, IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i, IE_ALPHA_OPACITY_TEMPLATE = "alpha(opacity=$opacity)", IE_ALPHA_OPACITY_TEMPLATE_RE = /\$opacity/, GET_OPACITY = opacityNotSupported, SET_OPACITY = opacityNotSupported, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
+            var CORE = __webpack_require__(2), STRING = __webpack_require__(20), DETECTED = __webpack_require__(13), DOM = __webpack_require__(21), COLOR = __webpack_require__(24), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", CLIENT_WIDTH = "clientWidth", CLIENT_HEIGHT = "clientHeight", COLOR_RE = /[Cc]olor$/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, BOX_RE = /(top|bottom|left|right|width|height)$/, DIMENSION_RE = /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size|Radius)$/, IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i, IE_ALPHA_OPACITY_TEMPLATE = "alpha(opacity=$opacity)", IE_ALPHA_OPACITY_TEMPLATE_RE = /\$opacity/, GET_OPACITY = opacityNotSupported, SET_OPACITY = opacityNotSupported, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
                 add: addClass,
                 remove: removeClass,
                 computedStyle: computedStyleNotSupported,
@@ -2755,12 +2601,12 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var CORE = __webpack_require__(2), FORMAT = __webpack_require__(26), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, REMOVE_SPACES = /[ \r\n\t\s]+/g, TO_COLOR = {
-            rgb: __webpack_require__(27),
-            rgba: __webpack_require__(28),
-            hsl: __webpack_require__(29),
-            hsla: __webpack_require__(30),
-            hex: __webpack_require__(31)
+        var CORE = __webpack_require__(2), FORMAT = __webpack_require__(25), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, REMOVE_SPACES = /[ \r\n\t\s]+/g, TO_COLOR = {
+            rgb: __webpack_require__(26),
+            rgba: __webpack_require__(27),
+            hsl: __webpack_require__(28),
+            hsla: __webpack_require__(29),
+            hex: __webpack_require__(30)
         }, EXPORTS = {
             parse: parseColorString,
             parseType: parseType,
@@ -2869,7 +2715,7 @@
         }
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var RGBA = __webpack_require__(28), CORE = __webpack_require__(2), EXPORTS = module.exports = CORE.assign({}, RGBA);
+        var RGBA = __webpack_require__(27), CORE = __webpack_require__(2), EXPORTS = module.exports = CORE.assign({}, RGBA);
         function toString(integer) {
             return "rgb(" + RGBA.toArray(integer).slice(0, 3).join(",") + ")";
         }
@@ -2880,7 +2726,7 @@
         EXPORTS.toInteger = toInteger;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var CORE = __webpack_require__(2), FORMAT = __webpack_require__(26), BYTE = 255, BYTE_PERCENT = 127, BYTE_HUE = 511, PERCENT = 100, HUE = 360, SATURATION = PERCENT, LUMINOSITY = PERCENT;
+        var CORE = __webpack_require__(2), FORMAT = __webpack_require__(25), BYTE = 255, BYTE_PERCENT = 127, BYTE_HUE = 511, PERCENT = 100, HUE = 360, SATURATION = PERCENT, LUMINOSITY = PERCENT;
         function hue2rgb(p, q, t) {
             t = (t + 1) % 1;
             switch (true) {
@@ -2960,7 +2806,7 @@
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var HSLA = __webpack_require__(29), CORE = __webpack_require__(2), EXPORTS = module.exports = CORE.assign({}, HSLA);
+        var HSLA = __webpack_require__(28), CORE = __webpack_require__(2), EXPORTS = module.exports = CORE.assign({}, HSLA);
         function toString(integer) {
             var values = HSLA.toArray(integer).slice(0, 3);
             values[1] += "%";
@@ -2970,7 +2816,7 @@
         EXPORTS.toString = toString;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var CORE = __webpack_require__(2), FORMAT = __webpack_require__(26), BYTE = 255, BYTE_PERCENT = 127, BYTE_HUE = 511, HUE = 360, PERCENT = 100;
+        var CORE = __webpack_require__(2), FORMAT = __webpack_require__(25), BYTE = 255, BYTE_PERCENT = 127, BYTE_HUE = 511, HUE = 360, PERCENT = 100;
         function itemize(value, index, format) {
             var F = FORMAT, M = Math, percent = PERCENT, parse = parseFloat, min = 0, max = index < 1 ? HUE : percent;
             switch (format) {
@@ -3017,7 +2863,7 @@
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var RGBA = __webpack_require__(28), CORE = __webpack_require__(2), EXPORTS = module.exports = CORE.assign({}, RGBA);
+        var RGBA = __webpack_require__(27), CORE = __webpack_require__(2), EXPORTS = module.exports = CORE.assign({}, RGBA);
         function toHex(integer) {
             var M = Math;
             integer = M.max(0, M.min(integer, 255));
@@ -3034,7 +2880,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), DETECTED = __webpack_require__(14), STRING = __webpack_require__(21), DOM = __webpack_require__(22), CSS = __webpack_require__(24), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", BOUNDING_RECT = "getBoundingClientRect", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getScreenSize = null, EXPORTS = {
+            var CORE = __webpack_require__(2), DETECTED = __webpack_require__(13), STRING = __webpack_require__(20), DOM = __webpack_require__(21), CSS = __webpack_require__(23), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", BOUNDING_RECT = "getBoundingClientRect", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getScreenSize = null, EXPORTS = {
                 offset: offset,
                 size: size,
                 box: box,
@@ -3342,7 +3188,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(14), STRING = __webpack_require__(21), DOM = __webpack_require__(22), DIMENSION = __webpack_require__(32), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
+            var DETECTED = __webpack_require__(13), STRING = __webpack_require__(20), DOM = __webpack_require__(21), DIMENSION = __webpack_require__(31), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
                 select: select,
                 clear: clear,
                 unselectable: unselectable
@@ -3442,7 +3288,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var STRING = __webpack_require__(21), CORE = __webpack_require__(2), EASING = __webpack_require__(35), COLOR = __webpack_require__(25), CSS = __webpack_require__(24), DIMENSION = __webpack_require__(32), SESSION_ACCESS = "__animate_session", BOX_POSITION = {
+        var STRING = __webpack_require__(20), CORE = __webpack_require__(2), EASING = __webpack_require__(34), COLOR = __webpack_require__(24), CSS = __webpack_require__(23), DIMENSION = __webpack_require__(31), SESSION_ACCESS = "__animate_session", BOX_POSITION = {
             left: 0,
             top: 1,
             right: 2,
