@@ -297,7 +297,7 @@ function applyAttributeToElement(value, name) {
         }
     }
     else if (helper.exists(name)) {
-        helper(name)(element, value);
+        helper.get(name)(element, value);
     }
     else if (DOM_ATTRIBUTE_RE.test(name) ||
             DOM_ATTRIBUTE_LIST.indexOf(name) !== -1) {
