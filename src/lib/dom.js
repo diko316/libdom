@@ -485,22 +485,36 @@ function notSupportedQuerySelector() {
     throw new Error(STRING[2003]);
 }
 
-function preOrderTraverse(element, callback, context) {
+function preOrderTraverse(element, callback, context, includeRoot) {
     
-    return orderTraverse(element, callback, ORDER_TYPE_PREORDER, context);
+    return orderTraverse(element,
+                        callback,
+                        context,
+                        ORDER_TYPE_PREORDER,
+                        includeRoot !== false);
 }
 
-function postOrderTraverse(element, callback, context) {
+function postOrderTraverse(element, callback, context, includeRoot) {
 
-    return orderTraverse(element, callback, ORDER_TYPE_POSTORDER, context);
+    return orderTraverse(element,
+                        callback,
+                        context,
+                        ORDER_TYPE_POSTORDER,
+                        includeRoot !== false);
 }
 
-function levelTraverse(element, callback, context) {
+
+function levelTraverse(element, callback, context, includeRoot) {
     
-    return orderTraverse(element, callback, ORDER_TYPE_LEVELORDER, context);
+    return orderTraverse(element,
+                        callback,
+                        context,
+                        ORDER_TYPE_LEVELORDER,
+                        includeRoot !== false);
 }
 
-function orderTraverse(element, callback, orderType, context) {
+
+function orderTraverse(element, callback, context, orderType, includeRoot) {
     var depth = 0,
         isPostOrder = 0;
     var queue, last, node, current;
@@ -516,6 +530,8 @@ function orderTraverse(element, callback, orderType, context) {
     if (typeof context === 'undefined') {
         context = null;
     }
+    
+    includeRoot = includeRoot !== false;
     
     switch (orderType) {
     case ORDER_TYPE_LEVELORDER:
@@ -534,12 +550,14 @@ function orderTraverse(element, callback, orderType, context) {
             for (; node; node = node.nextSibling) {
     
                 current = node.firstChild;
-                if (callback.call(context, current) === false) {
+                if ((includeRoot || 0 !== depth) &&
+                    callback.call(context, current) === false) {
                     break;
                 }
     
                 // insert
                 if (current) {
+                    depth++;
                     last.next = { node: current, next: null };
                     last = last.next;
                 }
@@ -555,7 +573,8 @@ function orderTraverse(element, callback, orderType, context) {
         main: for (current = element; current;) {
     
             // process pre-order
-            if (!isPostOrder && current.nodeType === 1 &&
+            if ((includeRoot || 0 !== depth) &&
+                !isPostOrder && current.nodeType === 1 &&
                 callback.call(context, current) === false) {
                 break;
             }
@@ -569,7 +588,8 @@ function orderTraverse(element, callback, orderType, context) {
             // go next sibling or parentNode's nextSibling
             else {
                 // process post-order
-                if (isPostOrder && current.nodeType === 1 &&
+                if ((includeRoot || 0 !== depth) &&
+                    isPostOrder && current.nodeType === 1 &&
                     callback.call(context, current) === false) {
                     break;
                 }
@@ -580,7 +600,8 @@ function orderTraverse(element, callback, orderType, context) {
                     current = current.parentNode;
                     
                     // process post-order
-                    if (isPostOrder && current.nodeType === 1 &&
+                    if ((includeRoot || 0 !== depth) &&
+                        isPostOrder && current.nodeType === 1 &&
                         callback.call(context, current) === false) {
                         break main;
                     }
