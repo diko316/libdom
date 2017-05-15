@@ -230,8 +230,8 @@ function w3cDispatch(observable, type, properties) {
     var name;
     
     event.initEvent(type,
-            properties.bubbles === true,
-            properties.cancelable !== false);
+            'bubbles' in properties && properties.bubbles === true,
+            'cancelable' in properties && properties.cancelable !== false);
     
     for (name in properties) {
         if (hasOwn(properties, name) && !(name in event)) {

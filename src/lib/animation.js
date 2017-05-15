@@ -254,12 +254,12 @@ function createElementHandler(animate) {
         
         // transform dimension
         DIMENSION.translate(node,
-                            values.left,
-                            values.top,
-                            values.right,
-                            values.bottom,
-                            values.width,
-                            values.height,
+                            'left' in values ? values.left : null,
+                            'top' in values ? values.top : null,
+                            'right' in values ? values.right : null,
+                            'bottom' in values ? values.bottom : null,
+                            'width' in values ? values.width : null,
+                            'height' in values ? values.height : null,
                             values);
         
         CSS.style(node, values);

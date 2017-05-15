@@ -23,17 +23,17 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), detect = __webpack_require__(16), rehash = CORE.rehash, EXPORTS = {
+            var CORE = __webpack_require__(2), detect = __webpack_require__(13), rehash = CORE.rehash, EXPORTS = {
                 env: CORE.env,
                 info: detect
             };
             var css, event, dimension, selection;
             if (detect) {
-                rehash(EXPORTS, __webpack_require__(23), {
+                rehash(EXPORTS, __webpack_require__(20), {
                     xmlEncode: "xmlEncode",
                     xmlDecode: "xmlDecode"
                 });
-                rehash(EXPORTS, __webpack_require__(24), {
+                rehash(EXPORTS, __webpack_require__(21), {
                     is: "is",
                     isView: "isView",
                     contains: "contains",
@@ -46,36 +46,36 @@
                     replace: "replace",
                     remove: "remove"
                 });
-                rehash(EXPORTS, css = __webpack_require__(26), {
+                rehash(EXPORTS, css = __webpack_require__(23), {
                     addClass: "add",
                     removeClass: "remove",
                     computedStyle: "computedStyle",
                     stylize: "style"
                 });
-                rehash(EXPORTS, event = __webpack_require__(25), {
+                rehash(EXPORTS, event = __webpack_require__(22), {
                     on: "on",
                     un: "un",
                     purge: "purge",
                     dispatch: "fire",
                     destructor: "ondestroy"
                 });
-                rehash(EXPORTS, dimension = __webpack_require__(34), {
+                rehash(EXPORTS, dimension = __webpack_require__(31), {
                     offset: "offset",
                     size: "size",
                     box: "box",
                     scroll: "scroll",
                     screen: "screen"
                 });
-                rehash(EXPORTS, selection = __webpack_require__(35), {
+                rehash(EXPORTS, selection = __webpack_require__(32), {
                     highlight: "select",
                     noHighlight: "unselectable",
                     clearHighlight: "clear"
                 });
-                rehash(EXPORTS, __webpack_require__(27), {
+                rehash(EXPORTS, __webpack_require__(24), {
                     parseColor: "parse",
                     formatColor: "stringify"
                 });
-                rehash(EXPORTS, __webpack_require__(36), {
+                rehash(EXPORTS, __webpack_require__(33), {
                     eachDisplacement: "each",
                     animateStyle: "style"
                 });
@@ -90,25 +90,25 @@
         module.exports = __webpack_require__(3);
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var DETECT = __webpack_require__(4), OBJECT = __webpack_require__(6), PROCESSOR = __webpack_require__(9), EXPORTS = {
+        var DETECT = __webpack_require__(4), OBJECT = __webpack_require__(5), PROCESSOR = __webpack_require__(8), EXPORTS = {
             env: DETECT
         };
-        OBJECT.assign(EXPORTS, __webpack_require__(7));
+        OBJECT.assign(EXPORTS, __webpack_require__(6));
         OBJECT.assign(EXPORTS, OBJECT);
-        OBJECT.assign(EXPORTS, __webpack_require__(12));
-        OBJECT.assign(EXPORTS, __webpack_require__(8));
+        OBJECT.assign(EXPORTS, __webpack_require__(9));
+        OBJECT.assign(EXPORTS, __webpack_require__(7));
         OBJECT.assign(EXPORTS, PROCESSOR);
-        OBJECT.assign(EXPORTS, __webpack_require__(13));
-        OBJECT.assign(EXPORTS, __webpack_require__(14));
+        OBJECT.assign(EXPORTS, __webpack_require__(10));
+        OBJECT.assign(EXPORTS, __webpack_require__(11));
         PROCESSOR.chain = EXPORTS;
-        EXPORTS.Promise = __webpack_require__(15);
+        EXPORTS.Promise = __webpack_require__(12);
         EXPORTS["default"] = EXPORTS;
         module.exports = EXPORTS;
-    }, function(module, exports, __webpack_require__) {
+    }, function(module, exports) {
         (function(global) {
             "use strict";
             var ROOT = global, doc = ROOT.document, win = ROOT.window, toString = Object.prototype.toString, objectSignature = "[object Object]", BROWSER = !!doc && !!win && win.self === (doc.defaultView || doc.parentWindow), NODEVERSIONS = BROWSER ? false : function() {
-                return __webpack_require__(5).versions || false;
+                return "process" in global && global.process.versions || false;
             }(), CONSOLE = {}, CONSOLE_NAMES = [ "log", "info", "warn", "error", "assert" ], EXPORTS = {
                 browser: BROWSER,
                 nodejs: NODEVERSIONS && !!NODEVERSIONS.node,
@@ -119,7 +119,7 @@
             };
             var c, l;
             function nodeUserAgent() {
-                var PROCESS = __webpack_require__(5), VERSIONS = NODEVERSIONS, str = [ "Node ", VERSIONS.node, "(", PROCESS.platform, "; V8 ", VERSIONS.v8 || "unknown", "; arch ", PROCESS.arch, ")" ];
+                var PROCESS = "process" in global ? global.process : null, VERSIONS = NODEVERSIONS, str = [ "Node ", VERSIONS.node, "(", PROCESS.platform, "; V8 ", VERSIONS.v8 || "unknown", "; arch ", PROCESS.arch, ")" ];
                 return str.join("");
             }
             function empty() {}
@@ -133,160 +133,9 @@
         }).call(exports, function() {
             return this;
         }());
-    }, function(module, exports) {
-        var process = module.exports = {};
-        var cachedSetTimeout;
-        var cachedClearTimeout;
-        function defaultSetTimout() {
-            throw new Error("setTimeout has not been defined");
-        }
-        function defaultClearTimeout() {
-            throw new Error("clearTimeout has not been defined");
-        }
-        (function() {
-            try {
-                if (typeof setTimeout === "function") {
-                    cachedSetTimeout = setTimeout;
-                } else {
-                    cachedSetTimeout = defaultSetTimout;
-                }
-            } catch (e) {
-                cachedSetTimeout = defaultSetTimout;
-            }
-            try {
-                if (typeof clearTimeout === "function") {
-                    cachedClearTimeout = clearTimeout;
-                } else {
-                    cachedClearTimeout = defaultClearTimeout;
-                }
-            } catch (e) {
-                cachedClearTimeout = defaultClearTimeout;
-            }
-        })();
-        function runTimeout(fun) {
-            if (cachedSetTimeout === setTimeout) {
-                return setTimeout(fun, 0);
-            }
-            if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-                cachedSetTimeout = setTimeout;
-                return setTimeout(fun, 0);
-            }
-            try {
-                return cachedSetTimeout(fun, 0);
-            } catch (e) {
-                try {
-                    return cachedSetTimeout.call(null, fun, 0);
-                } catch (e) {
-                    return cachedSetTimeout.call(this, fun, 0);
-                }
-            }
-        }
-        function runClearTimeout(marker) {
-            if (cachedClearTimeout === clearTimeout) {
-                return clearTimeout(marker);
-            }
-            if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-                cachedClearTimeout = clearTimeout;
-                return clearTimeout(marker);
-            }
-            try {
-                return cachedClearTimeout(marker);
-            } catch (e) {
-                try {
-                    return cachedClearTimeout.call(null, marker);
-                } catch (e) {
-                    return cachedClearTimeout.call(this, marker);
-                }
-            }
-        }
-        var queue = [];
-        var draining = false;
-        var currentQueue;
-        var queueIndex = -1;
-        function cleanUpNextTick() {
-            if (!draining || !currentQueue) {
-                return;
-            }
-            draining = false;
-            if (currentQueue.length) {
-                queue = currentQueue.concat(queue);
-            } else {
-                queueIndex = -1;
-            }
-            if (queue.length) {
-                drainQueue();
-            }
-        }
-        function drainQueue() {
-            if (draining) {
-                return;
-            }
-            var timeout = runTimeout(cleanUpNextTick);
-            draining = true;
-            var len = queue.length;
-            while (len) {
-                currentQueue = queue;
-                queue = [];
-                while (++queueIndex < len) {
-                    if (currentQueue) {
-                        currentQueue[queueIndex].run();
-                    }
-                }
-                queueIndex = -1;
-                len = queue.length;
-            }
-            currentQueue = null;
-            draining = false;
-            runClearTimeout(timeout);
-        }
-        process.nextTick = function(fun) {
-            var args = new Array(arguments.length - 1);
-            if (arguments.length > 1) {
-                for (var i = 1; i < arguments.length; i++) {
-                    args[i - 1] = arguments[i];
-                }
-            }
-            queue.push(new Item(fun, args));
-            if (queue.length === 1 && !draining) {
-                runTimeout(drainQueue);
-            }
-        };
-        function Item(fun, array) {
-            this.fun = fun;
-            this.array = array;
-        }
-        Item.prototype.run = function() {
-            this.fun.apply(null, this.array);
-        };
-        process.title = "browser";
-        process.browser = true;
-        process.env = {};
-        process.argv = [];
-        process.version = "";
-        process.versions = {};
-        function noop() {}
-        process.on = noop;
-        process.addListener = noop;
-        process.once = noop;
-        process.off = noop;
-        process.removeListener = noop;
-        process.removeAllListeners = noop;
-        process.emit = noop;
-        process.binding = function(name) {
-            throw new Error("process.binding is not supported");
-        };
-        process.cwd = function() {
-            return "/";
-        };
-        process.chdir = function(dir) {
-            throw new Error("process.chdir is not supported");
-        };
-        process.umask = function() {
-            return 0;
-        };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var O = Object.prototype, TYPE = __webpack_require__(7), STRING = __webpack_require__(8), OHasOwn = O.hasOwnProperty, NUMERIC_RE = /^[0-9]*$/;
+        var O = Object.prototype, TYPE = __webpack_require__(6), STRING = __webpack_require__(7), OHasOwn = O.hasOwnProperty, NUMERIC_RE = /^[0-9]*$/;
         function empty() {}
         function assign(target, source, defaults) {
             var onAssign = apply, eachProperty = each;
@@ -806,9 +655,9 @@
             uncamelize: uncamelize
         };
     }, function(module, exports, __webpack_require__) {
-        (function(global, setImmediate, clearImmediate) {
+        (function(global) {
             "use strict";
-            var TYPE = __webpack_require__(7), G = global, NAME_RE = /^(([^\.]+\.)*)((before|after)\:)?([a-zA-Z0-9\_\-\.]+)$/, POSITION_BEFORE = 1, POSITION_AFTER = 2, RUNNERS = {}, NAMESPACES = {}, NATIVE_SET_IMMEDIATE = !!G.setImmediate, EXPORTS = {
+            var TYPE = __webpack_require__(6), G = global, NAME_RE = /^(([^\.]+\.)*)((before|after)\:)?([a-zA-Z0-9\_\-\.]+)$/, POSITION_BEFORE = 1, POSITION_AFTER = 2, RUNNERS = {}, NAMESPACES = {}, NATIVE_SET_IMMEDIATE = !!G.setImmediate, EXPORTS = {
                 register: set,
                 run: run,
                 middleware: middlewareNamespace,
@@ -905,219 +754,24 @@
                 return nsRegister;
             }
             function timeoutAsync(handler) {
-                return setTimeout(handler, 1);
+                return G.setTimeout(handler, 1);
             }
             function clearTimeoutAsync(id) {
-                return clearTimeout(id);
+                return G.clearTimeout(id);
             }
             function nativeSetImmediate(fn) {
-                return setImmediate(fn);
+                return G.setImmediate(fn);
             }
             function nativeClearImmediate(id) {
-                return clearImmediate(id);
+                return G.clearImmediate(id);
             }
             module.exports = EXPORTS.chain = EXPORTS;
         }).call(exports, function() {
             return this;
-        }(), __webpack_require__(10).setImmediate, __webpack_require__(10).clearImmediate);
-    }, function(module, exports, __webpack_require__) {
-        var apply = Function.prototype.apply;
-        exports.setTimeout = function() {
-            return new Timeout(apply.call(setTimeout, window, arguments), clearTimeout);
-        };
-        exports.setInterval = function() {
-            return new Timeout(apply.call(setInterval, window, arguments), clearInterval);
-        };
-        exports.clearTimeout = exports.clearInterval = function(timeout) {
-            if (timeout) {
-                timeout.close();
-            }
-        };
-        function Timeout(id, clearFn) {
-            this._id = id;
-            this._clearFn = clearFn;
-        }
-        Timeout.prototype.unref = Timeout.prototype.ref = function() {};
-        Timeout.prototype.close = function() {
-            this._clearFn.call(window, this._id);
-        };
-        exports.enroll = function(item, msecs) {
-            clearTimeout(item._idleTimeoutId);
-            item._idleTimeout = msecs;
-        };
-        exports.unenroll = function(item) {
-            clearTimeout(item._idleTimeoutId);
-            item._idleTimeout = -1;
-        };
-        exports._unrefActive = exports.active = function(item) {
-            clearTimeout(item._idleTimeoutId);
-            var msecs = item._idleTimeout;
-            if (msecs >= 0) {
-                item._idleTimeoutId = setTimeout(function onTimeout() {
-                    if (item._onTimeout) item._onTimeout();
-                }, msecs);
-            }
-        };
-        __webpack_require__(11);
-        exports.setImmediate = setImmediate;
-        exports.clearImmediate = clearImmediate;
-    }, function(module, exports, __webpack_require__) {
-        (function(global, process) {
-            (function(global, undefined) {
-                "use strict";
-                if (global.setImmediate) {
-                    return;
-                }
-                var nextHandle = 1;
-                var tasksByHandle = {};
-                var currentlyRunningATask = false;
-                var doc = global.document;
-                var registerImmediate;
-                function setImmediate(callback) {
-                    if (typeof callback !== "function") {
-                        callback = new Function("" + callback);
-                    }
-                    var args = new Array(arguments.length - 1);
-                    for (var i = 0; i < args.length; i++) {
-                        args[i] = arguments[i + 1];
-                    }
-                    var task = {
-                        callback: callback,
-                        args: args
-                    };
-                    tasksByHandle[nextHandle] = task;
-                    registerImmediate(nextHandle);
-                    return nextHandle++;
-                }
-                function clearImmediate(handle) {
-                    delete tasksByHandle[handle];
-                }
-                function run(task) {
-                    var callback = task.callback;
-                    var args = task.args;
-                    switch (args.length) {
-                      case 0:
-                        callback();
-                        break;
-
-                      case 1:
-                        callback(args[0]);
-                        break;
-
-                      case 2:
-                        callback(args[0], args[1]);
-                        break;
-
-                      case 3:
-                        callback(args[0], args[1], args[2]);
-                        break;
-
-                      default:
-                        callback.apply(undefined, args);
-                        break;
-                    }
-                }
-                function runIfPresent(handle) {
-                    if (currentlyRunningATask) {
-                        setTimeout(runIfPresent, 0, handle);
-                    } else {
-                        var task = tasksByHandle[handle];
-                        if (task) {
-                            currentlyRunningATask = true;
-                            try {
-                                run(task);
-                            } finally {
-                                clearImmediate(handle);
-                                currentlyRunningATask = false;
-                            }
-                        }
-                    }
-                }
-                function installNextTickImplementation() {
-                    registerImmediate = function(handle) {
-                        process.nextTick(function() {
-                            runIfPresent(handle);
-                        });
-                    };
-                }
-                function canUsePostMessage() {
-                    if (global.postMessage && !global.importScripts) {
-                        var postMessageIsAsynchronous = true;
-                        var oldOnMessage = global.onmessage;
-                        global.onmessage = function() {
-                            postMessageIsAsynchronous = false;
-                        };
-                        global.postMessage("", "*");
-                        global.onmessage = oldOnMessage;
-                        return postMessageIsAsynchronous;
-                    }
-                }
-                function installPostMessageImplementation() {
-                    var messagePrefix = "setImmediate$" + Math.random() + "$";
-                    var onGlobalMessage = function(event) {
-                        if (event.source === global && typeof event.data === "string" && event.data.indexOf(messagePrefix) === 0) {
-                            runIfPresent(+event.data.slice(messagePrefix.length));
-                        }
-                    };
-                    if (global.addEventListener) {
-                        global.addEventListener("message", onGlobalMessage, false);
-                    } else {
-                        global.attachEvent("onmessage", onGlobalMessage);
-                    }
-                    registerImmediate = function(handle) {
-                        global.postMessage(messagePrefix + handle, "*");
-                    };
-                }
-                function installMessageChannelImplementation() {
-                    var channel = new MessageChannel();
-                    channel.port1.onmessage = function(event) {
-                        var handle = event.data;
-                        runIfPresent(handle);
-                    };
-                    registerImmediate = function(handle) {
-                        channel.port2.postMessage(handle);
-                    };
-                }
-                function installReadyStateChangeImplementation() {
-                    var html = doc.documentElement;
-                    registerImmediate = function(handle) {
-                        var script = doc.createElement("script");
-                        script.onreadystatechange = function() {
-                            runIfPresent(handle);
-                            script.onreadystatechange = null;
-                            html.removeChild(script);
-                            script = null;
-                        };
-                        html.appendChild(script);
-                    };
-                }
-                function installSetTimeoutImplementation() {
-                    registerImmediate = function(handle) {
-                        setTimeout(runIfPresent, 0, handle);
-                    };
-                }
-                var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
-                attachTo = attachTo && attachTo.setTimeout ? attachTo : global;
-                if ({}.toString.call(global.process) === "[object process]") {
-                    installNextTickImplementation();
-                } else if (canUsePostMessage()) {
-                    installPostMessageImplementation();
-                } else if (global.MessageChannel) {
-                    installMessageChannelImplementation();
-                } else if (doc && "onreadystatechange" in doc.createElement("script")) {
-                    installReadyStateChangeImplementation();
-                } else {
-                    installSetTimeoutImplementation();
-                }
-                attachTo.setImmediate = setImmediate;
-                attachTo.clearImmediate = clearImmediate;
-            })(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self);
-        }).call(exports, function() {
-            return this;
-        }(), __webpack_require__(5));
+        }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var DETECT = __webpack_require__(4), OBJECT = __webpack_require__(6), A = Array.prototype;
+        var DETECT = __webpack_require__(4), OBJECT = __webpack_require__(5), A = Array.prototype;
         function indexOf(subject) {
             var array = this, l = array.length, c = -1;
             for (;l--; ) {
@@ -1212,7 +866,7 @@
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var TYPE = __webpack_require__(7), OBJECT = __webpack_require__(6);
+        var TYPE = __webpack_require__(6), OBJECT = __webpack_require__(5);
         function create() {
             return new Registry();
         }
@@ -1259,7 +913,7 @@
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var TYPE = __webpack_require__(7), OBJECT = __webpack_require__(6), NUMERIC_RE = /^([1-9][0-9]*|0)$/;
+        var TYPE = __webpack_require__(6), OBJECT = __webpack_require__(5), NUMERIC_RE = /^([1-9][0-9]*|0)$/;
         function eachPath(path, callback, arg1, arg2, arg3, arg4) {
             var escape = "\\", dot = ".", buffer = [], bl = 0;
             var c, l, chr, apply, last;
@@ -1413,10 +1067,10 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var TYPE = __webpack_require__(7), OBJECT = __webpack_require__(6), PROCESSOR = __webpack_require__(9), slice = Array.prototype.slice, G = global, INDEX_STATUS = 0, INDEX_DATA = 1, INDEX_PENDING = 2;
+            var TYPE = __webpack_require__(6), OBJECT = __webpack_require__(5), PROCESSOR = __webpack_require__(8), slice = Array.prototype.slice, G = global, INDEX_STATUS = 0, INDEX_DATA = 1, INDEX_PENDING = 2;
             function isPromise(object) {
                 var T = TYPE;
-                return T.object(object) && T.method(object.then);
+                return T.object(object) && "then" in object && T.method(object.then);
             }
             function createPromise(instance) {
                 var Class = Promise;
@@ -1581,15 +1235,15 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var browser = __webpack_require__(17), EXPORTS = false;
+        var browser = __webpack_require__(14), EXPORTS = false;
         if (browser) {
             EXPORTS = {
                 browser: browser,
-                event: __webpack_require__(18),
-                dom: __webpack_require__(19),
-                css: __webpack_require__(20),
-                dimension: __webpack_require__(21),
-                selection: __webpack_require__(22)
+                event: __webpack_require__(15),
+                dom: __webpack_require__(16),
+                css: __webpack_require__(17),
+                dimension: __webpack_require__(18),
+                selection: __webpack_require__(19)
             };
         }
         module.exports = EXPORTS;
@@ -1679,7 +1333,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(17), WINDOW = global.window, ieVersion = DETECTED.ieVersion;
+            var DETECTED = __webpack_require__(14), WINDOW = global.window, ieVersion = DETECTED.ieVersion;
             module.exports = {
                 screensize: typeof WINDOW.innerWidth !== "undefined",
                 pagescroll: typeof WINDOW.pageXOffset !== "undefined",
@@ -1823,7 +1477,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var CORE = __webpack_require__(2), DETECTED = __webpack_require__(16), EVENT = __webpack_require__(25), STRING = __webpack_require__(23), ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING[1101], ERROR_INVALID_DOM_NODE = STRING[1103], ERROR_INVALID_CSS_SELECTOR = STRING[1111], ERROR_INVALID_CALLBACK = STRING[1112], ERROR_INVALID_ELEMENT_CONFIG = STRING[1121], INVALID_DESCENDANT_NODE_TYPES = {
+        var CORE = __webpack_require__(2), DETECTED = __webpack_require__(13), EVENT = __webpack_require__(22), STRING = __webpack_require__(20), ORDER_TYPE_PREORDER = 1, ORDER_TYPE_POSTORDER = 2, ORDER_TYPE_LEVELORDER = 3, ERROR_INVALID_DOM = STRING[1101], ERROR_INVALID_DOM_NODE = STRING[1103], ERROR_INVALID_CSS_SELECTOR = STRING[1111], ERROR_INVALID_CALLBACK = STRING[1112], ERROR_INVALID_ELEMENT_CONFIG = STRING[1121], INVALID_DESCENDANT_NODE_TYPES = {
             9: 1,
             11: 1
         }, STD_CONTAINS = notSupportedContains, DOM_ATTRIBUTE_RE = /(^\_|[^a-zA-Z\_])/, DOM_ATTRIBUTE_LIST = [ "nodeType", "nodeValue", "ownerDocument", "tagName", "attributes", "parentNode", "childNodes", "firstChild", "lastChild", "previousSibling", "nextSibling", "sourceIndex", "type" ], EVENT_ATTRIBUTE_RE = /^on(\-?[a-zA-Z].+)?$/, MANIPULATION_HELPERS = CORE.createRegistry(), EXPORTS = {
@@ -1984,7 +1638,7 @@
         function getTagNameFromConfig(config) {
             var C = CORE;
             if (C.object(config)) {
-                config = config.tagName || config.nodeNode || config.tag;
+                config = "tagName" in config ? config.tagName : "nodeName" in config ? config.nodeName : "tag" in config ? config.tag : false;
             }
             return C.string(config) ? config : false;
         }
@@ -2249,7 +1903,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), INFO = __webpack_require__(16), STRING = __webpack_require__(23), EVENTS = null, PAGE_UNLOADED = false, MIDDLEWARE = CORE.middleware("libdom.event"), IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_ON = "on", IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychange", EXPORTS = module.exports = {
+            var CORE = __webpack_require__(2), INFO = __webpack_require__(13), STRING = __webpack_require__(20), EVENTS = null, PAGE_UNLOADED = false, MIDDLEWARE = CORE.middleware("libdom.event"), IE_CUSTOM_EVENTS = {}, ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131], ERROR_INVALID_TYPE = STRING[1132], ERROR_INVALID_HANDLER = STRING[1133], IE_ON = "on", IE_BUBBLE_EVENT = "beforeupdate", IE_NO_BUBBLE_EVENT = "propertychange", EXPORTS = module.exports = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
@@ -2400,7 +2054,7 @@
             function w3cDispatch(observable, type, properties) {
                 var hasOwn = CORE.contains, event = global.document.createEvent("Event");
                 var name;
-                event.initEvent(type, properties.bubbles === true, properties.cancelable !== false);
+                event.initEvent(type, "bubbles" in properties && properties.bubbles === true, "cancelable" in properties && properties.cancelable !== false);
                 for (name in properties) {
                     if (hasOwn(properties, name) && !(name in event)) {
                         event[name] = properties[name];
@@ -2579,7 +2233,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), STRING = __webpack_require__(23), DETECTED = __webpack_require__(16), DOM = __webpack_require__(24), COLOR = __webpack_require__(27), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", CLIENT_WIDTH = "clientWidth", CLIENT_HEIGHT = "clientHeight", COLOR_RE = /[Cc]olor$/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, BOX_RE = /(top|bottom|left|right|width|height)$/, DIMENSION_RE = /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size|Radius)$/, IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i, IE_ALPHA_OPACITY_TEMPLATE = "alpha(opacity=$opacity)", IE_ALPHA_OPACITY_TEMPLATE_RE = /\$opacity/, GET_OPACITY = opacityNotSupported, SET_OPACITY = opacityNotSupported, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
+            var CORE = __webpack_require__(2), STRING = __webpack_require__(20), DETECTED = __webpack_require__(13), DOM = __webpack_require__(21), COLOR = __webpack_require__(24), PADDING_BOTTOM = "paddingBottom", PADDING_TOP = "paddingTop", PADDING_LEFT = "paddingLeft", PADDING_RIGHT = "paddingRight", OFFSET_LEFT = "offsetLeft", OFFSET_TOP = "offsetTop", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", CLIENT_WIDTH = "clientWidth", CLIENT_HEIGHT = "clientHeight", COLOR_RE = /[Cc]olor$/, EM_OR_PERCENT_RE = /%|em/, CSS_MEASUREMENT_RE = /^([0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*)(em|px|\%|pt|vh|vw|cm|ex|in|mm|pc|vmin)$/, WIDTH_RE = /width/i, NUMBER_RE = /\d/, BOX_RE = /(top|bottom|left|right|width|height)$/, DIMENSION_RE = /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size|Radius)$/, IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i, IE_ALPHA_OPACITY_TEMPLATE = "alpha(opacity=$opacity)", IE_ALPHA_OPACITY_TEMPLATE_RE = /\$opacity/, GET_OPACITY = opacityNotSupported, SET_OPACITY = opacityNotSupported, SET_STYLE = styleManipulationNotSupported, GET_STYLE = styleManipulationNotSupported, ERROR_INVALID_DOM = STRING[1101], EXPORTS = {
                 add: addClass,
                 remove: removeClass,
                 computedStyle: computedStyleNotSupported,
@@ -2955,12 +2609,12 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var CORE = __webpack_require__(2), FORMAT = __webpack_require__(28), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, REMOVE_SPACES = /[ \r\n\t\s]+/g, TO_COLOR = {
-            rgb: __webpack_require__(29),
-            rgba: __webpack_require__(30),
-            hsl: __webpack_require__(31),
-            hsla: __webpack_require__(32),
-            hex: __webpack_require__(33)
+        var CORE = __webpack_require__(2), FORMAT = __webpack_require__(25), COLOR_RE = /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/, NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/, REMOVE_SPACES = /[ \r\n\t\s]+/g, TO_COLOR = {
+            rgb: __webpack_require__(26),
+            rgba: __webpack_require__(27),
+            hsl: __webpack_require__(28),
+            hsla: __webpack_require__(29),
+            hex: __webpack_require__(30)
         }, EXPORTS = {
             parse: parseColorString,
             parseType: parseType,
@@ -3069,7 +2723,7 @@
         }
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var RGBA = __webpack_require__(30), CORE = __webpack_require__(2), EXPORTS = module.exports = CORE.assign({}, RGBA);
+        var RGBA = __webpack_require__(27), CORE = __webpack_require__(2), EXPORTS = module.exports = CORE.assign({}, RGBA);
         function toString(integer) {
             return "rgb(" + RGBA.toArray(integer).slice(0, 3).join(",") + ")";
         }
@@ -3080,7 +2734,7 @@
         EXPORTS.toInteger = toInteger;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var CORE = __webpack_require__(2), FORMAT = __webpack_require__(28), BYTE = 255, BYTE_PERCENT = 127, BYTE_HUE = 511, PERCENT = 100, HUE = 360, SATURATION = PERCENT, LUMINOSITY = PERCENT;
+        var CORE = __webpack_require__(2), FORMAT = __webpack_require__(25), BYTE = 255, BYTE_PERCENT = 127, BYTE_HUE = 511, PERCENT = 100, HUE = 360, SATURATION = PERCENT, LUMINOSITY = PERCENT;
         function hue2rgb(p, q, t) {
             t = (t + 1) % 1;
             switch (true) {
@@ -3160,7 +2814,7 @@
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var HSLA = __webpack_require__(31), CORE = __webpack_require__(2), EXPORTS = module.exports = CORE.assign({}, HSLA);
+        var HSLA = __webpack_require__(28), CORE = __webpack_require__(2), EXPORTS = module.exports = CORE.assign({}, HSLA);
         function toString(integer) {
             var values = HSLA.toArray(integer).slice(0, 3);
             values[1] += "%";
@@ -3170,7 +2824,7 @@
         EXPORTS.toString = toString;
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var CORE = __webpack_require__(2), FORMAT = __webpack_require__(28), BYTE = 255, BYTE_PERCENT = 127, BYTE_HUE = 511, HUE = 360, PERCENT = 100;
+        var CORE = __webpack_require__(2), FORMAT = __webpack_require__(25), BYTE = 255, BYTE_PERCENT = 127, BYTE_HUE = 511, HUE = 360, PERCENT = 100;
         function itemize(value, index, format) {
             var F = FORMAT, M = Math, percent = PERCENT, parse = parseFloat, min = 0, max = index < 1 ? HUE : percent;
             switch (format) {
@@ -3217,7 +2871,7 @@
         };
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var RGBA = __webpack_require__(30), CORE = __webpack_require__(2), EXPORTS = module.exports = CORE.assign({}, RGBA);
+        var RGBA = __webpack_require__(27), CORE = __webpack_require__(2), EXPORTS = module.exports = CORE.assign({}, RGBA);
         function toHex(integer) {
             var M = Math;
             integer = M.max(0, M.min(integer, 255));
@@ -3234,7 +2888,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var CORE = __webpack_require__(2), DETECTED = __webpack_require__(16), STRING = __webpack_require__(23), DOM = __webpack_require__(24), CSS = __webpack_require__(26), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", BOUNDING_RECT = "getBoundingClientRect", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getScreenSize = null, EXPORTS = {
+            var CORE = __webpack_require__(2), DETECTED = __webpack_require__(13), STRING = __webpack_require__(20), DOM = __webpack_require__(21), CSS = __webpack_require__(23), ERROR_INVALID_ELEMENT = STRING[1101], ERROR_INVALID_DOM = STRING[1102], OFFSET_TOP = "offsetTop", OFFSET_LEFT = "offsetLeft", OFFSET_WIDTH = "offsetWidth", OFFSET_HEIGHT = "offsetHeight", MARGIN_TOP = "marginTop", MARGIN_LEFT = "marginLeft", SCROLL_TOP = "scrollTop", SCROLL_LEFT = "scrollLeft", BOUNDING_RECT = "getBoundingClientRect", DEFAULTVIEW = null, ELEMENT_VIEW = 1, PAGE_VIEW = 2, USE_ZOOM_FACTOR = false, IE_PAGE_STAT_ACCESS = "documentElement", boundingRect = false, getPageScroll = null, getOffset = null, getSize = null, getScreenSize = null, EXPORTS = {
                 offset: offset,
                 size: size,
                 box: box,
@@ -3542,7 +3196,7 @@
     }, function(module, exports, __webpack_require__) {
         (function(global) {
             "use strict";
-            var DETECTED = __webpack_require__(16), STRING = __webpack_require__(23), DOM = __webpack_require__(24), DIMENSION = __webpack_require__(34), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
+            var DETECTED = __webpack_require__(13), STRING = __webpack_require__(20), DOM = __webpack_require__(21), DIMENSION = __webpack_require__(31), DETECTED_DOM = DETECTED.dom, DETECTED_SELECTION = DETECTED.selection, ERROR_DOM = STRING[1102], SELECT_ELEMENT = null, CLEAR_SELECTION = null, UNSELECTABLE = attributeUnselectable, CSS_UNSELECT = DETECTED_SELECTION.cssUnselectable, EXPORTS = {
                 select: select,
                 clear: clear,
                 unselectable: unselectable
@@ -3642,7 +3296,7 @@
         }());
     }, function(module, exports, __webpack_require__) {
         "use strict";
-        var STRING = __webpack_require__(23), CORE = __webpack_require__(2), EASING = __webpack_require__(37), COLOR = __webpack_require__(27), CSS = __webpack_require__(26), DIMENSION = __webpack_require__(34), SESSION_ACCESS = "__animate_session", BOX_POSITION = {
+        var STRING = __webpack_require__(20), CORE = __webpack_require__(2), EASING = __webpack_require__(34), COLOR = __webpack_require__(24), CSS = __webpack_require__(23), DIMENSION = __webpack_require__(31), SESSION_ACCESS = "__animate_session", BOX_POSITION = {
             left: 0,
             top: 1,
             right: 2,
@@ -3780,7 +3434,7 @@
         function createElementHandler(animate) {
             function onAnimate(values, last) {
                 var session = animate, node = session.node;
-                DIMENSION.translate(node, values.left, values.top, values.right, values.bottom, values.width, values.height, values);
+                DIMENSION.translate(node, "left" in values ? values.left : null, "top" in values ? values.top : null, "right" in values ? values.right : null, "bottom" in values ? values.bottom : null, "width" in values ? values.width : null, "height" in values ? values.height : null, values);
                 CSS.style(node, values);
                 if (last) {
                     node.removeAttribute(SESSION_ACCESS);

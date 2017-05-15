@@ -261,7 +261,12 @@ function getTagNameFromConfig(config) {
     var C = CORE;
     
     if (C.object(config)) {
-        config = config.tagName || config.nodeNode || config.tag;
+        config = 'tagName' in config ?
+                    config.tagName :
+                    'nodeName' in config ?
+                        config.nodeName :
+                        'tag' in config ?
+                            config.tag : false;
     }
     
     return C.string(config) ? config : false;
