@@ -80,6 +80,7 @@ if (detect) {
             require("./lib/color.js"),
             {
                 'parseColor': 'parse',
+                'parseColorType': 'parseType',
                 'formatColor': 'stringify'
             });
     
@@ -94,7 +95,13 @@ if (detect) {
         event.chain = 
         dimension.chain =
         selection.chain = EXPORTS;
+    
 }
 
-module.exports = global.libdom = EXPORTS['default'] = EXPORTS;
+
+module.exports =
+    EXPORTS['default'] =        // attach "default" for ES6 import
+    CORE.dom =                  // attach libdom to libcore from "dom"
+    global.libdom = EXPORTS;    // attach as global "libdom" variable
+
 

@@ -1,6 +1,7 @@
 'use strict';
 
 var PATH = require('path'),
+    webpack = require("webpack"),
     CustomVarLibraryNamePlugin = require('webpack-custom-var-library-name-plugin'),
     ROOT_PATH = PATH.resolve(__dirname, '..'),
     SOURCE_PATH = PATH.join(ROOT_PATH, 'src'),
@@ -23,15 +24,26 @@ module.exports = {
         //path: PATH.join(ROOT_PATH, 'dist'),
         path: PATH.join(ROOT_PATH, 'test', 'assets'),
         publicPath: '/assets/',
-        library: LIB_NAME,
+        //library: LIB_NAME,
+        library: undefined,
         libraryTarget: 'umd',
         umdNamedDefine: true
     },
+    
+    externals: {
+        // require("jquery") is external and available
+        //  on the global var jQuery
+        "libcore": {
+            root: "libcore"
+        }
+    },
+    
     plugins: [
-        new CustomVarLibraryNamePlugin({
-            name: VAR_NAME
-        })
+        //new CustomVarLibraryNamePlugin({
+        //    name: VAR_NAME
+        //})
     ],
+    
     module: {
         rules: [{
             test: /\.css$/,

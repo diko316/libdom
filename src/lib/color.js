@@ -1,6 +1,8 @@
 'use strict';
 
 var CORE = require("libcore"),
+    isString = CORE.string,
+    ERROR_SUBJECT = 'Invalid [subject] parameter.',
     FORMAT = require("./color/format.js"),
     COLOR_RE =
     /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/,
@@ -19,10 +21,15 @@ var CORE = require("libcore"),
         stringify: toColorString
     };
 
-function parseType(str) {
-    str = preParseValue(str);
-    if (str) {
-        return parseColorStringType(str) || null;
+function parseType(subject) {
+    
+    if (!isString(subject, true)) {
+        throw new Error(ERROR_SUBJECT);
+    }
+    
+    subject = preParseValue(subject);
+    if (subject) {
+        return parseColorStringType(subject) || null;
     }
     return null;
 }
@@ -69,11 +76,12 @@ function parseColorStringType(str) {
     else {
         items = items.split(',');
     }
+    
     return [type, isHex, items];
     
 }
 
-function parseColorString(str) {
+function parseColorString(subject) {
     var F = FORMAT,
         formatPercent = F.PERCENT,
         formatNumber = F.NUMBER,
@@ -82,8 +90,12 @@ function parseColorString(str) {
         
     var parsed, c, l, item, items, itemizer, processor, type, isHex, toProcess;
     
-    str = preParseValue(str);
-    parsed = str && parseColorStringType(str);
+    if (!isString(subject, true)) {
+        throw new Error(ERROR_SUBJECT);
+    }
+    
+    subject = preParseValue(subject);
+    parsed = subject && parseColorStringType(subject);
         
     if (parsed) {
         type = parsed[0];
@@ -132,11 +144,18 @@ function toColorString(colorValue, type) {
     var list = TO_COLOR,
         C = CORE;
     
+    if (!C.number(colorValue)) {
+        throw new Error("Invalid [colorValue] parameter.");
+    }
+    
     if (arguments.length < 2) {
         type = 'hex';
     }
+    else if (!isString(type)) {
+        throw new Error("Invalid [type] parameter.");
+    }
     
-    if (!C.contains(list, type) || !C.number(colorValue)) {
+    if (!C.contains(list, type)) {
         return null;
     }
     

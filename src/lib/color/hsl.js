@@ -1,7 +1,7 @@
 'use strict';
 
 
-var HSLA = require("./hsl.js"),
+var HSLA = require("./hsla.js"),
     CORE = require("libcore"),
     EXPORTS = module.exports = CORE.assign({}, HSLA);
 

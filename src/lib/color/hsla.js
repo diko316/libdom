@@ -66,7 +66,7 @@ function toString(integer) {
     var values = toArray(integer);
     values[1] += '%';
     values[2] += '%';
-    values[3] = (values[3] / PERCENT).toFixed(2);
+    values[3] = (values[3] / PERCENT);
     return 'hsla(' + values.join(',') + ')';
 }
 

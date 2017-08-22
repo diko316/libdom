@@ -23,13 +23,30 @@ function hue2rgb(p, q, t) {
     return p;
 }
 
+//function itemize(value, index, format) {
+//    var M = Math,
+//        min = 0,
+//        max = index > 2 ? PERCENT : BYTE;
+//    
+//    value = FORMAT.format(value, format);
+//
+//    return M.max(min, M.min(max, value));
+//
+//}
+
 function itemize(value, index, format) {
     var M = Math,
+        F = FORMAT,
+        isFloat = index > 2 && format !== F.PERCENT,
         min = 0,
-        max = index > 2 ? PERCENT : BYTE;
+        max = index < 3 ?
+                BYTE : PERCENT;
+        
+    value = F.format(value, format);
+    if (isFloat) {
+        value *= 100;
+    }
     
-    value = FORMAT.format(value, format);
-
     return M.max(min, M.min(max, value));
 
 }
@@ -64,7 +81,7 @@ function toArray(integer) {
     return [M.round(h2r(p, q, h + 1/3) * size),
                 M.round(h2r(p, q, h) * size),
                 M.round(h2r(p, q, h - 1/3) * size),
-                a];
+                (a).toFixed(2)];
 }
 
 function toInteger(r, g, b, a) {
