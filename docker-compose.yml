@@ -2,7 +2,7 @@ version: '2'
 
 services:
 
-  libdom:
+  server:
     build: .
     image: libdom:latest
     container_name: "libdom-test"
@@ -15,7 +15,7 @@ services:
     ports:
       - "3000:3000"
       
-  libdom_builder:
+  builder:
     image: libdom:latest
     container_name: "libdom-builder"
     command: bin/autosync-builds.sh

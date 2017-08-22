@@ -7,6 +7,7 @@ var STRING =  require("./string.js"),
     CSS = require("./css.js"),
     DIMENSION = require("./dimension.js"),
     SESSION_ACCESS = '__animate_session',
+    DEFAULT_EASING = 'easeOut',
     BOX_POSITION = {
         left: 0,
         top: 1,
@@ -121,6 +122,7 @@ function animate(handler, from, to, type, duration) {
     }
     
     // prepare displacements
+    console.log("type ", type);
     type = C.contains(easing, type) ? easing[type] : easing.linear;
     duration = (C.number(duration) && duration > 0 ? duration : 1) * 1000;
     frames = M.max(10, M.round(duration / defaultInterval));
@@ -191,7 +193,8 @@ function applyDisplacements(session, from, to) {
 }
 
 function hasAnimationType(type) {
-    return CORE.contains(EASING, type);
+    var C = CORE;
+    return C.string(type) && C.contains(EASING, type);
 }
 
 /**
@@ -215,6 +218,10 @@ function animateStyle(element, styles, type) {
     if (names.length) {
         sessionId = element.getAttribute(access);
         defaults = createStyleDefaults(element, names);
+        
+        if (!hasAnimationType(type)) {
+            type = DEFAULT_EASING;
+        }
         
         // create
         if (!sessionId) {
