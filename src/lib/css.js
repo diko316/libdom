@@ -92,21 +92,10 @@ function removeClass(element) {
 
 function applyStyle(element, style, value) {
     var C = CORE,
-        string = C.string,
-        number = C.number,
-        hasOwn = C.contains,
-        color = COLOR,
-        set = SET_STYLE,
-        setOpacity = SET_OPACITY,
-        colorRe = COLOR_RE,
-        
         parse = parseCSSText,
-        dimensionRe = DIMENSION_RE,
-        primaryColorUnit = EXPORTS.colorUnit,
-        camelize = STRING.stylize,
         len = arguments.length;
         
-    var name, elementStyle, isOpacity, isNumber, isScalar;
+    var context;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
@@ -115,11 +104,11 @@ function applyStyle(element, style, value) {
     // setter
     if (len > 1) {
         
-        if (string(style)) {
+        if (C.string(style)) {
             if (len > 2) {
-                elementStyle = {};
-                elementStyle[style] = value;
-                style = elementStyle;
+                context = {};
+                context[style] = value;
+                style = context;
             }
             else {
                 style = parse(style);
@@ -130,55 +119,61 @@ function applyStyle(element, style, value) {
             throw new Error(STRING[1141]);
         }
 
-        elementStyle = element.style;
-
-        main: for (name in style) {
-            if (hasOwn(style, name)) {
-                value = style[name];
-                name = camelize(name);
-                isOpacity = name === 'opacity';
-                isNumber = number(value);
-                isScalar = isNumber || string(value);
-                
-                switch (true) {
-
-                case name === 'opacity':
-                    if (!isScalar) {
-                        // remove IE style opacity
-                        set(elementStyle, 'filter', value = null);
-                    
-                    }
-                    else {
-                        setOpacity(elementStyle, value);
-                        continue main;
-                    }
-                    break;
-                
-                case isNumber && dimensionRe.test(name):
-                    value = '' + value + 'px';
-                    break;
-                
-                case isNumber && colorRe.test(name):
-                    value = color.stringify(value, primaryColorUnit);
-                    break;
-                
-                default:
-                    if (!isScalar) {
-                        value = null;
-                    }
-                }
-                
-                set(elementStyle, name, value);
-
-            }
-        }
-        elementStyle = null;
+        //elementStyle = element.style;
+        context = [element.style];
+        
+        CORE.each(style, onStyleElement, context, true);
+        
+        context = context[0] = null;
         
         return EXPORTS.chain;
     }
     
     // getter
     return parse(element.style.cssText);
+    
+}
+
+function onStyleElement(value, name) {
+    var C = CORE,
+        isNumber = C.number(value),
+        isScalar = isNumber || C.string(value),
+        elementStyle = this[0],
+        set = SET_STYLE,
+        applied = false;
+    
+    name = STRING.stylize(name);
+    
+    // opacity
+    if (name === 'opacity') {
+        if (!isScalar) {
+            // remove IE style opacity
+            set(elementStyle, 'filter', null);
+        }
+        else {
+            SET_OPACITY(elementStyle, value);
+            applied = true;
+        }
+        
+    }
+    // dimension
+    else if (isNumber && DIMENSION_RE.test(name)) {
+        value = '' + value + 'px';
+        
+    }
+    // color
+    else if (isNumber && COLOR_RE.test(name)) {
+        value = COLOR.stringify(value, EXPORTS.colorUnit);
+    }
+    
+    // non-scalar value is "unset"
+    if (!isScalar) {
+        value = null;
+    }
+    
+    set(elementStyle, name, value);
+    
+    elementStyle = null;
     
 }
 
@@ -391,7 +386,7 @@ function ieGetPixelSize(element, style, property, fontSize) {
         }
         return suffix === 'em' ?
                     size * fontSize :
-                    size / 100 * (property == 'fontSize' ?
+                    size / 100 * (property === 'fontSize' ?
                                     fontSize :
                                     WIDTH_RE.test(property) ?
                                         element[CLIENT_WIDTH] :
@@ -559,8 +554,6 @@ function ieSetStyleValue(style, name, value) {
         style.removeAttribute(name);
     }
     else {
-        //style.setAttribute(name, value);
-        //console.log(name, '=', value);
         style[name] = value;
     }
 }

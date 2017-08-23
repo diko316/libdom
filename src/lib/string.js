@@ -37,8 +37,10 @@ var CORE = require("libcore"),
         //1142: "Invalid Colorset [type] parameter.",
         //1143: "Invalid [colorValue] integer parameter.",
         
-        1151: "Invalid Animation [handler] parameter.",
+        1151: "Invalid Animation [callback] parameter.",
         1152: "Invalid Animation [displacements] parameter.",
+        1153: "Invalid Animation [type] parameter.",
+        1154: "Invalid Animation [duration] parameter.",
         
         2001: "Style Attribute manipulation is not supported",
         2002: "Computed style is not supported by this browser.",

@@ -4,7 +4,7 @@ var STRING =  require("./string.js"),
     CORE = require("libcore"),
     EASING = require("./easing.js"),
     COLOR = require("./color.js"),
-    CSS = require("./css.js"),
+    CSS_MODULE = require("./css.js"),
     DIMENSION = require("./dimension.js"),
     SESSION_ACCESS = '__animate_session',
     BOX_POSITION = {
@@ -15,11 +15,12 @@ var STRING =  require("./string.js"),
         width: 4,
         height: 5
     },
-    BOX_RE = CSS.boxRe,
-    DIMENSION_RE = CSS.dimensionRe,
-    COLOR_RE = CSS.colorRe,
+    BOX_RE = CSS_MODULE.boxRe,
+    DIMENSION_RE = CSS_MODULE.dimensionRe,
+    COLOR_RE = CSS_MODULE.colorRe,
     SESSIONS = {},
     EXPORTS = {
+        easing: EASING,
         defaultEasing: 'linear',
         interval: 10,
         each: animate,
@@ -41,17 +42,19 @@ function animate(callback, from, to, type, duration) {
         easing = EASING,
         C = CORE,
         isObject = C.object,
+        has = C.contains,
         list = SESSIONS,
         defaultInterval = EXPORTS.interval,
         clear = clearInterval,
         set = setInterval,
         interval = null,
+        alen = arguments.length,
         frame = 0;
         
     var frames, displacements;
     
-    function control() {
-        var fn = control;
+    function stop() {
+        var fn = stop;
         
         if (interval) {
             clear(interval);
@@ -108,7 +111,7 @@ function animate(callback, from, to, type, duration) {
         callback(result, last);
         
         if (last) {
-            control();
+            stop();
         }
         
     }
@@ -121,19 +124,35 @@ function animate(callback, from, to, type, duration) {
         throw new Error(string[1152]);
     }
     
+    // validate type
+    if (alen < 4) {
+        type = EXPORTS.defaultEasing;
+    }
+    else if (!C.string(type) || !has(easing, type)) {
+        throw new Error(string[1153]);
+    }
+    
+    // validate duration
+    if (alen < 5) {
+        duration = 1;
+    }
+    else if (!C.number(duration) || duration < 1) {
+        throw new Error(string[1154]);
+    }
+    
     // prepare displacements
-    type = C.contains(easing, type) ? easing[type] : easing.linear;
-    duration = (C.number(duration) && duration > 0 ? duration : 1) * 1000;
+    type = easing[type];
+    duration *= 1000;
     frames = M.max(10, M.round(duration / defaultInterval));
     
-    displacements = [[], [], [], from, control];
+    displacements = [[], [], [], from, stop];
     interval = set(run, defaultInterval);
-    control.session = interval;
-    control.update = update;
-    control.running = true;
+    stop.session = interval;
+    stop.update = update;
+    stop.running = true;
     list[interval] = displacements;
     displacements = applyDisplacements(displacements, from, to);
-    return control;
+    return stop;
     
 }
 
@@ -155,48 +174,43 @@ function applyDisplacements(session, from, to) {
 function onApplyDisplacement(value, name, to) {
     /* jshint validthis:true */
     var context = this,
-        hasOwn = CORE.contains,
         format = validValue,
         from = context[0],
         session = context[1],
         names = session[0],
-        sourceValues = session[1],
-        targetValues = session[2],
-        len = names.length;
+        sourceValues = session[1];
         
     var index, source, target, sourceEnded;
+        
+    target = format(to[name]);
     
-    if (hasOwn(to, name)) {
+    if (target !== false) {
+        index = names.indexOf(name);
+        source = CORE.contains(from, name) &&
+                    format(from[name]);
+                    
+        sourceEnded = source === false;
         
-        target = format(to[name]);
-        
-        if (target !== false) {
-            index = names.indexOf(name);
-            source = hasOwn(from, name) && format(from[name]);
-            sourceEnded = source === false;
-            
-            // create from source if did not exist
-            if (index === -1) {
-                if (sourceEnded) {
-                    return true;
-                }
-                index = len++;
-                names[index] = name;
-                
+        // create from source if did not exist
+        if (index === -1) {
+            if (sourceEnded) {
+                return true;
             }
-            else if (sourceEnded) {
-                
-                source = sourceValues[index];
-            }
-            
-            // update
-            sourceValues[index] = source;
-            targetValues[index] = target;
+            index = names.length;
+            names[index] = name;
             
         }
+        else if (sourceEnded) {
             
+            source = sourceValues[index];
+        }
+        
+        // update
+        sourceValues[index] = source;
+        session[2][index] = target;
         
     }
+
     
     return true;
 }
@@ -258,7 +272,7 @@ function animateStyle(element, styles, type) {
     }
     
     if (stat[2].length) {
-        CSS.style(element, staticValues);
+        CSS_MODULE.style(element, staticValues);
     }
     
 }
@@ -278,7 +292,7 @@ function createElementHandler(animate) {
                             'height' in values ? values.height : null,
                             values);
         
-        CSS.style(node, values);
+        CSS_MODULE.style(node, values);
         
         if (last) {
             node.removeAttribute(SESSION_ACCESS);
@@ -292,7 +306,7 @@ function createElementHandler(animate) {
 }
 
 function createStyleDefaults(element, names) {
-    var css = CSS,
+    var css = CSS_MODULE,
         values = css.computedStyle(element, names),
         dimension = DIMENSION,
         c = -1,
@@ -344,7 +358,7 @@ function eachElementValues(value, name) {
     }
     // box and dimension
     else if (BOX_RE.test(name) || DIMENSION_RE.test(name)) {
-        value = CSS.unitValue(raw);
+        value = CSS_MODULE.unitValue(raw);
         
     }
     // color

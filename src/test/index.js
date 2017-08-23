@@ -3,6 +3,8 @@
 // at this point, "libdom" global variable is now present
 require("../index.js");
 
+global.libcore = require("libcore");
+
 
 require("./color/parse-color.js");
 require("./color/parse-color-type.js");

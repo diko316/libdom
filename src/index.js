@@ -7,7 +7,7 @@ var CORE = require('libcore'),
         env: CORE.env,
         info: detect
     };
-var css, event, dimension, selection;
+var css, eventModule, dimension, selection;
 
 if (detect) {
     
@@ -49,7 +49,7 @@ if (detect) {
     
     
     rehash(EXPORTS,
-            event = require("./lib/event.js"),
+            eventModule = require("./lib/event.js"),
             {
                 'on': 'on',
                 'un': 'un',
@@ -92,7 +92,7 @@ if (detect) {
             });
     
     css.chain =
-        event.chain = 
+        eventModule.chain = 
         dimension.chain =
         selection.chain = EXPORTS;
     

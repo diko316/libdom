@@ -16,9 +16,9 @@ var CORE = require("libcore"),
         hex: require("./color/hex.js"),
     },
     EXPORTS = {
-        parse: parseColorString,
+        parse: parse,
         parseType: parseType,
-        stringify: toColorString
+        stringify: stringify
     };
 
 function parseType(subject) {
@@ -81,7 +81,7 @@ function parseColorStringType(str) {
     
 }
 
-function parseColorString(subject) {
+function parse(subject) {
     var F = FORMAT,
         formatPercent = F.PERCENT,
         formatNumber = F.NUMBER,
@@ -140,7 +140,7 @@ function parseColorString(subject) {
 }
 
 
-function toColorString(colorValue, type) {
+function stringify(colorValue, type) {
     var list = TO_COLOR,
         C = CORE;
     

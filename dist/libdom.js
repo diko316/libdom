@@ -153,8 +153,10 @@ var CORE = __webpack_require__(0),
         //1142: "Invalid Colorset [type] parameter.",
         //1143: "Invalid [colorValue] integer parameter.",
         
-        1151: "Invalid Animation [handler] parameter.",
+        1151: "Invalid Animation [callback] parameter.",
         1152: "Invalid Animation [displacements] parameter.",
+        1153: "Invalid Animation [type] parameter.",
+        1154: "Invalid Animation [duration] parameter.",
         
         2001: "Style Attribute manipulation is not supported",
         2002: "Computed style is not supported by this browser.",
@@ -1006,9 +1008,9 @@ var CORE = __webpack_require__(0),
         hex: __webpack_require__(15),
     },
     EXPORTS = {
-        parse: parseColorString,
+        parse: parse,
         parseType: parseType,
-        stringify: toColorString
+        stringify: stringify
     };
 
 function parseType(subject) {
@@ -1071,7 +1073,7 @@ function parseColorStringType(str) {
     
 }
 
-function parseColorString(subject) {
+function parse(subject) {
     var F = FORMAT,
         formatPercent = F.PERCENT,
         formatNumber = F.NUMBER,
@@ -1130,7 +1132,7 @@ function parseColorString(subject) {
 }
 
 
-function toColorString(colorValue, type) {
+function stringify(colorValue, type) {
     var list = TO_COLOR,
         C = CORE;
     
@@ -1438,21 +1440,10 @@ function removeClass(element) {
 
 function applyStyle(element, style, value) {
     var C = CORE,
-        string = C.string,
-        number = C.number,
-        hasOwn = C.contains,
-        color = COLOR,
-        set = SET_STYLE,
-        setOpacity = SET_OPACITY,
-        colorRe = COLOR_RE,
-        
         parse = parseCSSText,
-        dimensionRe = DIMENSION_RE,
-        primaryColorUnit = EXPORTS.colorUnit,
-        camelize = STRING.stylize,
         len = arguments.length;
         
-    var name, elementStyle, isOpacity, isNumber, isScalar;
+    var context;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
@@ -1461,11 +1452,11 @@ function applyStyle(element, style, value) {
     // setter
     if (len > 1) {
         
-        if (string(style)) {
+        if (C.string(style)) {
             if (len > 2) {
-                elementStyle = {};
-                elementStyle[style] = value;
-                style = elementStyle;
+                context = {};
+                context[style] = value;
+                style = context;
             }
             else {
                 style = parse(style);
@@ -1476,55 +1467,61 @@ function applyStyle(element, style, value) {
             throw new Error(STRING[1141]);
         }
 
-        elementStyle = element.style;
-
-        main: for (name in style) {
-            if (hasOwn(style, name)) {
-                value = style[name];
-                name = camelize(name);
-                isOpacity = name === 'opacity';
-                isNumber = number(value);
-                isScalar = isNumber || string(value);
-                
-                switch (true) {
-
-                case name === 'opacity':
-                    if (!isScalar) {
-                        // remove IE style opacity
-                        set(elementStyle, 'filter', value = null);
-                    
-                    }
-                    else {
-                        setOpacity(elementStyle, value);
-                        continue main;
-                    }
-                    break;
-                
-                case isNumber && dimensionRe.test(name):
-                    value = '' + value + 'px';
-                    break;
-                
-                case isNumber && colorRe.test(name):
-                    value = color.stringify(value, primaryColorUnit);
-                    break;
-                
-                default:
-                    if (!isScalar) {
-                        value = null;
-                    }
-                }
-                
-                set(elementStyle, name, value);
-
-            }
-        }
-        elementStyle = null;
+        //elementStyle = element.style;
+        context = [element.style];
+        
+        CORE.each(style, onStyleElement, context, true);
+        
+        context = context[0] = null;
         
         return EXPORTS.chain;
     }
     
     // getter
     return parse(element.style.cssText);
+    
+}
+
+function onStyleElement(value, name) {
+    var C = CORE,
+        isNumber = C.number(value),
+        isScalar = isNumber || C.string(value),
+        elementStyle = this[0],
+        set = SET_STYLE,
+        applied = false;
+    
+    name = STRING.stylize(name);
+    
+    // opacity
+    if (name === 'opacity') {
+        if (!isScalar) {
+            // remove IE style opacity
+            set(elementStyle, 'filter', null);
+        }
+        else {
+            SET_OPACITY(elementStyle, value);
+            applied = true;
+        }
+        
+    }
+    // dimension
+    else if (isNumber && DIMENSION_RE.test(name)) {
+        value = '' + value + 'px';
+        
+    }
+    // color
+    else if (isNumber && COLOR_RE.test(name)) {
+        value = COLOR.stringify(value, EXPORTS.colorUnit);
+    }
+    
+    // non-scalar value is "unset"
+    if (!isScalar) {
+        value = null;
+    }
+    
+    set(elementStyle, name, value);
+    
+    elementStyle = null;
     
 }
 
@@ -1737,7 +1734,7 @@ function ieGetPixelSize(element, style, property, fontSize) {
         }
         return suffix === 'em' ?
                     size * fontSize :
-                    size / 100 * (property == 'fontSize' ?
+                    size / 100 * (property === 'fontSize' ?
                                     fontSize :
                                     WIDTH_RE.test(property) ?
                                         element[CLIENT_WIDTH] :
@@ -1905,8 +1902,6 @@ function ieSetStyleValue(style, name, value) {
         style.removeAttribute(name);
     }
     else {
-        //style.setAttribute(name, value);
-        //console.log(name, '=', value);
         style[name] = value;
     }
 }
@@ -3216,7 +3211,7 @@ var CORE = __webpack_require__(0),
         env: CORE.env,
         info: detect
     };
-var css, event, dimension, selection;
+var css, eventModule, dimension, selection;
 
 if (detect) {
     
@@ -3258,7 +3253,7 @@ if (detect) {
     
     
     rehash(EXPORTS,
-            event = __webpack_require__(12),
+            eventModule = __webpack_require__(12),
             {
                 'on': 'on',
                 'un': 'un',
@@ -3301,7 +3296,7 @@ if (detect) {
             });
     
     css.chain =
-        event.chain = 
+        eventModule.chain = 
         dimension.chain =
         selection.chain = EXPORTS;
     
@@ -3328,10 +3323,9 @@ var STRING =  __webpack_require__(2),
     CORE = __webpack_require__(0),
     EASING = __webpack_require__(23),
     COLOR = __webpack_require__(5),
-    CSS = __webpack_require__(8),
+    CSS_MODULE = __webpack_require__(8),
     DIMENSION = __webpack_require__(9),
     SESSION_ACCESS = '__animate_session',
-    DEFAULT_EASING = 'easeOut',
     BOX_POSITION = {
         left: 0,
         top: 1,
@@ -3340,11 +3334,13 @@ var STRING =  __webpack_require__(2),
         width: 4,
         height: 5
     },
-    BOX_RE = CSS.boxRe,
-    DIMENSION_RE = CSS.dimensionRe,
-    COLOR_RE = CSS.colorRe,
+    BOX_RE = CSS_MODULE.boxRe,
+    DIMENSION_RE = CSS_MODULE.dimensionRe,
+    COLOR_RE = CSS_MODULE.colorRe,
     SESSIONS = {},
     EXPORTS = {
+        easing: EASING,
+        defaultEasing: 'linear',
         interval: 10,
         each: animate,
         has: hasAnimationType,
@@ -3365,17 +3361,19 @@ function animate(callback, from, to, type, duration) {
         easing = EASING,
         C = CORE,
         isObject = C.object,
+        has = C.contains,
         list = SESSIONS,
         defaultInterval = EXPORTS.interval,
         clear = clearInterval,
         set = setInterval,
         interval = null,
+        alen = arguments.length,
         frame = 0;
         
     var frames, displacements;
     
-    function control() {
-        var fn = control;
+    function stop() {
+        var fn = stop;
         
         if (interval) {
             clear(interval);
@@ -3432,7 +3430,7 @@ function animate(callback, from, to, type, duration) {
         callback(result, last);
         
         if (last) {
-            control();
+            stop();
         }
         
     }
@@ -3445,19 +3443,35 @@ function animate(callback, from, to, type, duration) {
         throw new Error(string[1152]);
     }
     
+    // validate type
+    if (alen < 4) {
+        type = EXPORTS.defaultEasing;
+    }
+    else if (!C.string(type) || !has(easing, type)) {
+        throw new Error(string[1153]);
+    }
+    
+    // validate duration
+    if (alen < 5) {
+        duration = 1;
+    }
+    else if (!C.number(duration) || duration < 1) {
+        throw new Error(string[1154]);
+    }
+    
     // prepare displacements
-    type = C.contains(easing, type) ? easing[type] : easing.linear;
-    duration = (C.number(duration) && duration > 0 ? duration : 1) * 1000;
+    type = easing[type];
+    duration *= 1000;
     frames = M.max(10, M.round(duration / defaultInterval));
     
-    displacements = [[], [], [], from, control];
+    displacements = [[], [], [], from, stop];
     interval = set(run, defaultInterval);
-    control.session = interval;
-    control.update = update;
-    control.running = true;
+    stop.session = interval;
+    stop.update = update;
+    stop.running = true;
     list[interval] = displacements;
     displacements = applyDisplacements(displacements, from, to);
-    return control;
+    return stop;
     
 }
 
@@ -3479,48 +3493,43 @@ function applyDisplacements(session, from, to) {
 function onApplyDisplacement(value, name, to) {
     /* jshint validthis:true */
     var context = this,
-        hasOwn = CORE.contains,
         format = validValue,
         from = context[0],
         session = context[1],
         names = session[0],
-        sourceValues = session[1],
-        targetValues = session[2],
-        len = names.length;
+        sourceValues = session[1];
         
     var index, source, target, sourceEnded;
+        
+    target = format(to[name]);
     
-    if (hasOwn(to, name)) {
+    if (target !== false) {
+        index = names.indexOf(name);
+        source = CORE.contains(from, name) &&
+                    format(from[name]);
+                    
+        sourceEnded = source === false;
         
-        target = format(to[name]);
-        
-        if (target !== false) {
-            index = names.indexOf(name);
-            source = hasOwn(from, name) && format(from[name]);
-            sourceEnded = source === false;
-            
-            // create from source if did not exist
-            if (index === -1) {
-                if (sourceEnded) {
-                    return true;
-                }
-                index = len++;
-                names[index] = name;
-                
+        // create from source if did not exist
+        if (index === -1) {
+            if (sourceEnded) {
+                return true;
             }
-            else if (sourceEnded) {
-                
-                source = sourceValues[index];
-            }
-            
-            // update
-            sourceValues[index] = source;
-            targetValues[index] = target;
+            index = names.length;
+            names[index] = name;
             
         }
+        else if (sourceEnded) {
             
+            source = sourceValues[index];
+        }
+        
+        // update
+        sourceValues[index] = source;
+        session[2][index] = target;
         
     }
+
     
     return true;
 }
@@ -3553,7 +3562,7 @@ function animateStyle(element, styles, type) {
         defaults = createStyleDefaults(element, names);
         
         if (!hasAnimationType(type)) {
-            type = DEFAULT_EASING;
+            type = EXPORTS.defaultEasing;
         }
         
         // create
@@ -3582,7 +3591,7 @@ function animateStyle(element, styles, type) {
     }
     
     if (stat[2].length) {
-        CSS.style(element, staticValues);
+        CSS_MODULE.style(element, staticValues);
     }
     
 }
@@ -3602,7 +3611,7 @@ function createElementHandler(animate) {
                             'height' in values ? values.height : null,
                             values);
         
-        CSS.style(node, values);
+        CSS_MODULE.style(node, values);
         
         if (last) {
             node.removeAttribute(SESSION_ACCESS);
@@ -3616,7 +3625,7 @@ function createElementHandler(animate) {
 }
 
 function createStyleDefaults(element, names) {
-    var css = CSS,
+    var css = CSS_MODULE,
         values = css.computedStyle(element, names),
         dimension = DIMENSION,
         c = -1,
@@ -3668,7 +3677,7 @@ function eachElementValues(value, name) {
     }
     // box and dimension
     else if (BOX_RE.test(name) || DIMENSION_RE.test(name)) {
-        value = CSS.unitValue(raw);
+        value = CSS_MODULE.unitValue(raw);
         
     }
     // color

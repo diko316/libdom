@@ -1,6 +1,6 @@
 # libdom
-Lean Browser Library for typical DOM operations tested to run in IE8 up to the modern browsers.
-This will be used to kick-start in creating libraries running in a browser platform.
+Lean Browser Library for typical DOM operations tested to run in IE8 up to modern browsers.
+This will be used to further create DOM UI libraries for browsers in the future.
 
 ## Installation
 

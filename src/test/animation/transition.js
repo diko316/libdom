@@ -9,7 +9,8 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                     'type:String,' +
                     'duration:Number) method',
     () => {
-        var transition = global.libdom.transition,
+        var libcore = global.libcore,
+            transition = global.libdom.transition,
             from = {
                 x: 0,
                 y: 0
@@ -100,5 +101,77 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                     toThrow();
                 expect(() => transition(empty, from, to, 'easeOut', NaN)).
                     toThrow();
+            });
+        
+        it('6. Should accept valid parameters and returns stop() transition ' +
+           'Function',
+           (done) => {
+                expect(libcore.method(transition(empty,
+                                                 from,
+                                                 to,
+                                                 'easeOut', 1))).
+                    toBe(true);
+                    
+                libcore.method(transition((value, last) => {
+                                            if (last) {
+                                                expect(to.x).
+                                                    toBe(value.x);
+                                                    
+                                                expect(to.y).
+                                                    toBe(value.y);
+                                                done();
+                                            }
+                                         },
+                                         from,
+                                         to,
+                                         'easeOut', 1));
+            });
+        
+        it('7. Should accept valid parameters without [type] and' +
+           '[duration] parameter which defaults easing [type] to "linear" ' +
+           'and [duration] to 1 second and returns stop() transition Function',
+           (done) => {
+                expect(() => libcore.method(transition(empty,
+                                                 from,
+                                                 to))).
+                    not.toThrow();
+                    
+                libcore.method(transition((value, last) => {
+                                            if (last) {
+                                                expect(to.x).
+                                                    toBe(value.x);
+                                                    
+                                                expect(to.y).
+                                                    toBe(value.y);
+                                                done();
+                                            }
+                                         },
+                                         from,
+                                         to));
+            });
+        
+        it('8. Should accept valid parameters without [duration] parameter ' +
+           'which defaults [duration] to 1 second and ' +
+           'returns stop() transition Function',
+           (done) => {
+                expect(() => libcore.method(transition(empty,
+                                                 from,
+                                                 to,
+                                                 'linear'))).
+                    not.toThrow();
+                    
+                libcore.method(transition((value, last) => {
+                                            if (last) {
+                                                expect(to.x).
+                                                    toBe(value.x);
+                                                    
+                                                expect(to.y).
+                                                    toBe(value.y);
+                                                done();
+                                            }
+                                         },
+                                         from,
+                                         to,
+                                         'linear'));
             });
     });
