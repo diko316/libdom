@@ -23,8 +23,19 @@ libdom.on(global.document,
         });
 ```
 
+### ES-2015 import
+With es6 import enabled using babel, you can also import **libdom** module.
+```javascript
+// default
+import libdom from "libdom";
+
+// tree shaking
+import { on, addClass } from "libdom";
+```
+
 ### Directly embed script in HTML
-**libdom** can also be directly embedded in HTML.
+**libdom** can embedded in HTML `<script>` tag.
+This requires preloading of **libcore** module.
 
 ```html
 <!doctype >
@@ -34,7 +45,11 @@ libdom.on(global.document,
     <title>Test Libdom</title>
 </head>
 <body>
+    <script src="node_modules/libcore/dist/libcore.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="node_modules/libdom/dist/libdom.min.js" type="text/javascript" charset="utf-8"></script>
+    <script type="text/javascript" charset="utf-8">
+    console.log("libdom object: ", libdom);
+    </script>
 </body>
 </html>
 ```
@@ -42,7 +57,10 @@ libdom.on(global.document,
 Non-minified version of **libdom** is located in `node_modules/libdom/dist/libdom.js`.
 
 
-## More
+## Module API
+
+Please refer to [API Documentation](API.md) for more information on Browser DOM helpers.
+
 
 ## License
 
