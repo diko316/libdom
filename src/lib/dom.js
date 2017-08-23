@@ -142,7 +142,7 @@ function add(element, config, before) {
         applyConfigToElement(toInsert, config);
     }
     
-    if (!is(toInsert, 1, 3, 4, 7, 8)) {
+    if (!is(toInsert, 1, 3, 4, 7, 8, 11)) {
         throw new Error(invalidConfig);
     }
     
