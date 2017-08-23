@@ -2,13 +2,13 @@
 
 ## Table of Contents
 
-* [DOM Node](dom-node)
-* [Cascading Stylesheet](cascading-stylesheet)
-* [Events](events)
-* [Dimension and Positioning](dimension-and-positioning)
-* [Node Selection](node-selection)
-* [Animation](animation)
-* [Misc](misc)
+* [DOM Node](#dom-node)
+* [Cascading Stylesheet](#cascading-stylesheet)
+* [Events](#events)
+* [Dimension and Positioning](#dimension-and-positioning)
+* [Node Selection](#node-selection)
+* [Animation](#animation)
+* [Misc](#misc)
 
 ## DOM Node
 
@@ -18,12 +18,14 @@
 * If `nodeType` is omitted, it will match any DOM Node.
 
 Parameter
+
 Name    | Type  | Description
 --        |--     |--
 node      | Mixed | any value to inspect
 nodeType  | [Number] | (optional, multiple) nodeType filter (e.g. Element = 1, Document = 9)
 
 Returns
+
 Value | Type  | Description
 --    |--     |--
 true  | Boolean | if [node] parameter is an HTML DOM node.
