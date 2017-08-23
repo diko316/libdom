@@ -87,7 +87,7 @@ if (detect) {
     rehash(EXPORTS,
             require("./lib/animation.js"),
             {
-                'eachDisplacement': 'each',
+                'transition': 'each',
                 'animateStyle': 'style'
             });
     

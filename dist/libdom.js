@@ -3296,7 +3296,7 @@ if (detect) {
     rehash(EXPORTS,
             __webpack_require__(14),
             {
-                'eachDisplacement': 'each',
+                'transition': 'each',
                 'animateStyle': 'style'
             });
     
@@ -3359,7 +3359,7 @@ var STRING =  __webpack_require__(2),
  *      cubic-bezier(n,n,n,n)|initial|inherit
  */
 
-function animate(handler, from, to, type, duration) {
+function animate(callback, from, to, type, duration) {
     var M = Math,
         string = STRING,
         easing = EASING,
@@ -3407,7 +3407,7 @@ function animate(handler, from, to, type, duration) {
         }
     }
     
-    function callback() {
+    function run() {
         var specs = displacements,
             names = specs[0],
             from = specs[1],
@@ -3429,7 +3429,7 @@ function animate(handler, from, to, type, duration) {
         
         
         specs[3] = result;
-        handler(result, last);
+        callback(result, last);
         
         if (last) {
             control();
@@ -3437,7 +3437,7 @@ function animate(handler, from, to, type, duration) {
         
     }
     
-    if (!C.method(handler)) {
+    if (!C.method(callback)) {
         throw new Error(string[1151]);
     }
     
@@ -3446,13 +3446,12 @@ function animate(handler, from, to, type, duration) {
     }
     
     // prepare displacements
-    console.log("type ", type);
     type = C.contains(easing, type) ? easing[type] : easing.linear;
     duration = (C.number(duration) && duration > 0 ? duration : 1) * 1000;
     frames = M.max(10, M.round(duration / defaultInterval));
     
     displacements = [[], [], [], from, control];
-    interval = set(callback, defaultInterval);
+    interval = set(run, defaultInterval);
     control.session = interval;
     control.update = update;
     control.running = true;
@@ -3471,49 +3470,59 @@ function validValue(value) {
 }
 
 function applyDisplacements(session, from, to) {
-    var hasOwn = CORE.contains,
+    
+    CORE.each(to, onApplyDisplacement, [from, session], true);
+    
+    return session;
+}
+
+function onApplyDisplacement(value, name, to) {
+    /* jshint validthis:true */
+    var context = this,
+        hasOwn = CORE.contains,
         format = validValue,
+        from = context[0],
+        session = context[1],
         names = session[0],
         sourceValues = session[1],
         targetValues = session[2],
         len = names.length;
-    var name, index, source, target;
+        
+    var index, source, target, sourceEnded;
     
-    // valid target names from source
-    for (name in to) {
-        if (!hasOwn(to, name)) {
-            continue;
-        }
+    if (hasOwn(to, name)) {
         
         target = format(to[name]);
         
-        if (target === false) {
-            continue;
-        }
+        if (target !== false) {
+            index = names.indexOf(name);
+            source = hasOwn(from, name) && format(from[name]);
+            sourceEnded = source === false;
             
-        index = names.indexOf(name);
-        source = hasOwn(from, name) && format(from[name]);
-        
-        // create from source if did not exist
-        if (index === -1) {
-            if (source === false) {
-                continue;
+            // create from source if did not exist
+            if (index === -1) {
+                if (sourceEnded) {
+                    return true;
+                }
+                index = len++;
+                names[index] = name;
+                
             }
-            index = len++;
-            names[index] = name;
+            else if (sourceEnded) {
+                
+                source = sourceValues[index];
+            }
+            
+            // update
+            sourceValues[index] = source;
+            targetValues[index] = target;
             
         }
-        else if (source === false) {
-            source = sourceValues[index];
-        }
+            
         
-        // update
-        sourceValues[index] = source;
-        targetValues[index] = target;
-
     }
     
-    return session;
+    return true;
 }
 
 function hasAnimationType(type) {
