@@ -42,7 +42,7 @@ libdom.on(global.document,
 Non-minified version of **libdom** is located in `node_modules/libdom/dist/libdom.js`.
 
 
-> More documentations to come later.
+## More
 
 ## License
 
