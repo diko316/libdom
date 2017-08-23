@@ -439,7 +439,7 @@ function add(element, config, before) {
         applyConfigToElement(toInsert, config);
     }
     
-    if (!is(toInsert, 1, 3, 4, 7, 8)) {
+    if (!is(toInsert, 1, 3, 4, 7, 8, 11)) {
         throw new Error(invalidConfig);
     }
     
@@ -1136,7 +1136,7 @@ function stringify(colorValue, type) {
     var list = TO_COLOR,
         C = CORE;
     
-    if (!C.number(colorValue)) {
+    if (!C.number(colorValue) || colorValue < 0) {
         throw new Error("Invalid [colorValue] parameter.");
     }
     
@@ -1410,30 +1410,46 @@ var CSS_INFO;
     
 
 
-function addClass(element) {
-    var className;
+function addClass(element, classNames) {
+    var C = CORE,
+        isString = C.string;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
     
-    className = element.className;
+    if (isString(classNames)) {
+        classNames = [classNames];
+    }
     
-    element.className = STRING.addWord(className, SLICE.call(arguments, 1));
+    if (C.array(classNames)) {
+        element.className = STRING.addWord(element.className || '',
+                                           classNames);
+    }
     
     return EXPORTS.chain;
 }
 
-function removeClass(element) {
-    var className;
+function removeClass(element, classNames) {
+    var C = CORE,
+        isString = C.string;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
     
-    className = element.className;
+    if (!DOM.is(element, 1)) {
+        throw new Error(ERROR_INVALID_DOM);
+    }
     
-    element.className = STRING.removeWord(className, SLICE.call(arguments, 1));
+    if (isString(classNames)) {
+        classNames = [classNames];
+    }
+    
+    if (C.array(classNames)) {
+        element.className = STRING.removeWord(element.className,
+                                              classNames);
+    }
     
     return EXPORTS.chain;
 }
@@ -1486,6 +1502,7 @@ function onStyleElement(value, name) {
     var C = CORE,
         isNumber = C.number(value),
         isScalar = isNumber || C.string(value),
+        /* jshint validthis: true */
         elementStyle = this[0],
         set = SET_STYLE,
         applied = false;
@@ -1611,7 +1628,7 @@ function computedStyleNotSupported() {
     throw new Error(STRING[2002]);
 }
 
-function w3cGetCurrentStyle(element, list) {
+function w3cGetCurrentStyle(element, ruleNames) {
     var camel = STRING.stylize,
         isString = CORE.string;
     var style, c, l, name, value, values, access;
@@ -1623,11 +1640,11 @@ function w3cGetCurrentStyle(element, list) {
     style = global.getComputedStyle(element);
     
     values = {};
-    if (!CORE.array(list)) {
-        list = SLICE.call(arguments, 1);
+    if (!CORE.array(ruleNames)) {
+        ruleNames = SLICE.call(arguments, 1);
     }
-    for (c = -1, l = list.length; l--;) {
-        name = list[++c];
+    for (c = -1, l = ruleNames.length; l--;) {
+        name = ruleNames[++c];
         if (isString(name)) {
             access = camel(name);
             switch (access) {
@@ -1646,7 +1663,7 @@ function w3cGetCurrentStyle(element, list) {
     return values;
 }
 
-function ieGetCurrentStyle(element, list) {
+function ieGetCurrentStyle(element, ruleNames) {
     var dimensionRe = DIMENSION_RE,
         C = CORE,
         boxRe = BOX_RE,
@@ -1666,12 +1683,12 @@ function ieGetCurrentStyle(element, list) {
     dimension = false;
     values = {};
     
-    if (!C.array(list)) {
-        list = SLICE.call(arguments, 1);
+    if (!C.array(ruleNames)) {
+        ruleNames = SLICE.call(arguments, 1);
     }
     
-    for (c = -1, l = list.length; l--;) {
-        name = list[++c];
+    for (c = -1, l = ruleNames.length; l--;) {
+        name = ruleNames[++c];
         if (isString(name)) {
             access = camel(name);
             

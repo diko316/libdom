@@ -4,6 +4,7 @@
 
 * [DOM Node](#dom-node)
 * [Cascading Stylesheet](#cascading-stylesheet)
+* [Color](#color)
 * [Events](#events)
 * [Dimension and Positioning](#dimension-and-positioning)
 * [Node Selection](#node-selection)
@@ -88,7 +89,7 @@ Returns
 
 Value | Type  | Description
 --    |--     |--
-[HTMLElement,..] | Array | May be empty if no node matched the `selector`.
+Array(HTMLElement,..) | Array | May be empty if no node matched the `selector`.
 
 ---
 
@@ -173,23 +174,132 @@ HTMLElement | Node | The removed (or destroyed) Node `node`.
 
 ## Cascading Stylesheet
 
-#### `addClass(element, className[, ...])`
+#### `addClass(element, classNames)`
 
-* Adds `className` (or `className`s) into `element`.
-* `className` (or `className`s) will not be added if it exist already in "class" attribute of `element`.
+* Adds `classNames` (or Array of `classNames`) into `element`.
+* `classNames` (or Array of `classNames`) will not be added if it exist already in "class" attribute of `element`.
 
 Parameter
 
 Name      | Type  | Description
 --        |--     |--
 element | Node | Element Node.
-className[className, ..] | String | (multiple) CSS class to append
+classNames | String or Array(String) | CSS class to append
 
 Returns
 
 Value | Type  | Description
 --    |--     |--
-libdom | Object | The libdom module for chaining method calls.
+Object(libdom) | Object | The libdom module for chaining method calls.
+
+---
+
+#### `removeClass(element, classNames)`
+
+* Removes `classNames` (or Array of `classNames`) attached to `element`.
+* `classNames` (or Array of `classNames`) will not be removed if it doesn't exist in "class" attribute of `element`.
+
+Parameter
+
+Name      | Type  | Description
+--        |--     |--
+element | Node | Element Node.
+classNames | String or Array(String) | CSS class names to remove.
+
+Returns
+
+Value | Type  | Description
+--    |--     |--
+Object(libdom) | Object | The libdom module for chaining method calls.
+
+
+#### `computedStyle(element, ruleNames)`
+
+* Extracts CSS computed styles of `element` listed in `ruleNames`.
+* If `ruleNames` is not an Array, it is expected that `ruleNames` parameter is spread across the function `arguments`.
+
+Parameter
+
+Name      | Type  | Description
+--        |--     |--
+element | Node | Element Node.
+ruleNames | String or Array(String) | (multiple if String) list of CSS rule names or CSS rule name if String.
+
+Returns
+
+Value | Type  | Description
+--    |--     |--
+Object([ruleName]:[value], ... ) | Object | The computed style extracted limited to the given `ruleNames`.
+
+## Color
+
+#### `parseColor(subject)`
+
+* Creates Number presentation of String color `subject` formatted in hex (`#fff` or `#fffff`), `rgb(255,255,255)`, `rgba(255,255,255,1)`, `hsl(359,100%,100%)`, or `hsla(359,100%,100%,1)`.
+* The extracted Number presentation is useful for transitioning colors in combination with `formatColor(colorValue:Number, type:String)`.
+
+Parameter
+
+Name      | Type  | Description
+--        |--     |--
+subject | String | String in hex, rgb, rba, hsl, or hsl format.
+
+Returns
+
+Value | Type  | Description
+--    |--     |--
+Number(12234) | Number | `subject` is in valid color format and succesfully parsed.
+null  | Null | `subject` is contains invalid color format, malformed or not recognized.
+
+---
+
+#### `parseType(subject)`
+
+* Extracts String `subject` color format information.
+* Array Color information contains the following items:
+`[type:String, isHexFormat:Boolean, items:String|Array]`
+> Examples:
+>
+> ['hex', true, 'ff00aa']
+>
+> ['rgba', false, ['255', '120', '100', '0.5']]
+
+Parameter
+
+Name      | Type  | Description
+--        |--     |--
+subject | String | String in hex, rgb, rba, hsl, or hsl format.
+
+Returns
+
+Value | Type  | Description
+--    |--     |--
+Array(type, isHexFormat, items) | Array | `subject` is in valid color format and succesfully parsed.
+null  | Null | `subject` is contains invalid color format, malformed or not recognized.
+
+---
+
+#### `formatColor(colorValue[, type])`
+
+* Generates a formatted color string from the given Number `colorValue` and String `type` color format.
+
+Parameter
+
+Name      | Type  | Description
+--        |--     |--
+colorValue | Number | The Number presentation of color which may be generated from `parseColor(subject:String)`.
+[type]  | String  | (optional) Supported color types that should be one of the following values: `"hex"`, `"rgb"`, `"rgba"`, `"hsl"`, or `"hsla"`.
+
+Returns
+
+Value | Type  | Description
+--    |--     |--
+"#ff00ff" | String | If `type` is `"hex"`.
+"rgb(255,255,255)" | String | If `type` is `"rgb"`.
+"rgba(255,255,255,1)" | String | If `type` is `"rgba"`.
+"hsl(240,100%,50%)" | String | If `type` is `"hsl"`.
+"hsl(120,100%,50%,1)" | String | If `type` is `"hsla"`.
+null  | Null | `type` is not a supported color format.
 
 ## Events
 ## Dimension and Positioning

@@ -144,7 +144,7 @@ function stringify(colorValue, type) {
     var list = TO_COLOR,
         C = CORE;
     
-    if (!C.number(colorValue)) {
+    if (!C.number(colorValue) || colorValue < 0) {
         throw new Error("Invalid [colorValue] parameter.");
     }
     
