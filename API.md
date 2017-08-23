@@ -38,11 +38,13 @@ false | Boolean | if not an HTML DOM node.
 * Checks if `defaultView` is an instance of window or defaultView.
 
 Parameter
+
 Name      | Type  | Description
 --        |--     |--
 defaultView | Mixed | any value to inspect
 
 Returns
+
 Value | Type  | Description
 --    |--     |--
 true  | Boolean | if [defaultView] parameter is an instance of window or defaultView.
@@ -55,12 +57,14 @@ false | Boolean | if not an instance of window or defaultView.
 * Checks if `ancestor` node has `descendant` node in any depth.
 
 Parameter
+
 Name      | Type  | Description
 --        |--     |--
 ancestor  | Node  | DOM Node of nodeType: Element, Document, or Fragment.
 descendant  | Node  | DOM Node of any nodeType.
 
 Returns
+
 Value | Type  | Description
 --    |--     |--
 true  | Boolean | if [ancestor] contains [descendant] in DOM tree.
@@ -74,12 +78,14 @@ false | Boolean | if [ancestor] doesn't contain [descendant] node.
 * This throws error if querySelectorAll() is not supported.
 
 Parameter
+
 Name      | Type  | Description
 --        |--     |--
 dom | Node | DOM Node of nodeType: Element, or Document
 selector | String | Browser supported CSS selector.
 
 Returns
+
 Value | Type  | Description
 --    |--     |--
 [HTMLElement,..] | Array | May be empty if no node matched the `selector`.
@@ -91,6 +97,7 @@ Value | Type  | Description
 * This will insert the `config` element before `before` Node if `before` is a valid childnode of `element`.
 
 Parameter
+
 Name      | Type  | Description
 --        |--     |--
 element | Node | DOM Node of nodeType: Element, or Fragment
@@ -98,6 +105,7 @@ config | Node or Object | if Node of nodeType: Element, Fragment, Comment, Text,
 before | [Node] | (optional)
 
 Returns
+
 Value | Type  | Description
 --    |--     |--
 HTMLElement | Node | The inserted `config` Node (or newly the created Node if `config` is Object).
