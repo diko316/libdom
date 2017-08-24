@@ -59,7 +59,7 @@ Non-minified version of **libdom** is located in `node_modules/libdom/dist/libdo
 
 ## Module API
 
-Please refer to [API Documentation](docs/README.md) for more information on Browser DOM helpers.
+Please refer to [API Documentation](https://diko316.github.io/libdom) for more information on Browser DOM helpers.
 
 
 ## License
