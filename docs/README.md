@@ -9,55 +9,55 @@
 
 * [DOM](#dom)
 
-  - [is()](#is-node-nodetype)
-  - [isView()](#is-view-defaultview)
-  - [contains()](#contains-ancestor-descendant)
-  - [select()](#select-dom-selector)
-  - [add()](#add-element-config-before)
-  - [move()](#move-nodes-element)
-  - [replace()](#replace-node-config-destroy)
-  - [remove()](#remove-node-destroy)
+  - [is()](#isnode-nodetype)
+  - [isView()](#isviewdefaultview)
+  - [contains()](#containsancestor-descendant)
+  - [select()](#selectdom-selector)
+  - [add()](#addelement-config-before)
+  - [move()](#movenodes-element)
+  - [replace()](#replacenode-config-destroy)
+  - [remove()](#removenode-destroy)
 
 * [Cascading Stylesheet](#cascading-stylesheet)
 
-  - [addClass()](#addclass-element-classnames)
-  - [removeClass()](#addclass-element-classnames)
-  - [computedStyle()](#computedstyle-element-rulenames)
-  - [stylize()](#stylize-element-rules-value)
-  - [stylify()](#stylify-element)
+  - [addClass()](#addclasselement-classnames)
+  - [removeClass()](#addclasselement-classnames)
+  - [computedStyle()](#computedstyleelement-rulenames)
+  - [stylize()](#stylizeelement-rules-value)
+  - [stylify()](#stylifyelement)
 
 * [Color](#color)
 
-  - [parseColor()](#parsecolor-subject)
-  - [parseColorType()](#parsecolortype-subject)
-  - [formatColor()](#formatcolor-colorvalue-type)
+  - [parseColor()](#parsecolorsubject)
+  - [parseColorType()](#parsecolortypesubject)
+  - [formatColor()](#formatcolorcolorvalue-type)
 
 * [Events](#events)
 
-  - [on()](#on-observable-type-handler-context)
-  - [un()](#un-observable-type-handler-context)
-  - [purge()](#purge-observable-type-handler-context)
-  - [dispatch()](#dispatch-observable-type-properties)
-  - [destructor()](#destructor-handler)
+  - [on()](#onobservable-type-handler-context)
+  - [un()](#unobservable-type-handler-context)
+  - [purge()](#purgeobservable-type-handler-context)
+  - [dispatch()](#dispatchobservable-type-properties)
+  - [destructor()](#destructorhandler)
 
 * [Dimension and Positioning](#dimension-and-positioning)
 
-  - [offset()](#offset-element-x-y)
-  - [size()](#size-element-width-height)
-  - [box()](#box-element-x-y-width-height)
-  - [scroll()](#scroll-dom-x-y)
-  - [screen()](#screen-dom)
+  - [offset()](#offsetelement-x-y)
+  - [size()](#sizeelement-width-height)
+  - [box()](#boxelement-x-y-width-height)
+  - [scroll()](#scrolldom-x-y)
+  - [screen()](#screendom)
 
 * [Node Selection](#node-selection)
 
-  - [highlight()](#highlight-from-to)
-  - [unhighlightable()](#unhighlightable-element-disableselect)
-  - [clearHighlight()](#clearhighlight-documentnode)
+  - [highlight()](#highlightfrom-to)
+  - [unhighlightable()](#unhighlightableelement-disableselect)
+  - [clearHighlight()](#clearhighlightdocumentnode)
 
 * [Animation](#animation)
 
-  - [transition()](#transition-callback-from-to-type-duration)
-  - [animateStyle()](#animatestyle-element-styles-type)
+  - [transition()](#transitioncallback-from-to-type-duration)
+  - [animateStyle()](#animatestyleelement-styles-type)
 
 ## String
 
@@ -96,9 +96,9 @@ String(raw String with decoded HTML entities)  | String | Decoded String.
 ## DOM
 
 ### `is(node[, nodeType[,...]])`
-test
-: Checks if `node` is a DOM Node filtered by any given `nodeType` parameters.
-: If `nodeType` is omitted, it will match any DOM Node.
+
+* Checks if `node` is a DOM Node filtered by any given `nodeType` parameters.
+* If `nodeType` is omitted, it will match any DOM Node.
 
 Parameter
 
