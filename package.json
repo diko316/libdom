@@ -53,6 +53,6 @@
     "webpack-hot-middleware": "^2.18.0"
   },
   "optionalDependencies": {
-    "libcore": "0.3.0"
+    "libcore": "0.3.2"
   }
 }

@@ -1,12 +1,12 @@
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require(undefined));
+		module.exports = factory(require("libcore"));
 	else if(typeof define === 'function' && define.amd)
-		define([], factory);
-	else {
-		var a = typeof exports === 'object' ? factory(require(undefined)) : factory(root["libcore"]);
-		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
-	}
+		define("libdom", [], factory);
+	else if(typeof exports === 'object')
+		exports["libdom"] = factory(require("libcore"));
+	else
+		root["libdom"] = factory(root["libcore"]);
 })(this, function(__WEBPACK_EXTERNAL_MODULE_0__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -3336,6 +3336,7 @@ if (detect) {
 module.exports =
     EXPORTS['default'] =        // attach "default" for ES6 import
     CORE.dom =                  // attach libdom to libcore from "dom"
+    //global.gago = EXPORTS;
     global.libdom = EXPORTS;    // attach as global "libdom" variable
 
 

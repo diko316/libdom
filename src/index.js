@@ -103,6 +103,7 @@ if (detect) {
 module.exports =
     EXPORTS['default'] =        // attach "default" for ES6 import
     CORE.dom =                  // attach libdom to libcore from "dom"
+    //global.gago = EXPORTS;
     global.libdom = EXPORTS;    // attach as global "libdom" variable
 
 
