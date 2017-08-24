@@ -231,6 +231,66 @@ Value | Type  | Description
 --    |--     |--
 Object([ruleName]:[value], ... ) | Object | The computed style extracted limited to the given `ruleNames`.
 
+--
+
+#### `stylize(element, rules[, value])`
+
+* Applies CSS `rules` Object to `element` style attribute.
+* If `rules` is String then `element` style is set individually using `value` parameter.
+* If `value` or property value of `rules` is `null` or `undefined`, then CSS rule(s) will be removed from `element` style attribute.
+
+Parameter
+
+Name      | Type  | Description
+--        |--     |--
+element | Node | Element Node.
+rules | String or Object | CSS rules Object to apply or individually set CSS rule String with `value` parameter.
+[value] | Mixed | (optional) only applicable if `rules` parameter is String
+
+Returns
+
+Value | Type  | Description
+--    |--     |--
+Object(libdom) | Object | libdom module.
+
+---
+
+#### `stylize(element, rules[, value])`
+
+* Applies CSS `rules` Object to `element` style attribute.
+* If `rules` is String then `element` style is set individually using `value` parameter. Or when `value` parameter is omitted, `rules` will be applied as cssText to `element` style attribute.
+* If `value` or property value of `rules` is `null` or `undefined`, then CSS rule(s) will be removed from `element` style attribute.
+
+Parameter
+
+Name      | Type  | Description
+--        |--     |--
+element | Node | Element Node.
+rules | String or Object | CSS rules Object to apply. When `rules` is String, it will individually set CSS rule String with `value` parameter. Or when `value` is omitted, `rules` parameter is treated as cssText and applied to element style attribute.
+[value] | Mixed | (optional) only applicable if `rules` parameter is String
+
+Returns
+
+Value | Type  | Description
+--    |--     |--
+Object(libdom) | Object | libdom module.
+
+#### `stylify(element)`
+
+* Extracts CSS rules in `element` style attribute.
+
+Parameter
+
+Name      | Type  | Description
+--        |--     |--
+element | Node | Element Node.
+
+Returns
+
+Value | Type  | Description
+--    |--     |--
+Object(CSS rules) | Object | CSS rules extracted.
+
 ## Color
 
 #### `parseColor(subject)`
@@ -302,6 +362,100 @@ Value | Type  | Description
 null  | Null | `type` is not a supported color format.
 
 ## Events
+
+#### `on(observable, type, handler[, context])`
+
+* Listens to dispatched event `type` ocurring in `observable` and runs `handler` callback on each event dispatch.
+
+Parameter
+
+Name      | Type  | Description
+--        |--     |--
+observable | Mixed | Object supporting DOM Events (e.g. Node, Window, XMLHttpRequest).
+type  | String  | event type or name (e.g. "load" for onload events).
+handler | Function | callback of event dispatch.
+[context] | Mixed | (optional) `this` object inside the handler which defaults to `Window` (or `undefined` in strict mode) if omitted.
+
+Returns
+
+Value | Type  | Description
+--    |--     |--
+Function(remove listener) | Function | The function that removes the event listener.
+
+---
+
+#### `un(observable, type, handler[, context])`
+
+* Removes event listener in `observable` that matches event `type`, and `handler` (including `context` if provided).
+
+Parameter
+
+Name      | Type  | Description
+--        |--     |--
+observable | Mixed | Object supporting DOM Events (e.g. Node, Window, XMLHttpRequest).
+type  | String  | event type or name (e.g. "load" for onload events).
+handler | Function | callback of event dispatch.
+[context] | Mixed | (optional) `this` object inside the handler which defaults to `Window` (or `undefined` in strict mode) if omitted.
+
+Returns
+
+Value | Type  | Description
+--    |--     |--
+Object(libdom) | Object | libdom module.
+
+---
+
+#### `purge([observable, [type, [handler[, context]]]])`
+
+* Removes all listeners that matches the parameters: `observable`, `type`, `handler`, and `context`.
+* When all parameters are omitted, all event listeners registered are removed.
+
+> Example
+>
+> - `purge(window, "load");` remove all "load" event listeners of `window`
+> - `purge(window);` remove all event listeners of `window`
+> - `purge(document.body, "mousemove", callback);` remove all "mousemove" event listeners of `document.body` having `callback` event handler.
+> - `purge()` remove all event listeners. This is called automatically before webpage unloads.
+
+Parameter
+
+Name      | Type  | Description
+--        |--     |--
+[observable] | Mixed | (optional) Object supporting DOM Events (e.g. Node, Window, XMLHttpRequest).
+[type]  | String  | (optional) event type or name (e.g. "load" for onload events).
+[handler] | Function | (optional) callback of event dispatch.
+[context] | Mixed | (optional) `this` object inside the handler which defaults to `Window` (or `undefined` in strict mode) if omitted.
+
+Returns
+
+Value | Type  | Description
+--    |--     |--
+Object(libdom) | Object | libdom module.
+
+---
+
+#### `dispatch(observable, type, properties)`
+
+* Dispatches custom DOM Event `type` to `observable`.
+> Note:
+>
+> - IE 8 and below uses "propertychange" event type to dispatch event if `properties.bubbles = false`. And, "beforeupdate" event type if `bubbles = true`.
+> - w3c standard browsers including IE9 supporting w3c Event throws errors to readonly Event object property after assigning `properties` to it.
+
+Parameter
+
+Name      | Type  | Description
+--        |--     |--
+observable | Mixed | Object supporting DOM Events (e.g. Node, Window, XMLHttpRequest).
+type  | String  | event type or name (e.g. "load" for onload events).
+properties | Object | Event Object property overrides.
+
+Returns
+
+Value | Type  | Description
+--    |--     |--
+Object(libdom) | Object | libdom module.
+
 ## Dimension and Positioning
 ## Node Selection
 ## Animation

@@ -44,7 +44,8 @@ if (detect) {
                 'addClass': 'add',
                 'removeClass': 'remove',
                 'computedStyle': 'computedStyle',
-                'stylize': 'style'
+                'stylize': 'style',
+                'stylify': 'currentStyle'
             });
     
     

@@ -47,7 +47,9 @@ var CORE = require("libcore"),
         add: addClass,
         remove: removeClass,
         computedStyle: computedStyleNotSupported,
-        style: applyStyle,
+        //style: applyStyle,
+        style: setStyle,
+        currentStyle: getStyle,
         unitValue: getCSSUnitValue,
         styleOpacity: opacityNotSupported,
         colorUnit: 'hex',
@@ -106,48 +108,57 @@ function removeClass(element, classNames) {
     return EXPORTS.chain;
 }
 
-function applyStyle(element, style, value) {
-    var C = CORE,
-        parse = parseCSSText,
-        len = arguments.length;
-        
+function applyStyle() {
+    /* jshint validthis: true */
+    return arguments.length > 1 ?
+                // setter
+                setStyle.apply(this, arguments) :
+                
+                // getter
+                getStyle.apply(this, arguments);
+                
+    
+    
+}
+
+function setStyle(element, rules, value) {
+    var C = CORE;
     var context;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
     
-    // setter
-    if (len > 1) {
-        
-        if (C.string(style)) {
-            if (len > 2) {
-                context = {};
-                context[style] = value;
-                style = context;
-            }
-            else {
-                style = parse(style);
-            }
+    if (C.string(rules)) {
+        if (arguments.length > 2) {
+            context = {};
+            context[rules] = value;
+            rules = context;
         }
-        
-        if (!C.object(style)) {
-            throw new Error(STRING[1141]);
+        else {
+            rules = parseCSSText(rules);
         }
-
-        //elementStyle = element.style;
-        context = [element.style];
-        
-        CORE.each(style, onStyleElement, context, true);
-        
-        context = context[0] = null;
-        
-        return EXPORTS.chain;
     }
     
-    // getter
-    return parse(element.style.cssText);
+    if (!C.object(rules)) {
+        throw new Error(STRING[1141]);
+    }
+
+    context = [element.style];
     
+    C.each(rules, onStyleElement, context, true);
+    
+    context = context[0] = null;
+    
+    return EXPORTS.chain;
+}
+
+function getStyle(element) {
+    if (!DOM.is(element, 1)) {
+        throw new Error(ERROR_INVALID_DOM);
+    }
+    
+    return parseCSSText(element.style.cssText);
 }
 
 function onStyleElement(value, name) {
