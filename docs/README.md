@@ -4,8 +4,8 @@
 
 * [String](#string)
 
-  - [xmlEncode()](#xmlencode-subject)
-  - [xmlDecode()](#xmldecode-subject)
+  - [xmlEncode()](#xmlencodesubject)
+  - [xmlDecode()](#xmldecodesubject)
 
 * [DOM](#dom)
 
