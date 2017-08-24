@@ -436,6 +436,7 @@ function addDestructor(handler) {
     if (CORE.method(handler)) {
         MIDDLEWARE.register('global-destroy', handler);
     }
+    return EXPORTS.chain;
 }
 
 

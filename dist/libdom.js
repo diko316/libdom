@@ -215,19 +215,19 @@ function removeWord(str, items) {
     return str.join(' ');    
 }
 
-function htmlunescape(str) {
+function htmlunescape(subject) {
     var textarea = TEXTAREA;
     var value = '';
     if (textarea) {
-        textarea.innerHTML = str;
+        textarea.innerHTML = subject;
         value = textarea.value;
     }
     textarea = null;
     return value;
 }
 
-function htmlescape(str) {
-    return str.replace(HTML_ESCAPE_CHARS_RE, htmlescapeCallback);
+function htmlescape(subject) {
+    return subject.replace(HTML_ESCAPE_CHARS_RE, htmlescapeCallback);
 }
 
 function htmlescapeCallback(chr) {
@@ -1996,7 +1996,7 @@ var CORE = __webpack_require__(0),
     DETECTED = __webpack_require__(3),
     STRING = __webpack_require__(2),
     DOM = __webpack_require__(4),
-    CSS = __webpack_require__(8),
+    CSS_MODULE = __webpack_require__(8),
     
     ERROR_INVALID_ELEMENT = STRING[1101],
     ERROR_INVALID_DOM = STRING[1102],
@@ -2081,7 +2081,7 @@ function box(element, x, y, width, height) {
         applyStyle = translateBox(element, x, y, null, null, width, height);
         
         if (applyStyle) {
-            CSS.style(element, applyStyle);
+            CSS_MODULE.style(element, applyStyle);
         }
         return EXPORTS.chain;
     }
@@ -2118,7 +2118,7 @@ function box(element, x, y, width, height) {
 }
 
 function translateBox(element, x, y, right, bottom, width, height, target) {
-    var css = CSS,
+    var css = CSS_MODULE,
         cssValue = css.unitValue,
         parse = parseFloat,
         NUMBER = 'number',
@@ -2326,7 +2326,7 @@ function pageBox(dom) {
  */
 function visible(element, visibility, displayed) {
     var style = null,
-        css = CSS,
+        css = CSS_MODULE,
         isString = CORE.string,
         len = arguments.length,
         attached = isViewable(element) === ELEMENT_VIEW;
@@ -2359,7 +2359,7 @@ function visible(element, visibility, displayed) {
     
     // getter
     if (attached) {
-        style = CSS.computedStyle(element,
+        style = CSS_MODULE.computedStyle(element,
                         'display',
                         'visibility');
         return style.display !== 'none' && style.visibility !== 'hidden';
@@ -2455,7 +2455,7 @@ function rectOffset(element, boundingRect) {
 function manualOffset(element) {
     var root = global.document[IE_PAGE_STAT_ACCESS],
         body = root.body,
-        css = CSS,
+        css = CSS_MODULE,
         
         top = OFFSET_TOP,
         left = OFFSET_LEFT,
@@ -2564,12 +2564,12 @@ function isViewable(dom) {
     var help = DOM;
     var body, viewable;
     
-    if (help.is(dom)) {
-        switch (dom.nodeType) {
-        case 9:
-        case 11:
+    if (help.is(dom, 1, 9)) {
+        
+        if (dom.nodeType === 9) {
             return PAGE_VIEW;
         }
+        
         body = dom.ownerDocument.body;
         viewable = (dom === body || help.contains(body, dom)) && ELEMENT_VIEW;
         body = null;
@@ -3180,6 +3180,7 @@ function addDestructor(handler) {
     if (CORE.method(handler)) {
         MIDDLEWARE.register('global-destroy', handler);
     }
+    return EXPORTS.chain;
 }
 
 
@@ -3305,7 +3306,7 @@ if (detect) {
             selection = __webpack_require__(24),
             {
                 'highlight': 'select',
-                'noHighlight': 'unselectable',
+                'unhighlightable': 'unselectable',
                 'clearHighlight': 'clear'
             });
     
@@ -3456,7 +3457,7 @@ function animate(callback, from, to, type, duration) {
         
         
         specs[3] = result;
-        callback(result, last);
+        callback(result, current, total);
         
         if (last) {
             stop();
@@ -3476,7 +3477,7 @@ function animate(callback, from, to, type, duration) {
     if (alen < 4) {
         type = EXPORTS.defaultEasing;
     }
-    else if (!C.string(type) || !has(easing, type)) {
+    else if (!hasAnimationType(type)) {
         throw new Error(string[1153]);
     }
     
@@ -3626,7 +3627,7 @@ function animateStyle(element, styles, type) {
 }
 
 function createElementHandler(animate) {
-    function onAnimate(values, last) {
+    function onAnimate(values, current, total) {
         var session = animate,
             node = session.node;
         
@@ -3642,7 +3643,7 @@ function createElementHandler(animate) {
         
         CSS_MODULE.style(node, values);
         
-        if (last) {
+        if (current === total) {
             node.removeAttribute(SESSION_ACCESS);
             session.node = null;
             delete session.node;
@@ -4337,42 +4338,42 @@ var DETECTED = __webpack_require__(3),
         unselectable: unselectable
     };
 
-function select(element, endElement) {
+function select(from, to) {
     var dimension = DIMENSION;
     
-    if (DOM.is(element, 9)) {
-        element = element.body;
+    if (DOM.is(from, 9)) {
+        from = from.body;
     }
     
-    if (!dimension.visible(element)) {
+    if (!dimension.visible(from)) {
         throw new Error(STRING[1101]);
     }
     
     if (arguments.length < 2) {
-        endElement = null;
+        to = null;
     }
     
-    if (endElement !== null && !dimension.visible(endElement)) {
+    if (to !== null && !dimension.visible(to)) {
         throw new Error(ERROR_DOM);
     }
     
-    SELECT_ELEMENT(element, endElement);
+    SELECT_ELEMENT(from, to);
     
     return EXPORTS.chain;
     
 }
 
-function clear(document) {
-    if (!DOM.is(document, 9)) {
+function clear(documentNode) {
+    if (!DOM.is(documentNode, 9)) {
         if (arguments.length > 0) {
             throw new Error(STRING[1104]);
         }
         else {
-            document = global.document;
+            documentNode = global.document;
         }
     }
     
-    CLEAR_SELECTION(document);
+    CLEAR_SELECTION(documentNode);
     
     return EXPORTS.chain;
 }
@@ -4382,7 +4383,9 @@ function unselectable(element, disableSelect) {
         throw new Error(ERROR_DOM);
     }
     
-    UNSELECTABLE(element, disableSelect === false);
+    UNSELECTABLE(element,
+                 disableSelect === false);
+    
     return EXPORTS.chain;
 }
 
@@ -4446,7 +4449,7 @@ function w3cSelectElement(startElement, endElement) {
         selection.addRange(endRange);
     }
     
-    document = selection = startRange = endRange;
+    document = selection = startRange = endRange = null;
 }
 
 function w3cClearSelection(document) {

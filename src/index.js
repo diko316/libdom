@@ -73,7 +73,7 @@ if (detect) {
             selection = require("./lib/selection.js"),
             {
                 'highlight': 'select',
-                'noHighlight': 'unselectable',
+                'unhighlightable': 'unselectable',
                 'clearHighlight': 'clear'
             });
     

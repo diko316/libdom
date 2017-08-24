@@ -112,8 +112,8 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                                                  'easeOut', 1))).
                     toBe(true);
                     
-                libcore.method(transition((value, last) => {
-                                            if (last) {
+                libcore.method(transition((value, current, total) => {
+                                            if (current === total) {
                                                 expect(to.x).
                                                     toBe(value.x);
                                                     
@@ -136,8 +136,8 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                                                  to))).
                     not.toThrow();
                     
-                libcore.method(transition((value, last) => {
-                                            if (last) {
+                libcore.method(transition((value, current, total) => {
+                                            if (current === total) {
                                                 expect(to.x).
                                                     toBe(value.x);
                                                     
@@ -160,8 +160,8 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                                                  'linear'))).
                     not.toThrow();
                     
-                libcore.method(transition((value, last) => {
-                                            if (last) {
+                libcore.method(transition((value, current, total) => {
+                                            if (current === total) {
                                                 expect(to.x).
                                                     toBe(value.x);
                                                     

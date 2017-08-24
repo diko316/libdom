@@ -108,7 +108,7 @@ function animate(callback, from, to, type, duration) {
         
         
         specs[3] = result;
-        callback(result, last);
+        callback(result, current, total);
         
         if (last) {
             stop();
@@ -128,7 +128,7 @@ function animate(callback, from, to, type, duration) {
     if (alen < 4) {
         type = EXPORTS.defaultEasing;
     }
-    else if (!C.string(type) || !has(easing, type)) {
+    else if (!hasAnimationType(type)) {
         throw new Error(string[1153]);
     }
     
@@ -278,7 +278,7 @@ function animateStyle(element, styles, type) {
 }
 
 function createElementHandler(animate) {
-    function onAnimate(values, last) {
+    function onAnimate(values, current, total) {
         var session = animate,
             node = session.node;
         
@@ -294,7 +294,7 @@ function createElementHandler(animate) {
         
         CSS_MODULE.style(node, values);
         
-        if (last) {
+        if (current === total) {
             node.removeAttribute(SESSION_ACCESS);
             session.node = null;
             delete session.node;

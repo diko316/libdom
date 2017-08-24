@@ -17,42 +17,42 @@ var DETECTED = require("./detect.js"),
         unselectable: unselectable
     };
 
-function select(element, endElement) {
+function select(from, to) {
     var dimension = DIMENSION;
     
-    if (DOM.is(element, 9)) {
-        element = element.body;
+    if (DOM.is(from, 9)) {
+        from = from.body;
     }
     
-    if (!dimension.visible(element)) {
+    if (!dimension.visible(from)) {
         throw new Error(STRING[1101]);
     }
     
     if (arguments.length < 2) {
-        endElement = null;
+        to = null;
     }
     
-    if (endElement !== null && !dimension.visible(endElement)) {
+    if (to !== null && !dimension.visible(to)) {
         throw new Error(ERROR_DOM);
     }
     
-    SELECT_ELEMENT(element, endElement);
+    SELECT_ELEMENT(from, to);
     
     return EXPORTS.chain;
     
 }
 
-function clear(document) {
-    if (!DOM.is(document, 9)) {
+function clear(documentNode) {
+    if (!DOM.is(documentNode, 9)) {
         if (arguments.length > 0) {
             throw new Error(STRING[1104]);
         }
         else {
-            document = global.document;
+            documentNode = global.document;
         }
     }
     
-    CLEAR_SELECTION(document);
+    CLEAR_SELECTION(documentNode);
     
     return EXPORTS.chain;
 }
@@ -62,7 +62,9 @@ function unselectable(element, disableSelect) {
         throw new Error(ERROR_DOM);
     }
     
-    UNSELECTABLE(element, disableSelect === false);
+    UNSELECTABLE(element,
+                 disableSelect === false);
+    
     return EXPORTS.chain;
 }
 
@@ -126,7 +128,7 @@ function w3cSelectElement(startElement, endElement) {
         selection.addRange(endRange);
     }
     
-    document = selection = startRange = endRange;
+    document = selection = startRange = endRange = null;
 }
 
 function w3cClearSelection(document) {

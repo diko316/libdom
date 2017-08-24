@@ -99,19 +99,19 @@ function removeWord(str, items) {
     return str.join(' ');    
 }
 
-function htmlunescape(str) {
+function htmlunescape(subject) {
     var textarea = TEXTAREA;
     var value = '';
     if (textarea) {
-        textarea.innerHTML = str;
+        textarea.innerHTML = subject;
         value = textarea.value;
     }
     textarea = null;
     return value;
 }
 
-function htmlescape(str) {
-    return str.replace(HTML_ESCAPE_CHARS_RE, htmlescapeCallback);
+function htmlescape(subject) {
+    return subject.replace(HTML_ESCAPE_CHARS_RE, htmlescapeCallback);
 }
 
 function htmlescapeCallback(chr) {

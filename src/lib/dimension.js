@@ -4,7 +4,7 @@ var CORE = require("libcore"),
     DETECTED = require("./detect.js"),
     STRING = require("./string.js"),
     DOM = require("./dom.js"),
-    CSS = require("./css.js"),
+    CSS_MODULE = require("./css.js"),
     
     ERROR_INVALID_ELEMENT = STRING[1101],
     ERROR_INVALID_DOM = STRING[1102],
@@ -89,7 +89,7 @@ function box(element, x, y, width, height) {
         applyStyle = translateBox(element, x, y, null, null, width, height);
         
         if (applyStyle) {
-            CSS.style(element, applyStyle);
+            CSS_MODULE.style(element, applyStyle);
         }
         return EXPORTS.chain;
     }
@@ -126,7 +126,7 @@ function box(element, x, y, width, height) {
 }
 
 function translateBox(element, x, y, right, bottom, width, height, target) {
-    var css = CSS,
+    var css = CSS_MODULE,
         cssValue = css.unitValue,
         parse = parseFloat,
         NUMBER = 'number',
@@ -334,7 +334,7 @@ function pageBox(dom) {
  */
 function visible(element, visibility, displayed) {
     var style = null,
-        css = CSS,
+        css = CSS_MODULE,
         isString = CORE.string,
         len = arguments.length,
         attached = isViewable(element) === ELEMENT_VIEW;
@@ -367,7 +367,7 @@ function visible(element, visibility, displayed) {
     
     // getter
     if (attached) {
-        style = CSS.computedStyle(element,
+        style = CSS_MODULE.computedStyle(element,
                         'display',
                         'visibility');
         return style.display !== 'none' && style.visibility !== 'hidden';
@@ -463,7 +463,7 @@ function rectOffset(element, boundingRect) {
 function manualOffset(element) {
     var root = global.document[IE_PAGE_STAT_ACCESS],
         body = root.body,
-        css = CSS,
+        css = CSS_MODULE,
         
         top = OFFSET_TOP,
         left = OFFSET_LEFT,
@@ -572,12 +572,12 @@ function isViewable(dom) {
     var help = DOM;
     var body, viewable;
     
-    if (help.is(dom)) {
-        switch (dom.nodeType) {
-        case 9:
-        case 11:
+    if (help.is(dom, 1, 9)) {
+        
+        if (dom.nodeType === 9) {
             return PAGE_VIEW;
         }
+        
         body = dom.ownerDocument.body;
         viewable = (dom === body || help.contains(body, dom)) && ELEMENT_VIEW;
         body = null;
