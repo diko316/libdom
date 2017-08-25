@@ -1,23 +1,27 @@
 'use strict';
 
+import { env } from "libcore";
+
 var ROOT = global,
-    CORE = require("libcore"),
-    ENV = CORE.env,
-    EXPORTS = false;
-    
+    browser = env.browser,
+    strict = false,
+    ieVersion = 0,
+    ie8 = false,
+    exported = false;
+
 var match, ieVersion;
 
-if (ENV.browser) {
-    match = ENV.userAgent.match(/msie ([0-9]+\.[0-9]+)/i);
-    ieVersion = match && parseInt(match[1], 10) || 0;
-    EXPORTS = {
-        strict: ROOT.document.compatMode === 'CSS1Compat',
-        ieVersion: ieVersion,
-        ie8: ieVersion === 8
-    };
-}
+if (browser) {
+  match = env.userAgent.match(/msie ([0-9]+\.[0-9]+)/i);
 
-module.exports = EXPORTS;
+  exported = {
+    strict: ROOT.document.compatMode === 'CSS1Compat',
+    ieVersion: match && parseInt(match[1], 10) || 0,
+    ie8: ieVersion === 8
+  };
+
+}
 
 ROOT = null;
 
+export default exported;

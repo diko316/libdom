@@ -1,54 +1,71 @@
 'use strict';
 
 
+import {
+            string
+        } from "libcore";
+
+import browser from "./browser.js";
+
 var WINDOW = global,
-    CORE = require("libcore"),
-    DOC = WINDOW.document,
-    DIV = DOC.createElement('div'),
-    STYLE = DIV.style,
-    RGBA = 'rgba(0,0,0,0.5)',
-    TRANSITION_SUPPORT = ['OTransition',
+    exported = false;
+var DOC, DIV, STYLE, name, color;
+
+function detectAlphaColor(style) {
+    var rgba = 'rgba(0,0,0,0.5)';
+
+    try {
+        style.color = rgba;
+        color = style.color;
+
+        if (string(color)) {
+            color = color.replace(/[ \r\n\t\s]+/g, '').toLowerCase();
+        }
+
+        if (rgba === color) {
+            return true;
+        }
+    }
+    catch (e) {}
+
+    return false;
+}
+
+function detectTransition(style) {
+    var supports = ['OTransition',
                             'webkitTransition',
                             'MozTransition',
-                            'transition'];
+                            'transition'],
+        l = supports.length;
 
-var name, l, EXPORTS, color;
+    for (l = supports.length; l--;) {
+        name = supports[l];
+        if (typeof style[name] !== 'undefined') {
+            return name;
+        }
+    }
+    return false;
+}
 
 
-module.exports = EXPORTS = {
+if (browser) {
+  DOC = WINDOW.document;
+  DIV = DOC.createElement('div');
+  STYLE = DIV.style;
+
+  exported = {
     w3cStyle: !!WINDOW.getComputedStyle,
     ieStyle: !!DOC.documentElement.currentStyle,
     setattribute: !!STYLE.setAttribute,
     setproperty: !!STYLE.setProperty,
-    transition: false,
     opacity: typeof STYLE.opacity !== 'undefined',
     filterOpacity: typeof STYLE.filter !== 'undefined',
-    alphaColor: false
-};
+    alphaColor: detectAlphaColor(STYLE),
+    transition: = detectTransition(STYLE)
+  };
 
-// try alpha color
-try {
-    STYLE.color = RGBA;
-    color = STYLE.color;
-    
-    if (CORE.string(color)) {
-        color = color.replace(/[ \r\n\t\s]+/g, '').toLowerCase();
-    }
-
-    if (RGBA === color) {
-        EXPORTS.alphaColor = true;
-    }
 }
-catch (e) {}
-
-// detect transition
-for (l = TRANSITION_SUPPORT.length; l--;) {
-    name = TRANSITION_SUPPORT[l];
-    if (typeof STYLE[name] !== 'undefined') {
-        EXPORTS.transition = name;
-        break;
-    }
-}
-
 
 WINDOW = DOC = DIV = STYLE = null;
+
+export default exported;

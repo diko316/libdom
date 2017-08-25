@@ -1,11 +1,18 @@
 'use strict';
 
-var WINDOW = global;
+import browser from "./browser.js";
 
-module.exports = {
+var WINDOW = global,
+  exported = false;
+
+if (browser) {
+  exported = {
     w3c: !!WINDOW.addEventListener,
     ie: !!WINDOW.attachEvent,
     customEvent: !!WINDOW.CustomEvent
-};
+  }
+}
 
 WINDOW = null;
+
+export default exported;

@@ -1,18 +1,24 @@
 'use strict';
 
-var browser = require("./detect/browser.js"),
-    EXPORTS = false;
-    
+
+import browser from "./detect/browser.js";
+import { default as domEvent } from "./detect/event.js";
+import dom from "./detect/dom.js";
+import css from "./detect/css.js";
+import dimension from "./detect/dimension.js";
+import selection from "./detect/selection.js";
+
+var exported = false;
 
 if (browser) {
-    EXPORTS = {
-        browser: browser,
-        event: require("./detect/event.js"),
-        dom: require("./detect/dom.js"),
-        css: require("./detect/css.js"),
-        dimension: require("./detect/dimension.js"),
-        selection: require("./detect/selection.js")
+    exported = {
+      browser: browser,
+      event: domEvent,
+      dom: dom,
+      css: css,
+      dimension: dimension,
+      selection: selection
     };
 }
 
-module.exports = EXPORTS;
+export default exported;

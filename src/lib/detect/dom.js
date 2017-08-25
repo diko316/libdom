@@ -1,9 +1,15 @@
 'use strict';
 
-var DOCUMENT = global.document,
-    ROOT = DOCUMENT.documentElement;
+import browser from "./browser.js";
 
-module.exports = {
+var WINDOW = global,
+    exported = false;
+var DOCUMENT, ROOT;
+
+if (browser) {
+  DOCUMENT = WINDOW.document;
+  ROOT = DOCUMENT.documentElement;
+  exported = {
     compare: !!ROOT.compareDocumentPosition,
     contains: !!ROOT.contains,
     defaultView: DOCUMENT.defaultView ?
@@ -12,6 +18,10 @@ module.exports = {
                         'parentWindow' : null,
     querySelectorAll: !!DOCUMENT.querySelectorAll,
     listToArray: ROOT.childNodes instanceof Object
-};
+  }
+
+}
 
 DOCUMENT = ROOT = null;
+
+export default exported;
