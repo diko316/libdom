@@ -1,30 +1,47 @@
 'use strict';
 
-import { rehash } from "libcore";
+import {
+            env,
+            rehash
+        } from "libcore";
 
+import detect from "./lib/detect.js";
 
+import string from "./lib/string.js";
 
-var CORE = require('libcore'),
-    detect = require("./lib/detect.js"),
-    rehash = CORE.rehash,
-    EXPORTS = {
-        env: CORE.env,
+import dom from "./lib/dom.js";
+
+import css from "./lib/css.js";
+
+import eventModule from "./lib/event.js";
+
+import dimension from "./lib/dimension.js";
+
+import selection from "./lib/selection.js";
+
+import color from "./lib/color.js";
+
+import animation from "./lib/animation.js";
+
+import chain from "./lib/chain.js";
+
+var exported = {
+        env: env,
         info: detect
     };
-var css, eventModule, dimension, selection;
 
 if (detect) {
     
-    rehash(EXPORTS,
-            require("./lib/string.js"),
-            {
+    rehash(exported,
+           string,
+           {
                 "xmlEncode": "xmlEncode",
                 "xmlDecode": "xmlDecode"
             });
 
     // dom structure
-    rehash(EXPORTS,
-            require("./lib/dom.js"),
+    rehash(exported,
+            dom,
             {
                 'is': 'is',
                 'isView': 'isView',
@@ -42,8 +59,8 @@ if (detect) {
                 'remove': 'remove'
             });
     
-    rehash(EXPORTS,
-            css = require("./lib/css.js"),
+    rehash(exported,
+           css,
             {
                 'addClass': 'add',
                 'removeClass': 'remove',
@@ -53,8 +70,8 @@ if (detect) {
             });
     
     
-    rehash(EXPORTS,
-            eventModule = require("./lib/event.js"),
+    rehash(exported,
+            eventModule,
             {
                 'on': 'on',
                 'un': 'un',
@@ -63,8 +80,8 @@ if (detect) {
                 "destructor": "ondestroy"
             });
     
-    rehash(EXPORTS,
-            dimension = require("./lib/dimension.js"),
+    rehash(exported,
+            dimension,
             {
                 'offset': 'offset',
                 'size': 'size',
@@ -73,41 +90,44 @@ if (detect) {
                 'screen': 'screen'
             });
     
-    rehash(EXPORTS,
-            selection = require("./lib/selection.js"),
+    rehash(exported,
+            selection,
             {
                 'highlight': 'select',
                 'unhighlightable': 'unselectable',
                 'clearHighlight': 'clear'
             });
     
-    rehash(EXPORTS,
-            require("./lib/color.js"),
+    rehash(exported,
+            color,
             {
                 'parseColor': 'parse',
                 'parseColorType': 'parseType',
                 'formatColor': 'stringify'
             });
     
-    rehash(EXPORTS,
-            require("./lib/animation.js"),
+    rehash(exported,
+            animation,
             {
                 'transition': 'each',
                 'animateStyle': 'style'
             });
     
-    css.chain =
-        eventModule.chain = 
-        dimension.chain =
-        selection.chain = EXPORTS;
+    //css.chain =
+    //    eventModule.chain = 
+    //    dimension.chain =
+    //    selection.chain = exported;
     
 }
 
+chain.use(exported);
 
-module.exports =
-    EXPORTS['default'] =        // attach "default" for ES6 import
-    CORE.dom =                  // attach libdom to libcore from "dom"
-    //global.gago = EXPORTS;
-    global.libdom = EXPORTS;    // attach as global "libdom" variable
+export default exported;
+
+//module.exports =
+//    exported['default'] =        // attach "default" for ES6 import
+//    //CORE.dom =                  // attach libdom to libcore from "dom"
+//    //global.gago = EXPORTS;
+//    global.libdom = exported;    // attach as global "libdom" variable
 
 

@@ -1,9 +1,10 @@
 'use strict';
 
-var CORE = require("libcore"),
-    FORMAT = require("./format.js"),
+import { number } from "libcore";
+        
+import format from "./format.js";
 
-    BYTE = 255,
+var BYTE = 255,
     BYTE_PERCENT = 127,
     BYTE_HUE = 511,
     
@@ -23,119 +24,107 @@ function hue2rgb(p, q, t) {
     return p;
 }
 
-//function itemize(value, index, format) {
-//    var M = Math,
-//        min = 0,
-//        max = index > 2 ? PERCENT : BYTE;
-//    
-//    value = FORMAT.format(value, format);
-//
-//    return M.max(min, M.min(max, value));
-//
-//}
-
-function itemize(value, index, format) {
-    var M = Math,
-        F = FORMAT,
-        isFloat = index > 2 && format !== F.PERCENT,
-        min = 0,
-        max = index < 3 ?
-                BYTE : PERCENT;
-        
-    value = F.format(value, format);
-    if (isFloat) {
-        value *= 100;
-    }
-    
-    return M.max(min, M.min(max, value));
-
-}
-
-function toArray(integer) {
-    var M = Math,
-        h2r = hue2rgb,
-        size = BYTE,
-        psize = BYTE_PERCENT,
-        h = integer & BYTE_HUE,
-        s = (integer >> 9) & psize,
-        l = (integer >> 16) & psize,
-        a = (integer >> 23) & psize;
-
-    var q, p;
-    
-    l /= LUMINOSITY;
-   
-    if (s === 0) {
-        return [l, l, l];
-    }
-    
-    h /= HUE;
-    s /= SATURATION;
-    
-    q = l < 0.5 ?
-            l * (1 + s) :
-            l + s - l * s;
+export
+    function itemize(value, index, colorFormat) {
+        var M = Math,
+            F = format,
+            isFloat = index > 2 && colorFormat !== F.PERCENT,
+            min = 0,
+            max = index < 3 ?
+                    BYTE : PERCENT;
             
-    p = 2 * l - q;
-    
-    return [M.round(h2r(p, q, h + 1/3) * size),
-                M.round(h2r(p, q, h) * size),
-                M.round(h2r(p, q, h - 1/3) * size),
-                (a).toFixed(2)];
-}
-
-function toInteger(r, g, b, a) {
-    var M = Math,
-        size = BYTE,
-        psize = BYTE_PERCENT;
-
-    var max, min, h, s, l, d;
-    
-    r /= size;
-    g /= size;
-    b /= size;
-    max = M.max(r, g, b);
-    min = M.min(r, g, b);
-    
-    l = (max + min) / 2;
-
-    if (max == min) {
-        h = s = 0; // achromatic
-    }
-    else {
-        d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    
-        switch (max) {
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
+        value = F.format(value, colorFormat);
+        if (isFloat) {
+            value *= 100;
         }
+        
+        return M.max(min, M.min(max, value));
     
-        h /= 6;
     }
+
+export
+    function toArray(integer) {
+        var M = Math,
+            h2r = hue2rgb,
+            size = BYTE,
+            psize = BYTE_PERCENT,
+            h = integer & BYTE_HUE,
+            s = (integer >> 9) & psize,
+            l = (integer >> 16) & psize,
+            a = (integer >> 23) & psize;
     
-    if (!CORE.number(a)) {
-        a = PERCENT;
+        var q, p;
+        
+        l /= LUMINOSITY;
+       
+        if (s === 0) {
+            return [l, l, l];
+        }
+        
+        h /= HUE;
+        s /= SATURATION;
+        
+        q = l < 0.5 ?
+                l * (1 + s) :
+                l + s - l * s;
+                
+        p = 2 * l - q;
+        
+        return [M.round(h2r(p, q, h + 1/3) * size),
+                    M.round(h2r(p, q, h) * size),
+                    M.round(h2r(p, q, h - 1/3) * size),
+                    (a).toFixed(2)];
     }
+
+export
+    function toInteger(r, g, b, a) {
+        var M = Math,
+            size = BYTE,
+            psize = BYTE_PERCENT;
     
-    return ((a & psize) << 23) |
-            (((l * LUMINOSITY) & psize) << 16) |
-            (((s * SATURATION) & psize) << 9) |
-            ((h * HUE) & BYTE_HUE);
-}
+        var max, min, h, s, l, d;
+        
+        r /= size;
+        g /= size;
+        b /= size;
+        max = M.max(r, g, b);
+        min = M.min(r, g, b);
+        
+        l = (max + min) / 2;
+    
+        if (max == min) {
+            h = s = 0; // achromatic
+        }
+        else {
+            d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+        
+            h /= 6;
+        }
+        
+        if (!number(a)) {
+            a = PERCENT;
+        }
+        
+        return ((a & psize) << 23) |
+                (((l * LUMINOSITY) & psize) << 16) |
+                (((s * SATURATION) & psize) << 9) |
+                ((h * HUE) & BYTE_HUE);
+    }
 
-function toString(integer) {
-    var values = toArray(integer),
-        alpha = (values[3] / PERCENT);
-    values[3] = parseFloat(alpha.toFixed(2));
-    return 'rgba(' + values.join(',') + ')';
-}
+export
+    function toString(integer) {
+        var values = toArray(integer),
+            alpha = (values[3] / PERCENT);
+        values[3] = parseFloat(alpha.toFixed(2));
+        return 'rgba(' + values.join(',') + ')';
+    }
 
 
-module.exports = {
-    itemize: itemize,
-    toArray: toArray,
-    toInteger: toInteger,
-    toString: toString
-};
+

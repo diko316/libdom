@@ -1,20 +1,22 @@
 'use strict';
 
+import {
+            itemize,
+            toArray,
+            toInteger as rgbaToInteger
+        } from "./rgba.js";
 
-var RGBA = require("./rgba.js"),
-    CORE = require("libcore"),
-    EXPORTS = CORE.assign({}, RGBA);
+export
+    function toString(integer) {
+        return 'rgb(' + toArray(integer).slice(0, 3).join(',') + ')';
+    }
 
-function toString(integer) {
-    return 'rgb(' + RGBA.toArray(integer).slice(0, 3).join(',') + ')';
-}
+export
+    function toInteger(r, g, b) {
+        return rgbaToInteger(r, g, b, 100);
+    }
 
-function toInteger(r, g, b) {
-    return RGBA.toInteger(r, g, b, 100);
-}
-
-EXPORTS.toString = toString;
-EXPORTS.toInteger = toInteger;
-
-
-module.exports = EXPORTS;
+export {
+            itemize,
+            toArray
+        };

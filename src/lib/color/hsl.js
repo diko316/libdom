@@ -1,15 +1,22 @@
 'use strict';
 
+import {
+            itemize,
+            toArray,
+            toInteger
+        } from "./hsla.js";
 
-var HSLA = require("./hsla.js"),
-    CORE = require("libcore"),
-    EXPORTS = module.exports = CORE.assign({}, HSLA);
+export
+    function toString(integer) {
+        var values = toArray(integer).slice(0, 3);
+        values[1] += '%';
+        values[2] += '%';
+        return 'hsl(' + values.join(',') + ')';
+    }
 
-function toString(integer) {
-    var values = HSLA.toArray(integer).slice(0, 3);
-    values[1] += '%';
-    values[2] += '%';
-    return 'hsl(' + values.join(',') + ')';
-}
+export {
+        itemize,
+        toArray,
+        toInteger
+    };
 
-EXPORTS.toString = toString;

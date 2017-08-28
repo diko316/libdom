@@ -1,11 +1,22 @@
 'use strict';
 
-var CORE = require("libcore"),
-    INFO = require("./detect.js"),
-    STRING = require("./string.js"),
-    EVENTS = null,
+import {
+            string,
+            method,
+            contains,
+            middleware
+        } from "libcore";
+        
+import STRING from "./string";
+
+import INFO from "./detect.js";
+
+import chain from "./chain.js";
+
+
+var EVENTS = null,
     PAGE_UNLOADED = false,
-    MIDDLEWARE = CORE.middleware('libdom.event'),
+    MIDDLEWARE = middleware('libdom.event'),
     IE_CUSTOM_EVENTS = {},
     ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131],
     ERROR_INVALID_TYPE = STRING[1132],
@@ -13,25 +24,25 @@ var CORE = require("libcore"),
     IE_ON = 'on',
     IE_BUBBLE_EVENT = 'beforeupdate',
     IE_NO_BUBBLE_EVENT = 'propertychange',
-    EXPORTS = module.exports = {
+    exported = {
                 on: listen,
                 un: unlisten,
                 fire: dispatch,
                 purge: purge,
                 ondestroy: addDestructor
             };
+            
 var RESOLVE, LISTEN, UNLISTEN, DISPATCH, EVENT_INFO, IS_CAPABLE, SUBJECT;
 
 function listen(observable, type, handler, context) {
-    var last = EVENTS,
-        C = CORE;
+    var last = EVENTS;
     var current, args;
     
-    if (!C.string(type)) {
+    if (!string(type)) {
         throw new Error(ERROR_INVALID_TYPE);
     }
     
-    if (!C.method(handler)) {
+    if (!method(handler)) {
         throw new Error(ERROR_INVALID_HANDLER);
     }
     
@@ -71,14 +82,13 @@ function listen(observable, type, handler, context) {
 }
 
 function unlisten(observable, type, handler, context) {
-    var C = CORE;
     var found, len, args;
     
-    if (!C.string(type)) {
+    if (!string(type)) {
         throw new Error(ERROR_INVALID_TYPE);
     }
     
-    if (!C.method(handler)) {
+    if (!method(handler)) {
         throw new Error(ERROR_INVALID_HANDLER);
     }
     
@@ -108,13 +118,13 @@ function unlisten(observable, type, handler, context) {
         found[len].unlisten();
     }
     
-    return EXPORTS.chain;
+    return chain.get();
 }
 
 
 function dispatch(observable, type, defaults) {
     
-    if (!CORE.string(type)) {
+    if (!string(type)) {
         throw new Error(ERROR_INVALID_TYPE);
     }
     
@@ -136,7 +146,7 @@ function purge() {
         found[len].unlisten();
     }
     
-    return EXPORTS.chain;
+    return chain.get();
 }
 
 
@@ -225,7 +235,7 @@ function w3cUnlisten(observable, type, listener) {
 }
 
 function w3cDispatch(observable, type, properties) {
-    var hasOwn = CORE.contains,
+    var hasOwn = contains,
         event = global.document.createEvent("Event");
     var name;
     
@@ -244,7 +254,7 @@ function w3cDispatch(observable, type, properties) {
 }
 
 function w3cObservable(observable) {
-    var isFunction = CORE.method;
+    var isFunction = method;
     
     return observable && typeof observable === 'object' &&
             isFunction(observable.addEventListener) &&
@@ -298,7 +308,7 @@ function ieUnlisten(observable, type, listener) {
 }
 
 function ieDispatch(observable, type, properties) {
-    var hasOwn = CORE.contains,
+    var hasOwn = contains,
         event = global.document.createEventObject();
     var name;
     
@@ -433,14 +443,14 @@ function onBeforeUnload() {
 }
 
 function addDestructor(handler) {
-    if (CORE.method(handler)) {
+    if (method(handler)) {
         MIDDLEWARE.register('global-destroy', handler);
     }
-    return EXPORTS.chain;
+    return chain.get();
 }
 
 
-RESOLVE = LISTEN = UNLISTEN = DISPATCH;
+RESOLVE = LISTEN = UNLISTEN = DISPATCH = null;
 
 /**
  * Initialize
@@ -479,4 +489,13 @@ if (EVENT_INFO) {
     }
 }
 
-EXPORTS.chain = EXPORTS;
+
+export {
+    purge,
+    listen as on,
+    unlisten as un,
+    dispatch as fire,
+    addDestructor as ondestroy
+};
+
+export default exported;

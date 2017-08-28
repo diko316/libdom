@@ -1,38 +1,32 @@
 'use strict';
 
-var CORE = require("libcore"),
-    isString = CORE.string,
-    ERROR_SUBJECT = 'Invalid [subject] parameter.',
-    FORMAT = require("./color/format.js"),
+import {
+            string,
+            contains,
+            number
+        } from "libcore";
+
+import * as hexColor from "./color/hex.js";
+import * as rgbColor from "./color/rgb.js";
+import * as rgbaColor from "./color/rgba.js";
+import * as hslColor from "./color/hsl.js";
+import * as hslaColor from "./color/hsla.js";
+
+import format from "./color/format.js";
+
+
+var ERROR_SUBJECT = 'Invalid [subject] parameter.',
     COLOR_RE =
     /^(\#?|rgba?|hsla?)(\(([^\,]+(\,[^\,]+){2,3})\)|[a-f0-9]{3}|[a-f0-9]{6})$/,
     NUMBER_RE = /^[0-9]*\.?[0-9]+|[0-9]+\.?[0-9]*$/,
     REMOVE_SPACES = /[ \r\n\t\s]+/g,
     TO_COLOR = {
-        rgb: require("./color/rgb.js"),
-        rgba: require("./color/rgba.js"),
-        hsl: require("./color/hsl.js"),
-        hsla: require("./color/hsla.js"),
-        hex: require("./color/hex.js"),
-    },
-    EXPORTS = {
-        parse: parse,
-        parseType: parseType,
-        stringify: stringify
+        rgb: rgbColor,
+        rgba: rgbaColor,
+        hsl: hslColor,
+        hsla: hslaColor
+        hex: hexColor
     };
-
-function parseType(subject) {
-    
-    if (!isString(subject, true)) {
-        throw new Error(ERROR_SUBJECT);
-    }
-    
-    subject = preParseValue(subject);
-    if (subject) {
-        return parseColorStringType(subject) || null;
-    }
-    return null;
-}
 
 function preParseValue(str) {
     if (typeof str === 'string') {
@@ -44,7 +38,6 @@ function preParseValue(str) {
     return null;
 }
 
-
 function parseColorStringType(str) {
     var list = TO_COLOR,
         m = str.match(COLOR_RE),
@@ -52,7 +45,7 @@ function parseColorStringType(str) {
         
     var items, isHex, item;
     
-    if (!CORE.contains(list, type)) {
+    if (!contains(list, type)) {
         type = 'hex';
     }
     
@@ -81,88 +74,103 @@ function parseColorStringType(str) {
     
 }
 
-function parse(subject) {
-    var F = FORMAT,
-        formatPercent = F.PERCENT,
-        formatNumber = F.NUMBER,
-        formatHex = F.HEX,
-        numberRe = NUMBER_RE;
+export
+    function parseType(subject) {
         
-    var parsed, c, l, item, items, itemizer, processor, type, isHex, toProcess;
-    
-    if (!isString(subject, true)) {
-        throw new Error(ERROR_SUBJECT);
-    }
-    
-    subject = preParseValue(subject);
-    parsed = subject && parseColorStringType(subject);
-        
-    if (parsed) {
-        type = parsed[0];
-        processor = TO_COLOR[type];
-        itemizer = processor.itemize;
-        
-        toProcess = [];
-        isHex = parsed[1];
-        items = parsed[2];
-        
-        c = -1;
-        if (isHex) {
-            toProcess[3] = 100;
-            l = 3;
-        }
-        else {
-            l = items.length;
+        if (!string(subject, true)) {
+            throw new Error(ERROR_SUBJECT);
         }
         
-        for (; l--;) {
-            item = items[++c];
-            if (isHex) {
-                item = items.substring(c * 2, c * 2 + 2);
-            }
-            else if (!numberRe.test(item)) {
-                return null;
-            }
-            
-            toProcess[c] = itemizer(item,
-                                    c,
-                                    isHex ?
-                                        formatHex :
-                                        item.charAt(item.length -1) === '%' ?
-                                            formatPercent :
-                                            formatNumber);
+        subject = preParseValue(subject);
+        if (subject) {
+            return parseColorStringType(subject) || null;
         }
-        
-        // add type
-        return processor.toInteger.apply(processor, toProcess);
-    }
-    return null;
-}
-
-
-function stringify(colorValue, type) {
-    var list = TO_COLOR,
-        C = CORE;
-    
-    if (!C.number(colorValue) || colorValue < 0) {
-        throw new Error("Invalid [colorValue] parameter.");
-    }
-    
-    if (arguments.length < 2) {
-        type = 'hex';
-    }
-    else if (!isString(type)) {
-        throw new Error("Invalid [type] parameter.");
-    }
-    
-    if (!C.contains(list, type)) {
         return null;
     }
-    
-    colorValue = Math.round(colorValue);
-    
-    return list[type].toString(colorValue);
-}
 
+export
+    function parse(subject) {
+        var F = format,
+            formatPercent = F.PERCENT,
+            formatNumber = F.NUMBER,
+            formatHex = F.HEX,
+            numberRe = NUMBER_RE;
+            
+        var parsed, c, l, item, items, itemizer,
+            processor, type, isHex, toProcess;
+        
+        if (!string(subject, true)) {
+            throw new Error(ERROR_SUBJECT);
+        }
+        
+        subject = preParseValue(subject);
+        parsed = subject && parseColorStringType(subject);
+            
+        if (parsed) {
+            type = parsed[0];
+            processor = TO_COLOR[type];
+            itemizer = processor.itemize;
+            
+            toProcess = [];
+            isHex = parsed[1];
+            items = parsed[2];
+            
+            c = -1;
+            if (isHex) {
+                toProcess[3] = 100;
+                l = 3;
+            }
+            else {
+                l = items.length;
+            }
+            
+            for (; l--;) {
+                item = items[++c];
+                if (isHex) {
+                    item = items.substring(c * 2, c * 2 + 2);
+                }
+                else if (!numberRe.test(item)) {
+                    return null;
+                }
+                
+                toProcess[c] = itemizer(item,
+                                        c,
+                                        isHex ?
+                                            formatHex :
+                                            item.
+                                                charAt(item.length -1) === '%' ?
+                                                    formatPercent :
+                                                    formatNumber);
+            }
+            
+            // add type
+            return processor.toInteger.apply(processor, toProcess);
+        }
+        
+        return null;
+    }
 
-module.exports = EXPORTS;
+export
+    function stringify(colorValue, type) {
+        var list = TO_COLOR;
+        
+        if (!number(colorValue) || colorValue < 0) {
+            throw new Error("Invalid [colorValue] parameter.");
+        }
+        
+        if (arguments.length < 2) {
+            type = 'hex';
+        }
+        else if (!string(type)) {
+            throw new Error("Invalid [type] parameter.");
+        }
+        
+        if (!contains(list, type)) {
+            return null;
+        }
+        
+        colorValue = Math.round(colorValue);
+        
+        return list[type].toString(colorValue);
+    }
+

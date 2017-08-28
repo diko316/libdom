@@ -1,13 +1,30 @@
 'use strict';
 
-var CORE = require("libcore"),
-    DETECTED = require("./detect.js"),
-    EVENT = require("./event.js"),
-    STRING = require("./string.js"),
-    
-    ORDER_TYPE_PREORDER = 1,
+import {
+            string,
+            number,
+            object,
+            method,
+            array,
+            each,
+            contains,
+            createRegistry
+        } from "libcore";
+
+import chain from "./chain.js";
+
+import DETECTED from "./detect.js";
+
+import STRING from "./string.js";
+
+import EVENT from "./event.js";
+
+
+
+var ORDER_TYPE_PREORDER = 1,
     ORDER_TYPE_POSTORDER = 2,
     ORDER_TYPE_LEVELORDER = 3,
+    CSS_SELECT = notSupportedQuerySelector,
     
     ERROR_INVALID_DOM = STRING[1101],
     ERROR_INVALID_DOM_NODE = STRING[1103],
@@ -33,25 +50,7 @@ var CORE = require("libcore"),
         'type'
     ],
     EVENT_ATTRIBUTE_RE = /^on(\-?[a-zA-Z].+)?$/,
-    MANIPULATION_HELPERS = CORE.createRegistry(),
-    EXPORTS = {
-        contains: contains,
-        is: isDom,
-        isView: isDefaultView,
-        eachPreorder: preOrderTraverse,
-        eachPostorder: postOrderTraverse,
-        eachLevel: levelTraverse,
-        documentViewAccess: 'defaultView',
-        select: notSupportedQuerySelector,
-        
-        helper: registerDomHelper,
-        
-        add: add,
-        replace: replace,
-        move: move,
-        remove: remove,
-        find: find
-    };
+    MANIPULATION_HELPERS = createRegistry();
     
 var DOM_INFO;
 
@@ -60,31 +59,7 @@ var DOM_INFO;
 /**
  * node contains...
  */
-function contains(ancestor, descendant) {
-    var elementErrorString = STRING[1102],
-        is = isDom;
-    
-    if (!is(ancestor, 1, 9, 11)) {
-        throw new Error(elementErrorString);
-    }
-    
-    if (!is(descendant) ||
-        (descendant.nodeType in INVALID_DESCENDANT_NODE_TYPES)) {
-        throw new Error(elementErrorString);
-    }
-    
-    switch (ancestor.nodeType) {
-    case 9:
-        ancestor = ancestor.documentElement;
-        break;
-    case 11:
-        ancestor = ancestor.firstChild;
-        break;
-    }
 
-    return STD_CONTAINS(ancestor, descendant);
-    
-}
 
 function notSupportedContains() {
     throw new Error(STRING[2004]);
@@ -102,165 +77,27 @@ function ieContains(ancestor, descendant) {
  * DOM Manipulation helper
  */
 function registerDomHelper(name, handler) {
-    var C = CORE;
-    if (!C.string(name)) {
+    if (!string(name)) {
         throw new Error(STRING[1001]);
     }
     
-    if (!C.method(handler)) {
+    if (!method(handler)) {
         throw new Error(STRING[1011]);
     }
     
     MANIPULATION_HELPERS.set(name, handler);
     
-    return EXPORTS.chain;
-}
-
-/**
- * DOM manipulaton
- */
-
-function add(element, config, before) {
-    var toInsert = null,
-        invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
-        is = isDom;
-    var tagName;
-    
-    if (!isDom(element, 1, 11)) {
-        throw new Error(ERROR_INVALID_DOM);
-    }
-    
-    if (is(config)) {
-        toInsert = config;
-    }
-    else if (CORE.object(config)) {
-        tagName = getTagNameFromConfig(config);
-        if (!tagName) {
-            throw new Error(invalidConfig);
-        }
-        toInsert = element.ownerDocument.createElement(tagName);
-        applyConfigToElement(toInsert, config);
-    }
-    
-    if (!is(toInsert, 1, 3, 4, 7, 8, 11)) {
-        throw new Error(invalidConfig);
-    }
-    
-    element.insertBefore(toInsert, findChild(element, before));
-    
-    return toInsert;
-    
-}
-
-function remove(node, destroy) {
-    var parentNode;
-    if (!isDom(node, 1, 3, 4, 7, 8)) {
-        throw new Error(ERROR_INVALID_DOM_NODE);
-    }
-    
-    // unset child events by default
-    if (node.nodeType === 1 && destroy !== false) {
-        postOrderTraverse(node, purgeEventsFrom);
-    }
-    
-    parentNode = node.parentNode;
-    if (parentNode) {
-        parentNode.removeChild(node);
-    }
-    parentNode = null;
-    return node;
-}
-
-function move(nodes, element) {
-    var is = isDom,
-        invalidDom = ERROR_INVALID_DOM_NODE,
-        created = false;
-    var c, l, fragment, newChild;
-    
-    if (!is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM);
-    }
-    
-    if (is(nodes, 1, 3, 4, 7, 8)) {
-        nodes = [nodes];
-        created = true;
-    }
-    
-    if (!CORE.array(nodes)) {
-        throw new Error(invalidDom);
-    }
-    
-    fragment = element.ownerDocument.createDocumentFragment();
-    for (c = -1, l = nodes.length; l--;) {
-        newChild = nodes[++c];
-        if (is(newChild, 1, 3, 4, 7, 8)) {
-            fragment.appendChild(newChild);
-        }
-    }
-    element.appendChild(fragment);
-    
-    newChild = null;
-    
-    if (created) {
-        nodes.splice(0, nodes.length);
-    }
-    
-    fragment = null;
-    
-    return element;
-}
-
-function replace(node, config, destroy) {
-    var toInsert = null,
-        invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
-        is = isDom;
-    var tagName;
-    
-    if (!is(node, 1, 3, 4, 7, 8) || !node.parentNode) {
-        throw new Error(ERROR_INVALID_DOM_NODE);
-    }
-    
-    if (is(config)) {
-        toInsert = config;
-    }
-    else if (CORE.object(config)) {
-        tagName = getTagNameFromConfig(config);
-        if (!tagName) {
-            throw new Error(invalidConfig);
-        }
-        toInsert = node.ownerDocument.createElement(tagName);
-        applyConfigToElement(toInsert, config);
-    }
-    
-    if (!is(toInsert, 1, 3, 4, 7, 8)) {
-        throw new Error(invalidConfig);
-    }
-    
-    // remove events before replacing it only if mandated
-    if (destroy === true && node.nodeType === 1) {
-        postOrderTraverse(node, purgeEventsFrom);
-    }
-    
-    node.parentNode.replaceChild(toInsert, node);
-    
-    return toInsert;
+    return chain.get();
 }
 
 function purgeEventsFrom(element) {
     EVENT.purge(element);
 }
 
-function find(element, node) {
-    if (!isDom(element, 1, 11)) {
-        throw new Error(ERROR_INVALID_DOM);
-    }
-    return findChild(element, node, 1);
-}
+
 
 function getTagNameFromConfig(config) {
-    var C = CORE;
-    
-    if (C.object(config)) {
+    if (object(config)) {
         config = 'tagName' in config ?
                     config.tagName :
                     'nodeName' in config ?
@@ -269,14 +106,13 @@ function getTagNameFromConfig(config) {
                             config.tag : false;
     }
     
-    return C.string(config) ? config : false;
+    return string(config) ? config : false;
 }
 
 
 function applyAttributeToElement(value, name) {
     /* jshint validthis:true */
     var element = this,
-        C = CORE,
         helper = MANIPULATION_HELPERS;
     var listen;
     
@@ -294,8 +130,8 @@ function applyAttributeToElement(value, name) {
     if (EVENT_ATTRIBUTE_RE.test(name)) {
         listen = name.substring(name.charAt(2) === '-' ? 3 : 2, name.length);
         
-        if (listen === 'on' && C.object(value)) {
-            C.each(value, applyEventAttribute, element);
+        if (listen === 'on' && object(value)) {
+            each(value, applyEventAttribute, element);
         }
         else {
             applyEventAttribute.call(element, value, listen);
@@ -320,7 +156,7 @@ function applyEventAttribute(handler, name) {
     /* jshint validthis:true */
     var element = this;
     
-    if (CORE.method(handler)) {
+    if (method(handler)) {
         EVENT.on(element, name, handler);
     }
     
@@ -328,9 +164,8 @@ function applyEventAttribute(handler, name) {
 }
 
 function applyConfigToElement(element, config, usedFragment) {
-    var C = CORE,
-        hasOwn = C.contains,
-        isObject= C.object,
+    var hasOwn = contains,
+        isObject= object,
         me = applyConfigToElement,
         resolveTagName = getTagNameFromConfig,
         applyAttribute = applyAttributeToElement,
@@ -368,7 +203,7 @@ function applyConfigToElement(element, config, usedFragment) {
                 
                 case 'attributes':
                     if (isObject(value)) {
-                        C.each(value, applyAttribute, element);
+                        each(value, applyAttribute, element);
                     }
                     continue;
                 }
@@ -379,7 +214,7 @@ function applyConfigToElement(element, config, usedFragment) {
         }
         
         // apply childNodes
-        if (C.string(childNodes)) {
+        if (string(childNodes)) {
             
             // convert
             if (htmlEncodeChild) {
@@ -396,7 +231,7 @@ function applyConfigToElement(element, config, usedFragment) {
                 childNodes = [childNodes];
             }
             
-            if (C.array(childNodes)) {
+            if (array(childNodes)) {
                 doc = element.ownerDocument;
                 fragment = usedFragment === true ?
                                 element :
@@ -426,7 +261,7 @@ function applyConfigToElement(element, config, usedFragment) {
 }
 
 function findChild(element, node, nodeType) {
-    var isNumber = CORE.number;
+    var isNumber = number;
     var index, counter, any;
     
     if (isDom(node, 1, 3, 4, 7, 8) && node.parentNode === element) {
@@ -459,7 +294,7 @@ function noArrayQuerySelectorAll(dom, selector) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
     
-    if (!CORE.string(selector)) {
+    if (!string(selector)) {
         throw new Error(ERROR_INVALID_CSS_SELECTOR);
     }
     
@@ -479,7 +314,7 @@ function toArrayQuerySelectorAll(dom, selector) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
     
-    if (!CORE.string(selector)) {
+    if (!string(selector)) {
         throw new Error(ERROR_INVALID_CSS_SELECTOR);
     }
 
@@ -490,35 +325,6 @@ function notSupportedQuerySelector() {
     throw new Error(STRING[2003]);
 }
 
-function preOrderTraverse(element, callback, context, includeRoot) {
-    
-    return orderTraverse(element,
-                        callback,
-                        context,
-                        ORDER_TYPE_PREORDER,
-                        includeRoot !== false);
-}
-
-function postOrderTraverse(element, callback, context, includeRoot) {
-
-    return orderTraverse(element,
-                        callback,
-                        context,
-                        ORDER_TYPE_POSTORDER,
-                        includeRoot !== false);
-}
-
-
-function levelTraverse(element, callback, context, includeRoot) {
-    
-    return orderTraverse(element,
-                        callback,
-                        context,
-                        ORDER_TYPE_LEVELORDER,
-                        includeRoot !== false);
-}
-
-
 function orderTraverse(element, callback, context, orderType, includeRoot) {
     var depth = 0,
         isPostOrder = 0;
@@ -528,7 +334,7 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
         throw new Error(ERROR_INVALID_DOM);
     }
     
-    if (!CORE.method(callback)) {
+    if (!method(callback)) {
         throw new Error(ERROR_INVALID_CALLBACK);
     }
     
@@ -621,49 +427,252 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
     last = queue = node = current = null;
     
     
-    return EXPORTS.chain;
+    return chain.get();
 }
 
 /**
  * is node
  */
-function isDom(node) {
-    var isNumber = CORE.number;
-    
-    var type, c, len, items, match, matched;
-    
-    if (node && typeof node === 'object') {
+export
+    function isDom(node) {
+        var isNumber = number;
         
-        type = node.nodeType;
+        var type, c, len, items, match, matched;
         
-        if (isNumber(type)) {
+        if (node && typeof node === 'object') {
             
-            items = arguments;
-            len = Math.max(items.length - 1, 0);
-            matched = !len;
+            type = node.nodeType;
             
-            for (c = 0; len--;) {
-                match = items[++c];
-                if (type === match) {
-                    return true;
+            if (isNumber(type)) {
+                
+                items = arguments;
+                len = Math.max(items.length - 1, 0);
+                matched = !len;
+                
+                for (c = 0; len--;) {
+                    match = items[++c];
+                    if (type === match) {
+                        return true;
+                    }
                 }
+                
+                return matched;
             }
-            
-            return matched;
         }
+        
+        return false;
     }
-    
-    return false;
-}
 
-function isDefaultView(defaultView) {
-    var type = typeof defaultView;
+export
+    function isDefaultView(defaultView) {
+        var type = typeof defaultView;
+        
+        return !!defaultView &&
+                (type === 'object' || type === 'function') &&
+                defaultView.self === defaultView.window &&
+                !!defaultView.document;
+    }
+
+export
+    function contains(ancestor, descendant) {
+        var elementErrorString = STRING[1102],
+            is = isDom;
+        
+        if (!is(ancestor, 1, 9, 11)) {
+            throw new Error(elementErrorString);
+        }
+        
+        if (!is(descendant) ||
+            (descendant.nodeType in INVALID_DESCENDANT_NODE_TYPES)) {
+            throw new Error(elementErrorString);
+        }
+        
+        switch (ancestor.nodeType) {
+        case 9:
+            ancestor = ancestor.documentElement;
+            break;
+        case 11:
+            ancestor = ancestor.firstChild;
+            break;
+        }
     
-    return !!defaultView &&
-            (type === 'object' || type === 'function') &&
-            defaultView.self === defaultView.window &&
-            !!defaultView.document;
-}
+        return STD_CONTAINS(ancestor, descendant);
+        
+    }
+
+/**
+ * DOM manipulaton
+ */
+export
+    function add(element, config, before) {
+        var toInsert = null,
+            invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
+            is = isDom;
+        var tagName;
+        
+        if (!isDom(element, 1, 11)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+        
+        if (is(config)) {
+            toInsert = config;
+        }
+        else if (object(config)) {
+            tagName = getTagNameFromConfig(config);
+            if (!tagName) {
+                throw new Error(invalidConfig);
+            }
+            toInsert = element.ownerDocument.createElement(tagName);
+            applyConfigToElement(toInsert, config);
+        }
+        
+        if (!is(toInsert, 1, 3, 4, 7, 8, 11)) {
+            throw new Error(invalidConfig);
+        }
+        
+        element.insertBefore(toInsert, findChild(element, before));
+        
+        return toInsert;
+        
+    }
+
+export
+    function remove(node, destroy) {
+        var parentNode;
+        if (!isDom(node, 1, 3, 4, 7, 8)) {
+            throw new Error(ERROR_INVALID_DOM_NODE);
+        }
+        
+        // unset child events by default
+        if (node.nodeType === 1 && destroy !== false) {
+            postOrderTraverse(node, purgeEventsFrom);
+        }
+        
+        parentNode = node.parentNode;
+        if (parentNode) {
+            parentNode.removeChild(node);
+        }
+        parentNode = null;
+        return node;
+    }
+
+export
+    function move(nodes, element) {
+        var is = isDom,
+            invalidDom = ERROR_INVALID_DOM_NODE,
+            created = false;
+        var c, l, fragment, newChild;
+        
+        if (!is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+        
+        if (is(nodes, 1, 3, 4, 7, 8)) {
+            nodes = [nodes];
+            created = true;
+        }
+        
+        if (!array(nodes)) {
+            throw new Error(invalidDom);
+        }
+        
+        fragment = element.ownerDocument.createDocumentFragment();
+        for (c = -1, l = nodes.length; l--;) {
+            newChild = nodes[++c];
+            if (is(newChild, 1, 3, 4, 7, 8)) {
+                fragment.appendChild(newChild);
+            }
+        }
+        element.appendChild(fragment);
+        
+        newChild = null;
+        
+        if (created) {
+            nodes.splice(0, nodes.length);
+        }
+        
+        fragment = null;
+        
+        return element;
+    }
+
+export
+    function replace(node, config, destroy) {
+        var toInsert = null,
+            invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
+            is = isDom;
+        var tagName;
+        
+        if (!is(node, 1, 3, 4, 7, 8) || !node.parentNode) {
+            throw new Error(ERROR_INVALID_DOM_NODE);
+        }
+        
+        if (is(config)) {
+            toInsert = config;
+        }
+        else if (object(config)) {
+            tagName = getTagNameFromConfig(config);
+            if (!tagName) {
+                throw new Error(invalidConfig);
+            }
+            toInsert = node.ownerDocument.createElement(tagName);
+            applyConfigToElement(toInsert, config);
+        }
+        
+        if (!is(toInsert, 1, 3, 4, 7, 8)) {
+            throw new Error(invalidConfig);
+        }
+        
+        // remove events before replacing it only if mandated
+        if (destroy === true && node.nodeType === 1) {
+            postOrderTraverse(node, purgeEventsFrom);
+        }
+        
+        node.parentNode.replaceChild(toInsert, node);
+        
+        return toInsert;
+    }
+
+export
+    function find(element, node) {
+        if (!isDom(element, 1, 11)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+        return findChild(element, node, 1);
+    }
+
+/**
+ * DOM Tree walk
+ */
+export
+    function eachPreorder(element, callback, context, includeRoot) {
+        
+        return orderTraverse(element,
+                            callback,
+                            context,
+                            ORDER_TYPE_PREORDER,
+                            includeRoot !== false);
+    }
+
+export
+    function eachPostorder(element, callback, context, includeRoot) {
+    
+        return orderTraverse(element,
+                            callback,
+                            context,
+                            ORDER_TYPE_POSTORDER,
+                            includeRoot !== false);
+    }
+
+export
+    function eachLevel(element, callback, context, includeRoot) {
+        
+        return orderTraverse(element,
+                            callback,
+                            context,
+                            ORDER_TYPE_LEVELORDER,
+                            includeRoot !== false);
+    }
 
 /**
  * Initialize
@@ -678,11 +687,32 @@ if (DOM_INFO) {
                                 notSupportedContains;
     
     if (DOM_INFO.querySelectorAll) {
-        EXPORTS.select = DOM_INFO.listToArray ?
-                                toArrayQuerySelectorAll :
-                                noArrayQuerySelectorAll;
+        CSS_SELECT = DOM_INFO.listToArray ?
+                            toArrayQuerySelectorAll :
+                            noArrayQuerySelectorAll;
     }
 }
 
+export {
+    registerDomHelper as helper,
+    CSS_SELECT as select
+};
 
-module.exports = EXPORTS.chain = EXPORTS;
+export default {
+            contains: contains,
+            is: isDom,
+            isView: isDefaultView,
+            eachPreorder: eachPreorder,
+            eachPostorder: eachPostorder,
+            eachLevel: eachLevel,
+            documentViewAccess: 'defaultView',
+            select: CSS_SELECT,
+            
+            helper: registerDomHelper,
+            
+            add: add,
+            replace: replace,
+            move: move,
+            remove: remove,
+            find: find
+        };

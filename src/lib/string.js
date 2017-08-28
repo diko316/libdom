@@ -1,19 +1,25 @@
 'use strict';
 
+import {
+            string,
+            camelize,
+            register
+        } from "libcore";
+        
+import detect from "./detect.js";
 
-var CORE = require("libcore"),
-    SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
+var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
     STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/,
     HTML_ESCAPE_CHARS_RE = /[^\u0021-\u007e]|[\u003e\u003c\&\"\']/g,
-    TEXTAREA = global.document.createElement('textarea'),
-    EXPORTS = {
-        camelize: CORE.camelize,
+    TEXTAREA = null,
+    exported = {
+        camelize: camelize,
         stylize: stylize,
         addWord: addWord,
         removeWord: removeWord,
         
-        xmlEncode: htmlescape,
-        xmlDecode: htmlunescape,
+        xmlEncode: xmlEncode,
+        xmlDecode: xmlDecode,
         
         1001: "Invalid [name] parameter.",
         1011: "Invalid [handler] parameter.",
@@ -48,72 +54,11 @@ var CORE = require("libcore"),
         2004: "DOM position comparison is not supported.",
         2005: "DOM selection not supported.",
         2006: "CSS Opacity is not supported by this browser"
-        
-        
-        
+
     };
 
-function stylize(str) {
-    str = CORE.camelize(str);
-    return STYLIZE_RE.test(str) ?
-                str.charAt(0).toUpperCase() + str.substring(1, str.length) :
-                str;
-}
 
-function addWord(str, items) {
-    var isString = CORE.string,
-        c = -1,
-        l = items.length;
-    var cl, name;
     
-    str = str.split(SEPARATE_RE);
-    cl = str.length;
-    for (; l--;) {
-        name = items[++c];
-        if (isString(name) && str.indexOf(name) === -1) {
-            str[cl++] = name;
-        }
-    }
-    
-    return str.join(' ');
-}
-
-function removeWord(str, items) {
-    var c = -1,
-        l = items.length;
-    var cl, total, name;
-    
-    str = str.split(SEPARATE_RE);
-    total = str.length;
-    
-    for (; l--;) {
-        name = items[++c];
-        for (cl = total; cl--;) {
-            if (name === str[cl]) {
-                str.splice(cl, 1);
-                total--;
-            }
-        }
-    }
-    
-    return str.join(' ');    
-}
-
-function htmlunescape(subject) {
-    var textarea = TEXTAREA;
-    var value = '';
-    if (textarea) {
-        textarea.innerHTML = subject;
-        value = textarea.value;
-    }
-    textarea = null;
-    return value;
-}
-
-function htmlescape(subject) {
-    return subject.replace(HTML_ESCAPE_CHARS_RE, htmlescapeCallback);
-}
-
 function htmlescapeCallback(chr) {
     var code = chr.charCodeAt(0).toString(16);
     var value;
@@ -137,12 +82,85 @@ function htmlescapeCallback(chr) {
 }
 
 
-// register destructor
+function initialize() {
+    if (detect) {
+        TEXTAREA = global.document.createElement('textarea');
+        // register destructor
+        register("libdom.event.global-destroy", onDestroy);
+    }
+}
+
 function onDestroy() {
     TEXTAREA = null;
 }
 
+export
+    function stylize(str) {
+        str = camelize(str);
+        return STYLIZE_RE.test(str) ?
+                    str.charAt(0).toUpperCase() + str.substring(1, str.length) :
+                    str;
+    }
 
-CORE.register("libdom.event.global-destroy", onDestroy);
+export
+    function addWord(str, items) {
+        var isString = string,
+            c = -1,
+            l = items.length;
+        var cl, name;
+        
+        str = str.split(SEPARATE_RE);
+        cl = str.length;
+        for (; l--;) {
+            name = items[++c];
+            if (isString(name) && str.indexOf(name) === -1) {
+                str[cl++] = name;
+            }
+        }
+        
+        return str.join(' ');
+    }
 
-module.exports = EXPORTS;
+export
+    function removeWord(str, items) {
+        var c = -1,
+            l = items.length;
+        var cl, total, name;
+        
+        str = str.split(SEPARATE_RE);
+        total = str.length;
+        
+        for (; l--;) {
+            name = items[++c];
+            for (cl = total; cl--;) {
+                if (name === str[cl]) {
+                    str.splice(cl, 1);
+                    total--;
+                }
+            }
+        }
+        
+        return str.join(' ');    
+    }
+
+export
+    function xmlDecode(subject) {
+        var textarea = TEXTAREA;
+        var value = '';
+        if (textarea) {
+            textarea.innerHTML = subject;
+            value = textarea.value;
+        }
+        textarea = null;
+        return value;
+    }
+    
+export
+    function xmlEncode(subject) {
+        return subject.replace(HTML_ESCAPE_CHARS_RE, htmlescapeCallback);
+    }
+
+
+initialize();
+
+export default exported;

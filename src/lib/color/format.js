@@ -1,27 +1,29 @@
 'use strict';
 
-var EXPORTS = module.exports = {
-        NUMBER: 1,
-        HEX: 2,
-        PERCENT: 3,
-        format: convert2Number
-    };
 
+var NUMBER = 1,
+    HEX = 2,
+    PERCENT = 3;
 
-function convert2Number(value, format) {
-    var parse = parseFloat,
-        F = EXPORTS;
+function format(value, colorFormat) {
     
-    switch (format) {
-    case F.HEX:
+    switch (colorFormat) {
+    case HEX:
         return parseInt(value, 16) || 0;
     
-    case F.NUMBER:
-        return parse(value) || 0;
+    case NUMBER:
+        return 1 * value || 0;
 
-    case F.PERCENT:
-        return Math.round((parse(value) || 1) * 100);
+    case PERCENT:
+        return Math.round((1 * value || 1) * 100);
     }
     return 0;
 }
+
+export default {
+                NUMBER,
+                HEX,
+                PERCENT,
+                format
+            };
 

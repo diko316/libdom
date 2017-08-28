@@ -1,12 +1,25 @@
 'use strict';
 
-var CORE = require("libcore"),
-    STRING = require("./string.js"),
-    DETECTED = require("./detect.js"),
-    DOM = require("./dom.js"),
-    COLOR = require("./color.js"),
-    
-    PADDING_BOTTOM = 'paddingBottom',
+import {
+            string,
+            number,
+            array,
+            object,
+            each
+        } from "libcore";
+
+import chain from "./chain.js";
+
+import DETECTED from "./detect.js";
+
+import STRING from "./string";
+
+import DOM from "./dom.js";
+
+import * as COLOR from "./color.js";
+
+
+var PADDING_BOTTOM = 'paddingBottom',
     PADDING_TOP = 'paddingTop',
     PADDING_LEFT = 'paddingLeft',
     PADDING_RIGHT = 'paddingRight',
@@ -43,7 +56,7 @@ var CORE = require("libcore"),
     
     ERROR_INVALID_DOM = STRING[1101],
     
-    EXPORTS = {
+    exported = {
         add: addClass,
         remove: removeClass,
         computedStyle: computedStyleNotSupported,
@@ -65,8 +78,7 @@ var CSS_INFO;
 
 
 function addClass(element, classNames) {
-    var C = CORE,
-        isString = C.string;
+    var isString = string;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
@@ -76,17 +88,16 @@ function addClass(element, classNames) {
         classNames = [classNames];
     }
     
-    if (C.array(classNames)) {
+    if (array(classNames)) {
         element.className = STRING.addWord(element.className || '',
                                            classNames);
     }
     
-    return EXPORTS.chain;
+    return chain.get();
 }
 
 function removeClass(element, classNames) {
-    var C = CORE,
-        isString = C.string;
+    var isString = string;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
@@ -100,12 +111,12 @@ function removeClass(element, classNames) {
         classNames = [classNames];
     }
     
-    if (C.array(classNames)) {
+    if (array(classNames)) {
         element.className = STRING.removeWord(element.className,
                                               classNames);
     }
     
-    return EXPORTS.chain;
+    return chain.get();
 }
 
 function applyStyle() {
@@ -122,14 +133,13 @@ function applyStyle() {
 }
 
 function setStyle(element, rules, value) {
-    var C = CORE;
     var context;
     
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
     
-    if (C.string(rules)) {
+    if (string(rules)) {
         if (arguments.length > 2) {
             context = {};
             context[rules] = value;
@@ -140,17 +150,17 @@ function setStyle(element, rules, value) {
         }
     }
     
-    if (!C.object(rules)) {
+    if (!object(rules)) {
         throw new Error(STRING[1141]);
     }
 
     context = [element.style];
     
-    C.each(rules, onStyleElement, context, true);
+    each(rules, onStyleElement, context, true);
     
     context = context[0] = null;
     
-    return EXPORTS.chain;
+    return chain.get();
 }
 
 function getStyle(element) {
@@ -162,9 +172,8 @@ function getStyle(element) {
 }
 
 function onStyleElement(value, name) {
-    var C = CORE,
-        isNumber = C.number(value),
-        isScalar = isNumber || C.string(value),
+    var isNumber = number(value),
+        isScalar = isNumber || string(value),
         /* jshint validthis: true */
         elementStyle = this[0],
         set = SET_STYLE,
@@ -191,7 +200,7 @@ function onStyleElement(value, name) {
     }
     // color
     else if (isNumber && COLOR_RE.test(name)) {
-        value = COLOR.stringify(value, EXPORTS.colorUnit);
+        value = COLOR.stringify(value, exported.colorUnit);
     }
     
     // non-scalar value is "unset"
@@ -293,7 +302,7 @@ function computedStyleNotSupported() {
 
 function w3cGetCurrentStyle(element, ruleNames) {
     var camel = STRING.stylize,
-        isString = CORE.string;
+        isString = string;
     var style, c, l, name, value, values, access;
     
     if (!DOM.is(element, 1)) {
@@ -303,7 +312,7 @@ function w3cGetCurrentStyle(element, ruleNames) {
     style = global.getComputedStyle(element);
     
     values = {};
-    if (!CORE.array(ruleNames)) {
+    if (!array(ruleNames)) {
         ruleNames = SLICE.call(arguments, 1);
     }
     for (c = -1, l = ruleNames.length; l--;) {
@@ -328,9 +337,8 @@ function w3cGetCurrentStyle(element, ruleNames) {
 
 function ieGetCurrentStyle(element, ruleNames) {
     var dimensionRe = DIMENSION_RE,
-        C = CORE,
         boxRe = BOX_RE,
-        isString = C.string,
+        isString = string,
         camel = STRING.stylize,
         getOpacity = GET_OPACITY,
         pixelSize = ieGetPixelSize;
@@ -346,7 +354,7 @@ function ieGetCurrentStyle(element, ruleNames) {
     dimension = false;
     values = {};
     
-    if (!C.array(ruleNames)) {
+    if (!array(ruleNames)) {
         ruleNames = SLICE.call(arguments, 1);
     }
     
@@ -507,31 +515,29 @@ function opacityNotSupported() {
 
 function ieGetOpacity(style) {
     var M = Math,
-        C = CORE,
         opacityRe = IE_ALPHA_OPACITY_RE,
         filter = style.filter;
     var m;
     
-    if (C.string(filter) && opacityRe.test(filter)) {
+    if (string(filter) && opacityRe.test(filter)) {
         m = filter.match(opacityRe);
         m = parseFloat(m[1]);
         
         return M.max(1,
                     M.min(100,
-                        C.number(m) ? m : 100)) / 100;
+                        number(m) ? m : 100)) / 100;
     }
     
     return 1;
 }
 
 function ieSetOpacity(style, opacity) {
-    var M = Math,
-        C = CORE;
+    var M = Math;
     
-    if (C.string(opacity)) {
+    if (string(opacity)) {
         opacity = parseFloat(opacity);
     }
-    if (C.number(opacity)) {
+    if (number(opacity)) {
         style.filter = IE_ALPHA_OPACITY_TEMPLATE.
                                 replace(IE_ALPHA_OPACITY_TEMPLATE_RE,
                                     M.min(100,
@@ -544,18 +550,17 @@ function ieSetOpacity(style, opacity) {
 function w3cGetOpacity(style) {
     var opacity = parseFloat(style.opacity);
     
-    return CORE.number(opacity) ? opacity : 1;
+    return number(opacity) ? opacity : 1;
 }
 
 function w3cSetOpacity(style, opacity) {
-    var M = Math,
-        C = CORE;
+    var M = Math;
     
-    if (C.string(opacity)) {
+    if (string(opacity)) {
         opacity = parseFloat(opacity);
     }
     
-    if (C.number(opacity)) {
+    if (number(opacity)) {
         style.opacity = M.min(1,
                             M.max(0, opacity)).toFixed(2);
     }
@@ -604,7 +609,7 @@ DOM.helper('style', applyStyle);
 CSS_INFO = DETECTED && DETECTED.css;
 if (CSS_INFO) {
     
-    EXPORTS.computedStyle = CSS_INFO.w3cStyle ?
+    exported.computedStyle = CSS_INFO.w3cStyle ?
                                 w3cGetCurrentStyle :
                                 CSS_INFO.ieStyle ?
                                     ieGetCurrentStyle :
@@ -629,9 +634,9 @@ if (CSS_INFO) {
     }
     
     if (CSS_INFO.alphaColor) {
-        EXPORTS.colorUnit = 'rgba';
+        exported.colorUnit = 'rgba';
     }
 }
 
 
-module.exports = EXPORTS.chain = EXPORTS;
+export default exported;
