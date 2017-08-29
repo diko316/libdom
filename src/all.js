@@ -119,7 +119,7 @@ if (detect) {
     //    selection.chain = exported;
 
 }
-console.log('exported ', exported);
+
 
 global.libdom = exported;
 

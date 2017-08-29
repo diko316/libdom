@@ -1,7 +1,7 @@
 'use strict';
 
 var main = global.libdom,
-    CORE = require("libcore");
+    CORE = global.libcore;
 
 console.log('testing: ', main);
 

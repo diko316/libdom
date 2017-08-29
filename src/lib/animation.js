@@ -35,7 +35,8 @@ var SESSION_ACCESS = '__animate_session',
     SESSIONS = {},
     exported = {
         easing: EASING,
-        defaultEasing: 'linear',
+        defaultEasing: 'easeOut',
+        duration: 0.5,
         interval: 10,
         each: animate,
         has: hasAnimationType,
@@ -146,7 +147,7 @@ function animate(callback, from, to, type, duration) {
     
     // validate duration
     if (alen < 5) {
-        duration = 1;
+        duration = exported.duration;
     }
     else if (!number(duration) || duration < 1) {
         throw new Error(string[1154]);

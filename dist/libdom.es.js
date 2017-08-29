@@ -1,9 +1,3 @@
-(function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(factory((global.libdom = {})));
-}(this, (function (exports) { 'use strict';
-
 var global$1 = typeof global !== "undefined" ? global :
             typeof self !== "undefined" ? self :
             typeof window !== "undefined" ? window : {};
@@ -6847,9 +6841,5 @@ use(exported);
 //    //global.gago = EXPORTS;
 //    global.libdom = exported;    // attach as global "libdom" variable
 
-exports['default'] = exported;
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-})));
-//# sourceMappingURL=libdom.js.map
+export default exported;
+//# sourceMappingURL=libdom.es.js.map

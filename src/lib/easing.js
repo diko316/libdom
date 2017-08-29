@@ -11,7 +11,11 @@
  */
     
 
-
+export let
+    linear = linearTween,
+    easeIn = easeInQuad,
+    easeOut = easeOutQuad,
+    easeInOut = easeInOutQuad;
 
     
 // simple linear tweening - no easing, no acceleration

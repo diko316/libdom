@@ -26,14 +26,14 @@ export
             break;
         
         case F.NUMBER:
-            value = 1 * value || 0;
+            value = (1 * value) || 0;
             if (index > 2) {
                 value *= percent;
             }
             break;
         
         case F.PERCENT:
-            value = 1 * value || 1;
+            value = (1 * value.substring(0, value.length - 1)) || 0;
             break;
         }
         

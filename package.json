@@ -2,13 +2,14 @@
   "name": "libdom",
   "version": "0.5.1",
   "description": "Lean Browser Library for typical DOM operations",
-  "main": "dist/index.js",
+  "main": "dist/libdom.js",
+  "module": "dist/libdom.es.js",
+  "jsnext:main": "dist/libdom.es.js",
   "scripts": {
-    "test": "export BUILD_MODE=unit-test && xvfb-run node_modules/.bin/karma start karma.config.js",
-    "prestart": "node_modules/.bin/webpack --hide-modules",
-    "start": "node webpack.dev.server.js",
-    "build": "BUILD_MODE=production && node_modules/.bin/webpack --hide-modules",
-    "build-optimized": "BUILD_MODE=compressed && node_modules/.bin/webpack --hide-modules"
+    "test": "bin/build-bundle.sh test || exit 1",
+    "start": "bin/build-bundle.sh start || exit 1",
+    "build": "bin/build-bundle.sh build || exit 1",
+    "build-optimized": "bin/build-bundle.sh build-optimized || exit 1"
   },
   "repository": {
     "type": "git",
@@ -46,6 +47,6 @@
     "rollup-plugin-uglify": "^2.0.1"
   },
   "optionalDependencies": {
-    "libcore": "git://github.com/diko316/libcore.git#rollup"
+    "libcore": "https://github.com/diko316/libcore/tarball/rollup"
   }
 }

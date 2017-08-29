@@ -3,7 +3,8 @@
 
 var NUMBER = 1,
     HEX = 2,
-    PERCENT = 3;
+    PERCENT = 3,
+    HAS_UNIT_RE = /\%$/;
 
 function format(value, colorFormat) {
     
@@ -12,10 +13,15 @@ function format(value, colorFormat) {
         return parseInt(value, 16) || 0;
     
     case NUMBER:
-        return 1 * value || 0;
+        value = 1 * value;
+        return value || 0;
 
     case PERCENT:
-        return Math.round((1 * value || 1) * 100);
+        value = HAS_UNIT_RE.test(value) ?
+                    1 * value.substring(0, value.length -1) :
+                    1 * value;
+
+        return Math.round((value || 1) * 100);
     }
     return 0;
 }

@@ -48,17 +48,19 @@ let plugins = [
     
 function configure(config, meta) {
         
-        var umd = meta.umd = {
+        var name = meta.name,
+            umd = meta.umd = {
                     file: meta.target,
                     format: 'umd',
-                    name: meta.name,
+                    name: name,
+                    amd: name,
                     exports: 'named',
                     sourcemap: true
                 },
             es = meta.es = {
                 file: meta.esTarget,
                 format: 'es',
-                name: meta.name,
+                name: name,
                 exports: 'named',
                 sourcemap: true
             };

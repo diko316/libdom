@@ -8,7 +8,8 @@ let pkg = require('./package.json'),
     meta = {
         name: pkg.name,
         target: pkg.main,
-        moduleTarget: pkg.moduleName
+        moduleTarget: pkg.moduleName,
+        optionals: pkg.optionalDependencies
     },
     config = {};
 

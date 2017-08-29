@@ -92,7 +92,7 @@ export
         
         l = (max + min) / 2;
     
-        if (max == min) {
+        if (max === min) {
             h = s = 0; // achromatic
         }
         else {
