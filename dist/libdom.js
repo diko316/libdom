@@ -8,6 +8,16 @@ var global$1 = typeof global !== "undefined" ? global :
             typeof self !== "undefined" ? self :
             typeof window !== "undefined" ? window : {};
 
+var MAIN = null;
+
+function use(chain) {
+        MAIN = chain;
+    }
+    
+function get() {
+        return MAIN;
+    }
+
 var ROOT = global$1;
 var browser = libcore.env.browser;
 var ieVersion = 0;
@@ -347,16 +357,6 @@ function xmlEncode(subject) {
 
 
 initialize();
-
-var MAIN = null;
-
-function use(chain) {
-        MAIN = chain;
-    }
-    
-function get() {
-        return MAIN;
-    }
 
 var EVENTS = null;
 var PAGE_UNLOADED = false;
@@ -842,7 +842,7 @@ if (EVENT_INFO) {
 var ORDER_TYPE_PREORDER = 1;
 var ORDER_TYPE_POSTORDER = 2;
 var ORDER_TYPE_LEVELORDER = 3;
-var CSS_SELECT = notSupportedQuerySelector;
+exports.select = notSupportedQuerySelector;
 var ERROR_INVALID_DOM = exported$9[1101];
 var ERROR_INVALID_DOM_NODE = exported$9[1103];
 var ERROR_INVALID_CSS_SELECTOR = exported$9[1111];
@@ -1493,7 +1493,7 @@ if (DOM_INFO) {
                                 notSupportedContains;
 
     if (DOM_INFO.querySelectorAll) {
-        CSS_SELECT = DOM_INFO.listToArray ?
+        exports.select = DOM_INFO.listToArray ?
                             toArrayQuerySelectorAll :
                             noArrayQuerySelectorAll;
     }
@@ -1507,7 +1507,7 @@ var DOM = {
             eachPostorder: eachPostorder,
             eachLevel: eachLevel,
             documentViewAccess: 'defaultView',
-            select: CSS_SELECT,
+            select: exports.select,
 
             helper: registerDomHelper,
 
@@ -1971,16 +1971,6 @@ function stringify(colorValue, type) {
 
         return list[type].toString(colorValue);
     }
-
-
-
-
-var color$1 = Object.freeze({
-	parseType: parseType,
-	parse: parse,
-	stringify: stringify,
-	default: TO_COLOR
-});
 
 var PADDING_BOTTOM = 'paddingBottom';
 var PADDING_TOP = 'paddingTop';
@@ -2589,6 +2579,8 @@ if (CSS_INFO) {
         exported$11.colorUnit = 'rgba';
     }
 }
+
+var computedStyle = exported$11.computedStyle;
 
 var ERROR_INVALID_ELEMENT = exported$9[1101];
 var ERROR_INVALID_DOM$2 = exported$9[1102];
@@ -3203,11 +3195,6 @@ var UNSELECTABLE = attributeUnselectable;
 var DETECTED_SELECTION = null;
 var DETECTED_DOM = null;
 var CSS_UNSELECT = null;
-var exported$13 = {
-        select: select,
-        clear: clear,
-        unselectable: unselectable
-    };
     
 
 
@@ -3643,7 +3630,7 @@ var BOX_RE$1 = exported$11.boxRe;
 var DIMENSION_RE$1 = exported$11.dimensionRe;
 var COLOR_RE$2 = exported$11.colorRe;
 var SESSIONS = {};
-var exported$14 = {
+var exported$15 = {
         easing: EASING,
         defaultEasing: 'easeOut',
         duration: 0.5,
@@ -3667,7 +3654,7 @@ function animate(callback, from, to, type, duration) {
         easing = EASING,
         isObject = libcore.object,
         list = SESSIONS,
-        defaultInterval = exported$14.interval,
+        defaultInterval = exported$15.interval,
         clear = clearInterval,
         set = setInterval,
         interval = null,
@@ -3749,7 +3736,7 @@ function animate(callback, from, to, type, duration) {
     
     // validate type
     if (alen < 4) {
-        type = exported$14.defaultEasing;
+        type = exported$15.defaultEasing;
     }
     else if (!hasAnimationType(type)) {
         throw new Error(string$$1[1153]);
@@ -3757,7 +3744,7 @@ function animate(callback, from, to, type, duration) {
     
     // validate duration
     if (alen < 5) {
-        duration = exported$14.duration;
+        duration = exported$15.duration;
     }
     else if (!libcore.number(duration) || duration < 1) {
         throw new Error(string$$1[1154]);
@@ -3864,7 +3851,7 @@ function animateStyle(element, styles, type) {
         defaults = createStyleDefaults(element, names);
         
         if (!hasAnimationType(type)) {
-            type = exported$14.defaultEasing;
+            type = exported$15.defaultEasing;
         }
         
         // create
@@ -4000,115 +3987,91 @@ function eachElementValues(value, name) {
     }
 }
 
-var exported = {
-        env: libcore.env,
-        info: DETECTED
-    };
-
-if (DETECTED) {
-
-    libcore.rehash(exported,
-           exported$9,
-           {
-                "xmlEncode": "xmlEncode",
-                "xmlDecode": "xmlDecode"
-            });
-
-    // dom structure
-    libcore.rehash(exported,
-            DOM,
-            {
-                'is': 'is',
-                'isView': 'isView',
-                'contains': 'contains',
-
-                'select': 'select',
-
-                'eachNodePreorder': 'eachPreorder',
-                'eachNodePostorder': 'eachPostorder',
-                'eachNodeLevelorder': 'eachLevel',
-
-                'add': 'add',
-                'move': 'move',
-                'replace': 'replace',
-                'remove': 'remove'
-            });
-
-    libcore.rehash(exported,
-           exported$11,
-            {
-                'addClass': 'add',
-                'removeClass': 'remove',
-                'computedStyle': 'computedStyle',
-                'stylize': 'style',
-                'stylify': 'currentStyle'
-            });
 
 
-    libcore.rehash(exported,
-            exported$10,
-            {
-                'on': 'on',
-                'un': 'un',
-                'purge': 'purge',
-                'dispatch': 'fire',
-                "destructor": "ondestroy"
-            });
+var exported$1 = Object.freeze({
+	env: libcore.env,
+	info: DETECTED,
+	xmlEncode: xmlEncode,
+	xmlDecode: xmlDecode,
+	is: isDom,
+	isView: isDefaultView,
+	contains: contains$1,
+	get select () { return exports.select; },
+	add: add,
+	move: move,
+	replace: replace,
+	remove: remove,
+	eachNodePreorder: eachPreorder,
+	eachNodePostorder: eachPostorder,
+	eachNodeLevelorder: eachLevel,
+	addClass: addClass,
+	removeClass: removeClass,
+	computedStyle: computedStyle,
+	stylize: setStyle,
+	stylify: getStyle,
+	on: listen,
+	un: unlisten,
+	purge: purge,
+	dispatch: dispatch,
+	destructor: addDestructor,
+	offset: offset,
+	size: size,
+	box: box,
+	scroll: scroll,
+	screen: screen,
+	highlight: select,
+	unhighlightable: unselectable,
+	clearHighlight: clear,
+	parseColor: parse,
+	parseColorType: parseType,
+	formatColor: stringify,
+	transition: animate,
+	animateStyle: animateStyle
+});
 
-    libcore.rehash(exported,
-            exported$12,
-            {
-                'offset': 'offset',
-                'size': 'size',
-                'box': 'box',
-                'scroll': 'scroll',
-                'screen': 'screen'
-            });
+global$1.libdom = exported$1;
 
-    libcore.rehash(exported,
-            exported$13,
-            {
-                'highlight': 'select',
-                'unhighlightable': 'unselectable',
-                'clearHighlight': 'clear'
-            });
+use(exported$1);
 
-    libcore.rehash(exported,
-            color$1,
-            {
-                'parseColor': 'parse',
-                'parseColorType': 'parseType',
-                'formatColor': 'stringify'
-            });
-
-    libcore.rehash(exported,
-            exported$14,
-            {
-                'transition': 'each',
-                'animateStyle': 'style'
-            });
-
-    //css.chain =
-    //    eventModule.chain =
-    //    dimension.chain =
-    //    selection.chain = exported;
-
-}
-
-
-global$1.libdom = exported;
-
-use(exported);
-
-
-
-//module.exports =
-//    exported['default'] =        // attach "default" for ES6 import
-//    //CORE.dom =                  // attach libdom to libcore from "dom"
-//    //global.gago = EXPORTS;
-//    global.libdom = exported;    // attach as global "libdom" variable
-
-exports['default'] = exported;
+exports['default'] = exported$1;
+exports.env = libcore.env;
+exports.info = DETECTED;
+exports.xmlEncode = xmlEncode;
+exports.xmlDecode = xmlDecode;
+exports.is = isDom;
+exports.isView = isDefaultView;
+exports.contains = contains$1;
+exports.add = add;
+exports.move = move;
+exports.replace = replace;
+exports.remove = remove;
+exports.eachNodePreorder = eachPreorder;
+exports.eachNodePostorder = eachPostorder;
+exports.eachNodeLevelorder = eachLevel;
+exports.addClass = addClass;
+exports.removeClass = removeClass;
+exports.computedStyle = computedStyle;
+exports.stylize = setStyle;
+exports.stylify = getStyle;
+exports.on = listen;
+exports.un = unlisten;
+exports.purge = purge;
+exports.dispatch = dispatch;
+exports.destructor = addDestructor;
+exports.offset = offset;
+exports.size = size;
+exports.box = box;
+exports.scroll = scroll;
+exports.screen = screen;
+exports.highlight = select;
+exports.unhighlightable = unselectable;
+exports.clearHighlight = clear;
+exports.parseColor = parse;
+exports.parseColorType = parseType;
+exports.formatColor = stringify;
+exports.transition = animate;
+exports.animateStyle = animateStyle;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

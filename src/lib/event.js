@@ -492,9 +492,9 @@ if (EVENT_INFO) {
 
 export {
     purge,
+    dispatch,
     listen as on,
     unlisten as un,
-    dispatch as fire,
     addDestructor as ondestroy
 };
 

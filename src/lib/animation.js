@@ -390,5 +390,17 @@ function eachElementValues(value, name) {
     }
 }
 
+export let
+    defaultEasing = exported.defaultEasing,
+    duration = exported.duration,
+    interval = exported.interval;
+
+export {
+        EASING as easing,
+        animate as each,
+        hasAnimationType as has,
+        animateStyle as style
+    };
+    
 export default exported;
 

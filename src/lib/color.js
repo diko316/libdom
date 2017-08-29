@@ -175,4 +175,8 @@ export
         return list[type].toString(colorValue);
     }
 
-export default TO_COLOR;
+export default {
+                    parse: parse,
+                    parseType: parseType,
+                    stringify: stringify
+                };

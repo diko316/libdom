@@ -636,5 +636,20 @@ if (CSS_INFO) {
     }
 }
 
-
+export let
+        computedStyle = exported.computedStyle,
+        colorUnit = exported.colorUnit;
+        
+export {
+        addClass as add,
+        removeClass as remove,
+        setStyle as style,
+        getStyle as currentStyle,
+        getCSSUnitValue as unitValue,
+        opacityNotSupported as styleOpacity,
+        BOX_RE as boxRe,
+        DIMENSION_RE as dimensionRe,
+        COLOR_RE as colorRe
+    };
+    
 export default exported;
