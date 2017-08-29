@@ -7,11 +7,11 @@ import {
             method,
             array,
             each,
-            contains,
+            contains as hasProperty,
             createRegistry
         } from "libcore";
 
-import chain from "./chain.js";
+import { get as getModule } from "./chain.js";
 
 import DETECTED from "./detect.js";
 
@@ -25,7 +25,7 @@ var ORDER_TYPE_PREORDER = 1,
     ORDER_TYPE_POSTORDER = 2,
     ORDER_TYPE_LEVELORDER = 3,
     CSS_SELECT = notSupportedQuerySelector,
-    
+
     ERROR_INVALID_DOM = STRING[1101],
     ERROR_INVALID_DOM_NODE = STRING[1103],
     ERROR_INVALID_CSS_SELECTOR = STRING[1111],
@@ -51,7 +51,7 @@ var ORDER_TYPE_PREORDER = 1,
     ],
     EVENT_ATTRIBUTE_RE = /^on(\-?[a-zA-Z].+)?$/,
     MANIPULATION_HELPERS = createRegistry();
-    
+
 var DOM_INFO;
 
 
@@ -80,14 +80,14 @@ function registerDomHelper(name, handler) {
     if (!string(name)) {
         throw new Error(STRING[1001]);
     }
-    
+
     if (!method(handler)) {
         throw new Error(STRING[1011]);
     }
-    
+
     MANIPULATION_HELPERS.set(name, handler);
-    
-    return chain.get();
+
+    return getModule();
 }
 
 function purgeEventsFrom(element) {
@@ -105,7 +105,7 @@ function getTagNameFromConfig(config) {
                         'tag' in config ?
                             config.tag : false;
     }
-    
+
     return string(config) ? config : false;
 }
 
@@ -115,21 +115,21 @@ function applyAttributeToElement(value, name) {
     var element = this,
         helper = MANIPULATION_HELPERS;
     var listen;
-    
+
     // rename attributes
     switch (name) {
     case 'class':
         name = 'className';
         break;
-    
+
     case 'for':
         name = 'htmlFor';
         break;
     }
-    
+
     if (EVENT_ATTRIBUTE_RE.test(name)) {
         listen = name.substring(name.charAt(2) === '-' ? 3 : 2, name.length);
-        
+
         if (listen === 'on' && object(value)) {
             each(value, applyEventAttribute, element);
         }
@@ -147,75 +147,75 @@ function applyAttributeToElement(value, name) {
     else {
         element[name] = value;
     }
-    
+
     element = null;
-    
+
 }
 
 function applyEventAttribute(handler, name) {
     /* jshint validthis:true */
     var element = this;
-    
+
     if (method(handler)) {
         EVENT.on(element, name, handler);
     }
-    
+
     element = null;
 }
 
 function applyConfigToElement(element, config, usedFragment) {
-    var hasOwn = contains,
+    var hasOwn = hasProperty,
         isObject= object,
         me = applyConfigToElement,
         resolveTagName = getTagNameFromConfig,
         applyAttribute = applyAttributeToElement,
         htmlEncodeChild = false,
         childNodes = null;
-        
+
     var name, value, item, c, l, fragment, doc, created;
-    
+
     if (isObject(config)) {
         childNodes = null;
-        
+
         // apply attributes
         main: for (name in config) {
             if (hasOwn(config, name)) {
                 value = config[name];
-                
+
                 // apply non-attributes if found
                 switch (name) {
                 case 'tagName':
                 case 'nodeName':
                 case 'tag':
                     continue main;
-                
+
                 case 'text':
                 case 'childText':
                 case 'innerText':
                     htmlEncodeChild = true;
-                    
+
                 /* falls through */
                 case 'childNodes':
                 case 'innerHTML':
                 case 'html':
                     childNodes = value;
                     continue main;
-                
+
                 case 'attributes':
                     if (isObject(value)) {
                         each(value, applyAttribute, element);
                     }
                     continue;
                 }
-                
+
                 applyAttribute.call(element, value, name);
 
             }
         }
-        
+
         // apply childNodes
         if (string(childNodes)) {
-            
+
             // convert
             if (htmlEncodeChild) {
                 childNodes = STRING.xmlEncode(childNodes);
@@ -223,20 +223,20 @@ function applyConfigToElement(element, config, usedFragment) {
 
             element.innerHTML = childNodes;
         }
-        
+
         // fragment
         else if (!htmlEncodeChild) {
-            
+
             if (isObject(childNodes)) {
                 childNodes = [childNodes];
             }
-            
+
             if (array(childNodes)) {
                 doc = element.ownerDocument;
                 fragment = usedFragment === true ?
                                 element :
                                 doc.createDocumentFragment();
-                
+
                 for (c = -1, l = childNodes.length; l--;) {
                     item = childNodes[++c];
 
@@ -248,11 +248,11 @@ function applyConfigToElement(element, config, usedFragment) {
                         fragment.appendChild(created);
                     }
                 }
-                
+
                 if (fragment !== element) {
                     element.appendChild(fragment);
                 }
-                
+
                 doc = fragment = created = null;
             }
         }
@@ -263,7 +263,7 @@ function applyConfigToElement(element, config, usedFragment) {
 function findChild(element, node, nodeType) {
     var isNumber = number;
     var index, counter, any;
-    
+
     if (isDom(node, 1, 3, 4, 7, 8) && node.parentNode === element) {
         return node;
     }
@@ -289,19 +289,19 @@ function findChild(element, node, nodeType) {
  */
 function noArrayQuerySelectorAll(dom, selector) {
     var list, c, l, result;
-    
+
     if (!isDom(dom, 9, 1)) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
-    
+
     if (!string(selector)) {
         throw new Error(ERROR_INVALID_CSS_SELECTOR);
     }
-    
+
     list = dom.querySelectorAll(selector);
     c = -1;
     (result = []).length = l = list.length;
-    
+
     for (; l--;) {
         result[++c] = list[c];
     }
@@ -313,7 +313,7 @@ function toArrayQuerySelectorAll(dom, selector) {
     if (!isDom(dom, 9, 1)) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
-    
+
     if (!string(selector)) {
         throw new Error(ERROR_INVALID_CSS_SELECTOR);
     }
@@ -329,43 +329,43 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
     var depth = 0,
         isPostOrder = 0;
     var queue, last, node, current;
-    
+
     if (!isDom(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
-    
+
     if (!method(callback)) {
         throw new Error(ERROR_INVALID_CALLBACK);
     }
-    
+
     if (typeof context === 'undefined') {
         context = null;
     }
-    
+
     includeRoot = includeRoot !== false;
-    
+
     switch (orderType) {
     case ORDER_TYPE_LEVELORDER:
-        
+
         queue = last = {
                     node: element,
                     next: null
                 };
-                
+
         for (; queue; queue = queue.next) {
 
             node = queue.node;
             queue.node = null;
-    
+
             // iterate siblings
             for (; node; node = node.nextSibling) {
-    
+
                 current = node.firstChild;
                 if ((includeRoot || 0 !== depth) &&
                     callback.call(context, current) === false) {
                     break;
                 }
-    
+
                 // insert
                 if (current) {
                     depth++;
@@ -380,19 +380,19 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
 
     /* falls through */
     case ORDER_TYPE_PREORDER:
-    
+
         main: for (current = element; current;) {
-    
+
             // process pre-order
             if ((includeRoot || 0 !== depth) &&
                 !isPostOrder && current.nodeType === 1 &&
                 callback.call(context, current) === false) {
                 break;
             }
-    
+
             // go into first child
             node = current.firstChild;
-    
+
             if (node) {
                 depth++;
             }
@@ -404,30 +404,30 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
                     callback.call(context, current) === false) {
                     break;
                 }
-                
+
                 node = current.nextSibling;
-                
+
                 for (; !node && depth-- && current;) {
                     current = current.parentNode;
-                    
+
                     // process post-order
                     if ((includeRoot || 0 !== depth) &&
                         isPostOrder && current.nodeType === 1 &&
                         callback.call(context, current) === false) {
                         break main;
                     }
-                    
+
                     node = current.nextSibling;
                 }
             }
             current = node;
         }
     }
-    
+
     last = queue = node = current = null;
-    
-    
-    return chain.get();
+
+
+    return getModule();
 }
 
 /**
@@ -436,37 +436,37 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
 export
     function isDom(node) {
         var isNumber = number;
-        
+
         var type, c, len, items, match, matched;
-        
+
         if (node && typeof node === 'object') {
-            
+
             type = node.nodeType;
-            
+
             if (isNumber(type)) {
-                
+
                 items = arguments;
                 len = Math.max(items.length - 1, 0);
                 matched = !len;
-                
+
                 for (c = 0; len--;) {
                     match = items[++c];
                     if (type === match) {
                         return true;
                     }
                 }
-                
+
                 return matched;
             }
         }
-        
+
         return false;
     }
 
 export
     function isDefaultView(defaultView) {
         var type = typeof defaultView;
-        
+
         return !!defaultView &&
                 (type === 'object' || type === 'function') &&
                 defaultView.self === defaultView.window &&
@@ -477,16 +477,16 @@ export
     function contains(ancestor, descendant) {
         var elementErrorString = STRING[1102],
             is = isDom;
-        
+
         if (!is(ancestor, 1, 9, 11)) {
             throw new Error(elementErrorString);
         }
-        
+
         if (!is(descendant) ||
             (descendant.nodeType in INVALID_DESCENDANT_NODE_TYPES)) {
             throw new Error(elementErrorString);
         }
-        
+
         switch (ancestor.nodeType) {
         case 9:
             ancestor = ancestor.documentElement;
@@ -495,9 +495,9 @@ export
             ancestor = ancestor.firstChild;
             break;
         }
-    
+
         return STD_CONTAINS(ancestor, descendant);
-        
+
     }
 
 /**
@@ -509,11 +509,11 @@ export
             invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
             is = isDom;
         var tagName;
-        
+
         if (!isDom(element, 1, 11)) {
             throw new Error(ERROR_INVALID_DOM);
         }
-        
+
         if (is(config)) {
             toInsert = config;
         }
@@ -525,15 +525,15 @@ export
             toInsert = element.ownerDocument.createElement(tagName);
             applyConfigToElement(toInsert, config);
         }
-        
+
         if (!is(toInsert, 1, 3, 4, 7, 8, 11)) {
             throw new Error(invalidConfig);
         }
-        
+
         element.insertBefore(toInsert, findChild(element, before));
-        
+
         return toInsert;
-        
+
     }
 
 export
@@ -542,12 +542,12 @@ export
         if (!isDom(node, 1, 3, 4, 7, 8)) {
             throw new Error(ERROR_INVALID_DOM_NODE);
         }
-        
+
         // unset child events by default
         if (node.nodeType === 1 && destroy !== false) {
             postOrderTraverse(node, purgeEventsFrom);
         }
-        
+
         parentNode = node.parentNode;
         if (parentNode) {
             parentNode.removeChild(node);
@@ -562,20 +562,20 @@ export
             invalidDom = ERROR_INVALID_DOM_NODE,
             created = false;
         var c, l, fragment, newChild;
-        
+
         if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM);
         }
-        
+
         if (is(nodes, 1, 3, 4, 7, 8)) {
             nodes = [nodes];
             created = true;
         }
-        
+
         if (!array(nodes)) {
             throw new Error(invalidDom);
         }
-        
+
         fragment = element.ownerDocument.createDocumentFragment();
         for (c = -1, l = nodes.length; l--;) {
             newChild = nodes[++c];
@@ -584,15 +584,15 @@ export
             }
         }
         element.appendChild(fragment);
-        
+
         newChild = null;
-        
+
         if (created) {
             nodes.splice(0, nodes.length);
         }
-        
+
         fragment = null;
-        
+
         return element;
     }
 
@@ -602,11 +602,11 @@ export
             invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
             is = isDom;
         var tagName;
-        
+
         if (!is(node, 1, 3, 4, 7, 8) || !node.parentNode) {
             throw new Error(ERROR_INVALID_DOM_NODE);
         }
-        
+
         if (is(config)) {
             toInsert = config;
         }
@@ -618,18 +618,18 @@ export
             toInsert = node.ownerDocument.createElement(tagName);
             applyConfigToElement(toInsert, config);
         }
-        
+
         if (!is(toInsert, 1, 3, 4, 7, 8)) {
             throw new Error(invalidConfig);
         }
-        
+
         // remove events before replacing it only if mandated
         if (destroy === true && node.nodeType === 1) {
             postOrderTraverse(node, purgeEventsFrom);
         }
-        
+
         node.parentNode.replaceChild(toInsert, node);
-        
+
         return toInsert;
     }
 
@@ -646,7 +646,7 @@ export
  */
 export
     function eachPreorder(element, callback, context, includeRoot) {
-        
+
         return orderTraverse(element,
                             callback,
                             context,
@@ -656,7 +656,7 @@ export
 
 export
     function eachPostorder(element, callback, context, includeRoot) {
-    
+
         return orderTraverse(element,
                             callback,
                             context,
@@ -666,7 +666,7 @@ export
 
 export
     function eachLevel(element, callback, context, includeRoot) {
-        
+
         return orderTraverse(element,
                             callback,
                             context,
@@ -685,7 +685,7 @@ if (DOM_INFO) {
                             DOM_INFO.contains ?
                                 ieContains :
                                 notSupportedContains;
-    
+
     if (DOM_INFO.querySelectorAll) {
         CSS_SELECT = DOM_INFO.listToArray ?
                             toArrayQuerySelectorAll :
@@ -707,9 +707,9 @@ export default {
             eachLevel: eachLevel,
             documentViewAccess: 'defaultView',
             select: CSS_SELECT,
-            
+
             helper: registerDomHelper,
-            
+
             add: add,
             replace: replace,
             move: move,

@@ -19,11 +19,11 @@ import dimension from "./lib/dimension.js";
 
 import selection from "./lib/selection.js";
 
-import color from "./lib/color.js";
+import * as color from "./lib/color.js";
 
 import animation from "./lib/animation.js";
 
-import chain from "./lib/chain.js";
+import { use as registerModule } from "./lib/chain.js";
 
 var exported = {
         env: env,
@@ -31,7 +31,7 @@ var exported = {
     };
 
 if (detect) {
-    
+
     rehash(exported,
            string,
            {
@@ -46,19 +46,19 @@ if (detect) {
                 'is': 'is',
                 'isView': 'isView',
                 'contains': 'contains',
-                
+
                 'select': 'select',
-                
+
                 'eachNodePreorder': 'eachPreorder',
                 'eachNodePostorder': 'eachPostorder',
                 'eachNodeLevelorder': 'eachLevel',
-                
+
                 'add': 'add',
                 'move': 'move',
                 'replace': 'replace',
                 'remove': 'remove'
             });
-    
+
     rehash(exported,
            css,
             {
@@ -68,8 +68,8 @@ if (detect) {
                 'stylize': 'style',
                 'stylify': 'currentStyle'
             });
-    
-    
+
+
     rehash(exported,
             eventModule,
             {
@@ -79,7 +79,7 @@ if (detect) {
                 'dispatch': 'fire',
                 "destructor": "ondestroy"
             });
-    
+
     rehash(exported,
             dimension,
             {
@@ -89,7 +89,7 @@ if (detect) {
                 'scroll': 'scroll',
                 'screen': 'screen'
             });
-    
+
     rehash(exported,
             selection,
             {
@@ -97,7 +97,7 @@ if (detect) {
                 'unhighlightable': 'unselectable',
                 'clearHighlight': 'clear'
             });
-    
+
     rehash(exported,
             color,
             {
@@ -105,22 +105,25 @@ if (detect) {
                 'parseColorType': 'parseType',
                 'formatColor': 'stringify'
             });
-    
+
     rehash(exported,
             animation,
             {
                 'transition': 'each',
                 'animateStyle': 'style'
             });
-    
+
     //css.chain =
-    //    eventModule.chain = 
+    //    eventModule.chain =
     //    dimension.chain =
     //    selection.chain = exported;
-    
-}
 
-chain.use(exported);
+}
+console.log('exported ', exported);
+
+global.libdom = exported;
+
+registerModule(exported);
 
 export default exported;
 
@@ -129,5 +132,3 @@ export default exported;
 //    //CORE.dom =                  // attach libdom to libcore from "dom"
 //    //global.gago = EXPORTS;
 //    global.libdom = exported;    // attach as global "libdom" variable
-
-

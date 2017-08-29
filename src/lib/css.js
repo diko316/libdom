@@ -8,7 +8,7 @@ import {
             each
         } from "libcore";
 
-import chain from "./chain.js";
+import { get as getModule } from "./chain.js";
 
 import DETECTED from "./detect.js";
 
@@ -18,22 +18,21 @@ import DOM from "./dom.js";
 
 import * as COLOR from "./color.js";
 
-
 var PADDING_BOTTOM = 'paddingBottom',
     PADDING_TOP = 'paddingTop',
     PADDING_LEFT = 'paddingLeft',
     PADDING_RIGHT = 'paddingRight',
-    
+
     OFFSET_LEFT = 'offsetLeft',
     OFFSET_TOP = 'offsetTop',
     OFFSET_WIDTH = 'offsetWidth',
     OFFSET_HEIGHT = 'offsetHeight',
-    
+
     CLIENT_WIDTH = 'clientWidth',
     CLIENT_HEIGHT = 'clientHeight',
-    
+
     COLOR_RE = /[Cc]olor$/,
-    
+
     //DIMENSION_RE = /width|height|(margin|padding).*|border.+(Width|Radius)/,
     EM_OR_PERCENT_RE = /%|em/,
     CSS_MEASUREMENT_RE =
@@ -43,24 +42,23 @@ var PADDING_BOTTOM = 'paddingBottom',
     BOX_RE = /(top|bottom|left|right|width|height)$/,
     DIMENSION_RE =
         /([Tt]op|[Bb]ottom|[Ll]eft|[Rr]ight|[wW]idth|[hH]eight|Size|Radius)$/,
-    
+
     IE_ALPHA_OPACITY_RE = /\(opacity\=([0-9]+)\)/i,
     IE_ALPHA_OPACITY_TEMPLATE = 'alpha(opacity=$opacity)',
     IE_ALPHA_OPACITY_TEMPLATE_RE = /\$opacity/,
-    
+
     GET_OPACITY = opacityNotSupported,
     SET_OPACITY = opacityNotSupported,
-    
+
     SET_STYLE = styleManipulationNotSupported,
     GET_STYLE = styleManipulationNotSupported,
-    
+
     ERROR_INVALID_DOM = STRING[1101],
-    
+
     exported = {
         add: addClass,
         remove: removeClass,
         computedStyle: computedStyleNotSupported,
-        //style: applyStyle,
         style: setStyle,
         currentStyle: getStyle,
         unitValue: getCSSUnitValue,
@@ -68,55 +66,55 @@ var PADDING_BOTTOM = 'paddingBottom',
         colorUnit: 'hex',
         boxRe: BOX_RE,
         dimensionRe: DIMENSION_RE,
-            
+
         colorRe: COLOR_RE
     },
     SLICE = Array.prototype.slice;
-    
+
 var CSS_INFO;
-    
+
 
 
 function addClass(element, classNames) {
     var isString = string;
-    
+
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
-    
+
     if (isString(classNames)) {
         classNames = [classNames];
     }
-    
+
     if (array(classNames)) {
         element.className = STRING.addWord(element.className || '',
                                            classNames);
     }
-    
-    return chain.get();
+
+    return getModule();
 }
 
 function removeClass(element, classNames) {
     var isString = string;
-    
+
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
-    
+
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
-    
+
     if (isString(classNames)) {
         classNames = [classNames];
     }
-    
+
     if (array(classNames)) {
         element.className = STRING.removeWord(element.className,
                                               classNames);
     }
-    
-    return chain.get();
+
+    return getModule();
 }
 
 function applyStyle() {
@@ -124,21 +122,21 @@ function applyStyle() {
     return arguments.length > 1 ?
                 // setter
                 setStyle.apply(this, arguments) :
-                
+
                 // getter
                 getStyle.apply(this, arguments);
-                
-    
-    
+
+
+
 }
 
 function setStyle(element, rules, value) {
     var context;
-    
+
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
-    
+
     if (string(rules)) {
         if (arguments.length > 2) {
             context = {};
@@ -149,25 +147,25 @@ function setStyle(element, rules, value) {
             rules = parseCSSText(rules);
         }
     }
-    
+
     if (!object(rules)) {
         throw new Error(STRING[1141]);
     }
 
     context = [element.style];
-    
+
     each(rules, onStyleElement, context, true);
-    
+
     context = context[0] = null;
-    
-    return chain.get();
+
+    return getModule();
 }
 
 function getStyle(element) {
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
-    
+
     return parseCSSText(element.style.cssText);
 }
 
@@ -178,9 +176,9 @@ function onStyleElement(value, name) {
         elementStyle = this[0],
         set = SET_STYLE,
         applied = false;
-    
+
     name = STRING.stylize(name);
-    
+
     // opacity
     if (name === 'opacity') {
         if (!isScalar) {
@@ -191,27 +189,27 @@ function onStyleElement(value, name) {
             SET_OPACITY(elementStyle, value);
             applied = true;
         }
-        
+
     }
     // dimension
     else if (isNumber && DIMENSION_RE.test(name)) {
         value = '' + value + 'px';
-        
+
     }
     // color
     else if (isNumber && COLOR_RE.test(name)) {
         value = COLOR.stringify(value, exported.colorUnit);
     }
-    
+
     // non-scalar value is "unset"
     if (!isScalar) {
         value = null;
     }
-    
+
     set(elementStyle, name, value);
-    
+
     elementStyle = null;
-    
+
 }
 
 function parseCSSText(str) {
@@ -224,10 +222,10 @@ function parseCSSText(str) {
         name = [],
         result = {};
     var chr, value;
-    
+
     for (; l--;) {
         chr = str.charAt(++c);
-        
+
         switch (state) {
         case STATE_NAME:
             if (chr === ':') {
@@ -239,7 +237,7 @@ function parseCSSText(str) {
                 name[il++] = chr;
             }
             break;
-        
+
         case STATE_VALUE:
             if (chr === ';' || !l) {
                 result[name] = value.join('');
@@ -251,14 +249,14 @@ function parseCSSText(str) {
             }
         }
     }
-    
+
     return result;
 }
 
 function getCSSUnitValue(value) {
     var is = isFinite;
     var len;
-    
+
     switch (typeof value) {
     case 'number':
         if (is(value)) {
@@ -279,13 +277,13 @@ function getCSSUnitValue(value) {
             return value;
         }
     }
-    
+
     if (value === null) {
         return value;
     }
-    
+
     return false;
-    
+
 }
 
 function styleManipulationNotSupported() {
@@ -304,13 +302,13 @@ function w3cGetCurrentStyle(element, ruleNames) {
     var camel = STRING.stylize,
         isString = string;
     var style, c, l, name, value, values, access;
-    
+
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
-    
+
     style = global.getComputedStyle(element);
-    
+
     values = {};
     if (!array(ruleNames)) {
         ruleNames = SLICE.call(arguments, 1);
@@ -329,9 +327,9 @@ function w3cGetCurrentStyle(element, ruleNames) {
             values[name] = value;
         }
     }
-    
+
     style = null;
-    
+
     return values;
 }
 
@@ -342,58 +340,58 @@ function ieGetCurrentStyle(element, ruleNames) {
         camel = STRING.stylize,
         getOpacity = GET_OPACITY,
         pixelSize = ieGetPixelSize;
-        
+
     var style, c, l, name, value, access, fontSize, values, dimension;
-    
+
     if (!DOM.is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
-    
+
     style = element.currentStyle;
     fontSize = false;
     dimension = false;
     values = {};
-    
+
     if (!array(ruleNames)) {
         ruleNames = SLICE.call(arguments, 1);
     }
-    
+
     for (c = -1, l = ruleNames.length; l--;) {
         name = ruleNames[++c];
         if (isString(name)) {
             access = camel(name);
-            
+
             switch (true) {
             case access === 'opacity':
                 value = getOpacity(style);
                 break;
-            
+
             case boxRe.test(access):
                 if (!dimension) {
                     dimension = ieGetPositionStyle(element, style);
                 }
                 value = dimension[access] + 'px';
                 break;
-            
+
             case dimensionRe.test(access) && style[access] !== 'auto':
                 if (fontSize === false) {
                     fontSize = pixelSize(element, style, 'fontSize', null);
                 }
                 value = pixelSize(element, style, access, fontSize) + 'px';
                 break;
-            
+
             case access === 'float':
                 value = style.styleFloat;
                 break;
-            
+
             default:
                 value = style[access];
             }
-            
+
             values[name] = value;
         }
     }
-    
+
     style = value = null;
     return values;
 }
@@ -408,7 +406,7 @@ function ieGetPixelSize(element, style, property, fontSize) {
     switch (suffix) {
     case 'in': return size * 96;
     case 'pt': return size * 96 / 72;
-    case 'em': 
+    case 'em':
     case '%':
         if (!fontSize) {
             parent = element.parentElement;
@@ -438,15 +436,15 @@ function ieGetPositionStyle(element, style) {
         parentStyle = parent.currentStyle,
         ieAdjust = DETECTED.browser.ieVersion < 9,
         parse = parseFloat,
-        
+
         ptop = PADDING_TOP,
         pleft = PADDING_LEFT,
         pbottom = PADDING_BOTTOM,
         pright = PADDING_RIGHT,
-        
+
         cwidth = CLIENT_WIDTH,
         cheight = CLIENT_HEIGHT,
-        
+
         left = element[OFFSET_LEFT],
         top = element[OFFSET_TOP],
         right = parent[cwidth] - element[OFFSET_WIDTH],
@@ -454,15 +452,15 @@ function ieGetPositionStyle(element, style) {
         width = element[cwidth],
         height = element[cheight];
     var node, nodeStyle;
-        
+
     switch (style.position) {
     case 'relative':
         left -= (parse(parentStyle[pleft]) || 0);
         top -= (parse(parentStyle[ptop]) || 0);
-        
+
         if (ieAdjust) {
             node = element.parentNode;
-            
+
             for (; node !== parent; node = node.parentNode) {
                 nodeStyle = node.currentStyle;
                 if (nodeStyle.position === 'static') {
@@ -472,13 +470,13 @@ function ieGetPositionStyle(element, style) {
                             (parse(nodeStyle.borderTopWidth) || 0);
                 }
             }
-            
+
             if (parent === element.ownerDocument.body) {
                 left -= parse(parentStyle.marginLeft) || 0;
                 top -= parse(parentStyle.marginTop) || 0;
             }
         }
-        
+
     /* falls through */
     case 'absolute':
     case 'fixed':
@@ -486,16 +484,16 @@ function ieGetPositionStyle(element, style) {
         top -= (parse(parentStyle.borderTopWidth) || 0);
     }
 
-    
+
     right -= left;
     bottom -= top;
     width -= (parse(style[pleft]) || 0) +
                 (parse(style[pright]) || 0);
     height -= (parse(style[ptop]) || 0) +
                 (parse(style[pbottom]) || 0);
-    
+
     parent = parentStyle = null;
-    
+
     return {
         left: left,
         top: top,
@@ -518,22 +516,22 @@ function ieGetOpacity(style) {
         opacityRe = IE_ALPHA_OPACITY_RE,
         filter = style.filter;
     var m;
-    
+
     if (string(filter) && opacityRe.test(filter)) {
         m = filter.match(opacityRe);
         m = parseFloat(m[1]);
-        
+
         return M.max(1,
                     M.min(100,
                         number(m) ? m : 100)) / 100;
     }
-    
+
     return 1;
 }
 
 function ieSetOpacity(style, opacity) {
     var M = Math;
-    
+
     if (string(opacity)) {
         opacity = parseFloat(opacity);
     }
@@ -549,17 +547,17 @@ function ieSetOpacity(style, opacity) {
 
 function w3cGetOpacity(style) {
     var opacity = parseFloat(style.opacity);
-    
+
     return number(opacity) ? opacity : 1;
 }
 
 function w3cSetOpacity(style, opacity) {
     var M = Math;
-    
+
     if (string(opacity)) {
         opacity = parseFloat(opacity);
     }
-    
+
     if (number(opacity)) {
         style.opacity = M.min(1,
                             M.max(0, opacity)).toFixed(2);
@@ -608,13 +606,13 @@ DOM.helper('style', applyStyle);
 
 CSS_INFO = DETECTED && DETECTED.css;
 if (CSS_INFO) {
-    
+
     exported.computedStyle = CSS_INFO.w3cStyle ?
                                 w3cGetCurrentStyle :
                                 CSS_INFO.ieStyle ?
                                     ieGetCurrentStyle :
                                     computedStyleNotSupported;
-                            
+
     if (CSS_INFO.setattribute) {
         SET_STYLE = ieSetStyleValue;
         GET_STYLE = ieGetStyleValue;
@@ -623,7 +621,7 @@ if (CSS_INFO) {
         SET_STYLE = w3cSetStyleValue;
         GET_STYLE = w3cGetStyleValue;
     }
-    
+
     if (CSS_INFO.opacity) {
         GET_OPACITY = w3cGetOpacity;
         SET_OPACITY = w3cSetOpacity;
@@ -632,7 +630,7 @@ if (CSS_INFO) {
         GET_OPACITY = ieGetOpacity;
         SET_OPACITY = ieSetOpacity;
     }
-    
+
     if (CSS_INFO.alphaColor) {
         exported.colorUnit = 'rgba';
     }

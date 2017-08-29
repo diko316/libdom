@@ -61,7 +61,7 @@ if (browser) {
     opacity: typeof STYLE.opacity !== 'undefined',
     filterOpacity: typeof STYLE.filter !== 'undefined',
     alphaColor: detectAlphaColor(STYLE),
-    transition: = detectTransition(STYLE)
+    transition: detectTransition(STYLE)
   };
 
 }

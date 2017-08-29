@@ -1,12 +1,26 @@
 'use strict';
 
-var STRING =  require("./string.js"),
-    CORE = require("libcore"),
-    EASING = require("./easing.js"),
-    COLOR = require("./color.js"),
-    CSS_MODULE = require("./css.js"),
-    DIMENSION = require("./dimension.js"),
-    SESSION_ACCESS = '__animate_session',
+import {
+            string,
+            number,
+            method,
+            object,
+            contains,
+            each
+        } from "libcore";
+        
+import STRING from "./string.js";
+
+import { parse as colorParse } from "./color.js";
+
+import * as EASING from "./easing.js";
+
+import CSS_MODULE from "./css.js";
+
+import DIMENSION from "./dimension.js";
+
+
+var SESSION_ACCESS = '__animate_session',
     BOX_POSITION = {
         left: 0,
         top: 1,
@@ -19,7 +33,7 @@ var STRING =  require("./string.js"),
     DIMENSION_RE = CSS_MODULE.dimensionRe,
     COLOR_RE = CSS_MODULE.colorRe,
     SESSIONS = {},
-    EXPORTS = {
+    exported = {
         easing: EASING,
         defaultEasing: 'linear',
         interval: 10,
@@ -40,11 +54,9 @@ function animate(callback, from, to, type, duration) {
     var M = Math,
         string = STRING,
         easing = EASING,
-        C = CORE,
-        isObject = C.object,
-        has = C.contains,
+        isObject = object,
         list = SESSIONS,
-        defaultInterval = EXPORTS.interval,
+        defaultInterval = exported.interval,
         clear = clearInterval,
         set = setInterval,
         interval = null,
@@ -116,7 +128,7 @@ function animate(callback, from, to, type, duration) {
         
     }
     
-    if (!C.method(callback)) {
+    if (!method(callback)) {
         throw new Error(string[1151]);
     }
     
@@ -126,7 +138,7 @@ function animate(callback, from, to, type, duration) {
     
     // validate type
     if (alen < 4) {
-        type = EXPORTS.defaultEasing;
+        type = exported.defaultEasing;
     }
     else if (!hasAnimationType(type)) {
         throw new Error(string[1153]);
@@ -136,7 +148,7 @@ function animate(callback, from, to, type, duration) {
     if (alen < 5) {
         duration = 1;
     }
-    else if (!C.number(duration) || duration < 1) {
+    else if (!number(duration) || duration < 1) {
         throw new Error(string[1154]);
     }
     
@@ -157,16 +169,15 @@ function animate(callback, from, to, type, duration) {
 }
 
 function validValue(value) {
-    var C = CORE;
-    if (C.string(value)) {
+    if (string(value)) {
         value = parseFloat(value);
     }
-    return C.number(value) && value;
+    return number(value) && value;
 }
 
 function applyDisplacements(session, from, to) {
     
-    CORE.each(to, onApplyDisplacement, [from, session], true);
+    each(to, onApplyDisplacement, [from, session], true);
     
     return session;
 }
@@ -186,7 +197,7 @@ function onApplyDisplacement(value, name, to) {
     
     if (target !== false) {
         index = names.indexOf(name);
-        source = CORE.contains(from, name) &&
+        source = contains(from, name) &&
                     format(from[name]);
                     
         sourceEnded = source === false;
@@ -216,8 +227,7 @@ function onApplyDisplacement(value, name, to) {
 }
 
 function hasAnimationType(type) {
-    var C = CORE;
-    return C.string(type) && C.contains(EASING, type);
+    return string(type) && contains(EASING, type);
 }
 
 /**
@@ -231,7 +241,7 @@ function animateStyle(element, styles, type) {
     var session, sessionId, animateObject,
         names, defaults, animateValues, staticValues;
         
-    CORE.each(styles, eachElementValues, stat);
+    each(styles, eachElementValues, stat);
     
     names = stat[0];
     animateValues = stat[1];
@@ -243,7 +253,7 @@ function animateStyle(element, styles, type) {
         defaults = createStyleDefaults(element, names);
         
         if (!hasAnimationType(type)) {
-            type = EXPORTS.defaultEasing;
+            type = exported.defaultEasing;
         }
         
         // create
@@ -314,7 +324,7 @@ function createStyleDefaults(element, names) {
         cssValue = css.unitValue,
         dimensionRe = DIMENSION_RE,
         colorRe = COLOR_RE,
-        colorParse = COLOR.parse,
+        parse = colorParse,
         boxRe = BOX_RE,
         boxPosition = BOX_POSITION,
         box = null;
@@ -333,7 +343,7 @@ function createStyleDefaults(element, names) {
             value = cssValue(value);
         }
         else if (colorRe.test(name)) {
-            value = colorParse(value);
+            value = parse(value);
         }
         values[name] = parseFloat(value) || 0;
     }
@@ -363,13 +373,13 @@ function eachElementValues(value, name) {
     }
     // color
     else if (COLOR_RE.test(name)) {
-        value = COLOR.parse(raw);
+        value = colorParse(raw);
         if (value === null) {
             value = false;
         }
     }
     
-    if (CORE.number(value)) {
+    if (number(value)) {
         names[names.length] = name;
         values[name] = value;
     }
@@ -379,7 +389,5 @@ function eachElementValues(value, name) {
     }
 }
 
-
-module.exports = EXPORTS;
-
+export default exported;
 
