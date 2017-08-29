@@ -5,13 +5,30 @@
 
 let pkg = require('./package.json'),
     configure = require('./config/base.js'),
+    hasOwn = Object.prototype.hasOwnProperty,
+    optionalObject = pkg.optionalDependencies,
+    optionals = [],
+    ol = 0,
+    config = {},
+    globals = {},
     meta = {
         name: pkg.name,
         esTarget: pkg.module,
         target: pkg.main,
-        moduleTarget: pkg.moduleName
-    },
-    config = {};
+        moduleTarget: pkg.moduleName,
+        optionals: optionals,
+        globals: globals
+    };
+    
+var access;
+
+// fix externals
+for (access in optionalObject) {
+    if (hasOwn.call(optionalObject, access)) {
+        optionals[ol++] =
+            globals[access] = access;
+    }
+}
 
 // base setup
 configure(config, meta);

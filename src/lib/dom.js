@@ -545,7 +545,7 @@ export
 
         // unset child events by default
         if (node.nodeType === 1 && destroy !== false) {
-            postOrderTraverse(node, purgeEventsFrom);
+            eachPostorder(node, purgeEventsFrom);
         }
 
         parentNode = node.parentNode;
@@ -625,7 +625,7 @@ export
 
         // remove events before replacing it only if mandated
         if (destroy === true && node.nodeType === 1) {
-            postOrderTraverse(node, purgeEventsFrom);
+            eachPostorder(node, purgeEventsFrom);
         }
 
         node.parentNode.replaceChild(toInsert, node);

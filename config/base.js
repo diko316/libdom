@@ -70,6 +70,9 @@ function configure(config, meta) {
         config.plugins = plugins;
         
         config.output = [umd, es];
+        
+        config.external = meta.optionals;
+        config.globals = meta.globals;
 
         return config;
     }

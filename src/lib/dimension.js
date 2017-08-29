@@ -224,7 +224,6 @@ function iePageScrollOffset(window) {
 }
 
 function getZoomFactor() {
-    var factor = 1;
     //var rect, body;
     //
     //if (boundingRect) {
@@ -240,7 +239,7 @@ function getZoomFactor() {
     //
     //body = null;
     
-    return factor;
+    return 1;
 }
 
 
