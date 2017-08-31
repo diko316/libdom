@@ -10,13 +10,13 @@
  *  
  */
     
-
-export let
-    linear = linearTween,
-    easeIn = easeInQuad,
-    easeOut = easeOutQuad,
-    easeInOut = easeInOutQuad;
-
+// easing aliases
+export {
+        linearTween as linear,
+        easeInQuad as easeIn,
+        easeOutQuad as easeOut,
+        easeInOutQuad as easeInOut
+    };
     
 // simple linear tweening - no easing, no acceleration
 export

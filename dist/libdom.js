@@ -3340,23 +3340,6 @@ if (DETECTED) {
 
 }
 
-/**
- *  Easing Formula taken from: http://gizma.com/easing
- *
- *  currentFrame = current frame
- *  startValue = start value
- *  endValue = end value
- *  totalFrames = total frame
- *  
- */
-    
-
-var linear = linearTween;
-var easeIn = easeInQuad;
-var easeOut = easeOutQuad;
-var easeInOut = easeInOutQuad;
-
-    
 // simple linear tweening - no easing, no acceleration
 function linearTween(currentFrame, startValue, endValue, totalFrames) {
         return endValue *
@@ -3589,10 +3572,10 @@ function easeInOutCirc(currentFrame, startValue, endValue, totalFrames) {
 
 
 var EASING = Object.freeze({
-	linear: linear,
-	easeIn: easeIn,
-	easeOut: easeOut,
-	easeInOut: easeInOut,
+	linear: linearTween,
+	easeIn: easeInQuad,
+	easeOut: easeOutQuad,
+	easeInOut: easeInOutQuad,
 	linearTween: linearTween,
 	easeInQuad: easeInQuad,
 	easeOutQuad: easeOutQuad,
@@ -3746,7 +3729,7 @@ function animate(callback, from, to, type, duration) {
     if (alen < 5) {
         duration = exported$15.duration;
     }
-    else if (!libcore.number(duration) || duration < 1) {
+    else if (!libcore.number(duration) || duration <= 0) {
         throw new Error(string$$1[1154]);
     }
     

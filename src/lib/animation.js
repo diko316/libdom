@@ -149,7 +149,7 @@ function animate(callback, from, to, type, duration) {
     if (alen < 5) {
         duration = exported.duration;
     }
-    else if (!number(duration) || duration < 1) {
+    else if (!number(duration) || duration <= 0) {
         throw new Error(string[1154]);
     }
     

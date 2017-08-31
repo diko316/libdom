@@ -1,7 +1,7 @@
 'use strict';
 
 // at this point, "libdom" global variable is now present
-import "../index.js";
+import "./prepare.js";
 
 //global.libcore = require("libcore");
 
@@ -10,4 +10,4 @@ import "./color/parse-color-type.js";
 import "./color/format-color.js";
 
 
-//import "./animation/transition.js";
+import "./animation/transition.js";

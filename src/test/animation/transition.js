@@ -174,4 +174,54 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                                          to,
                                          'linear'));
             });
+        
+        it('9. Should accept valid parameters and Number [duration] parameter ' +
+           'greater than zero and returns stop() transition Function',
+           () => {
+                expect(() => libcore.method(transition(empty,
+                                                 from,
+                                                 to,
+                                                 'linear',
+                                                 0.5))).
+                    not.toThrow();
+                    
+                expect(() => libcore.method(transition(empty,
+                                                 from,
+                                                 to,
+                                                 'linear',
+                                                 0.1))).
+                    not.toThrow();
+                    
+                expect(() => libcore.method(transition(empty,
+                                                 from,
+                                                 to,
+                                                 'linear',
+                                                 20))).
+                    not.toThrow();
+            });
+        
+        it('10. Should not accept Number [duration] parameter ' +
+           'lesser than or equal to zero and throws exception.',
+           () => {
+                expect(() => libcore.method(transition(empty,
+                                                 from,
+                                                 to,
+                                                 'linear',
+                                                 -1))).
+                    toThrow();
+                    
+                expect(() => libcore.method(transition(empty,
+                                                 from,
+                                                 to,
+                                                 'linear',
+                                                 0))).
+                    toThrow();
+                    
+                expect(() => libcore.method(transition(empty,
+                                                 from,
+                                                 to,
+                                                 'linear',
+                                                 -20))).
+                    toThrow();
+            });
     });
