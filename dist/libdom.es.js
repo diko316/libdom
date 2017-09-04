@@ -364,13 +364,7 @@ var ERROR_INVALID_HANDLER = exported$9[1133];
 var IE_ON = 'on';
 var IE_BUBBLE_EVENT = 'beforeupdate';
 var IE_NO_BUBBLE_EVENT = 'propertychange';
-var exported$10 = {
-                on: listen,
-                un: unlisten,
-                fire: dispatch,
-                purge: purge,
-                ondestroy: addDestructor
-            };
+
 
 var RESOLVE;
 var LISTEN;
@@ -379,122 +373,6 @@ var DISPATCH;
 var EVENT_INFO;
 var IS_CAPABLE;
 var SUBJECT;
-
-function listen(observable, type, handler, context) {
-    var last = EVENTS;
-    var current, args;
-
-    if (!string(type)) {
-        throw new Error(ERROR_INVALID_TYPE);
-    }
-
-    if (!method(handler)) {
-        throw new Error(ERROR_INVALID_HANDLER);
-    }
-
-    observable = RESOLVE(observable);
-
-    if (!observable) {
-        throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
-    }
-
-    if (typeof context === 'undefined') {
-        context = null;
-    }
-
-    args = [observable, type, handler, context];
-    MIDDLEWARE.run('listen', args);
-
-    observable = args[0];
-    type = args[1];
-    handler = args[2];
-    context = args[3];
-    args.splice(0, 4);
-    args = null;
-
-    current = LISTEN(observable, type, handler, context);
-
-    current.unlisten = createUnlistener(current);
-    current.head = last;
-    current.tail = null;
-
-    if (last) {
-        last.tail = current;
-    }
-    EVENTS = current;
-
-    return current.unlisten;
-
-}
-
-function unlisten(observable, type, handler, context) {
-    var found, len, args;
-
-    if (!string(type)) {
-        throw new Error(ERROR_INVALID_TYPE);
-    }
-
-    if (!method(handler)) {
-        throw new Error(ERROR_INVALID_HANDLER);
-    }
-
-    observable = RESOLVE(observable);
-
-    if (!observable) {
-        throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
-    }
-
-    if (typeof context === 'undefined') {
-        context = null;
-    }
-
-    args = [observable, type, handler, context];
-    MIDDLEWARE.run('unlisten', args);
-
-    observable = args[0];
-    type = args[1];
-    handler = args[2];
-    context = args[3];
-    args.splice(0, 4);
-    args = null;
-
-    found = filter(observable, type, handler, context);
-
-    for (len = found.length; len--;) {
-        found[len].unlisten();
-    }
-
-    return get();
-}
-
-
-function dispatch(observable, type, defaults) {
-
-    if (!string(type)) {
-        throw new Error(ERROR_INVALID_TYPE);
-    }
-
-    observable = RESOLVE(observable);
-
-    if (!observable) {
-        throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
-    }
-
-    return DISPATCH(observable, type, defaults);
-
-}
-
-function purge() {
-    var found = filter.apply(null, arguments),
-        len = found.length;
-
-    for (; len--;) {
-        found[len].unlisten();
-    }
-
-    return get();
-}
-
 
 function createUnlistener(event) {
     var destroyed = false;
@@ -788,12 +666,7 @@ function onBeforeUnload() {
     }
 }
 
-function addDestructor(handler) {
-    if (method(handler)) {
-        MIDDLEWARE.register('global-destroy', handler);
-    }
-    return get();
-}
+
 
 
 RESOLVE = LISTEN = UNLISTEN = DISPATCH = null;
@@ -829,11 +702,132 @@ if (EVENT_INFO) {
         SUBJECT = global$1;
 
         // register destructors
-        listen(SUBJECT, 'beforeunload', onBeforeUnload);
-        listen(SUBJECT, 'unload', onBeforeUnload);
+        on(SUBJECT, 'beforeunload', onBeforeUnload);
+        on(SUBJECT, 'unload', onBeforeUnload);
         SUBJECT = null;
     }
 }
+
+function on(observable, type, handler, context) {
+        var last = EVENTS;
+        var current, args;
+    
+        if (!string(type)) {
+            throw new Error(ERROR_INVALID_TYPE);
+        }
+    
+        if (!method(handler)) {
+            throw new Error(ERROR_INVALID_HANDLER);
+        }
+    
+        observable = RESOLVE(observable);
+    
+        if (!observable) {
+            throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
+        }
+    
+        if (typeof context === 'undefined') {
+            context = null;
+        }
+    
+        args = [observable, type, handler, context];
+        MIDDLEWARE.run('listen', args);
+    
+        observable = args[0];
+        type = args[1];
+        handler = args[2];
+        context = args[3];
+        args.splice(0, 4);
+        args = null;
+    
+        current = LISTEN(observable, type, handler, context);
+    
+        current.unlisten = createUnlistener(current);
+        current.head = last;
+        current.tail = null;
+    
+        if (last) {
+            last.tail = current;
+        }
+        EVENTS = current;
+    
+        return current.unlisten;
+    
+    }
+
+function un(observable, type, handler, context) {
+        var found, len, args;
+    
+        if (!string(type)) {
+            throw new Error(ERROR_INVALID_TYPE);
+        }
+    
+        if (!method(handler)) {
+            throw new Error(ERROR_INVALID_HANDLER);
+        }
+    
+        observable = RESOLVE(observable);
+    
+        if (!observable) {
+            throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
+        }
+    
+        if (typeof context === 'undefined') {
+            context = null;
+        }
+    
+        args = [observable, type, handler, context];
+        MIDDLEWARE.run('unlisten', args);
+    
+        observable = args[0];
+        type = args[1];
+        handler = args[2];
+        context = args[3];
+        args.splice(0, 4);
+        args = null;
+    
+        found = filter(observable, type, handler, context);
+    
+        for (len = found.length; len--;) {
+            found[len].unlisten();
+        }
+    
+        return get();
+    }
+
+function dispatch(observable, type, defaults) {
+    
+        if (!string(type)) {
+            throw new Error(ERROR_INVALID_TYPE);
+        }
+    
+        observable = RESOLVE(observable);
+    
+        if (!observable) {
+            throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
+        }
+    
+        return DISPATCH(observable, type, defaults);
+    
+    }
+
+function purge() {
+        var found = filter.apply(null, arguments),
+            len = found.length;
+    
+        for (; len--;) {
+            found[len].unlisten();
+        }
+    
+        return get();
+    }
+    
+function destructor(handler) {
+        if (method(handler)) {
+            MIDDLEWARE.register('global-destroy', handler);
+        }
+        return get();
+    }
 
 var ORDER_TYPE_PREORDER = 1;
 var ORDER_TYPE_POSTORDER = 2;
@@ -904,7 +898,7 @@ function registerDomHelper(name, handler) {
 }
 
 function purgeEventsFrom(element) {
-    exported$10.purge(element);
+    purge(element);
 }
 
 
@@ -927,7 +921,7 @@ function applyAttributeToElement(value, name) {
     /* jshint validthis:true */
     var element = this,
         helper = MANIPULATION_HELPERS;
-    var listen$$1;
+    var listen;
 
     // rename attributes
     switch (name) {
@@ -941,13 +935,13 @@ function applyAttributeToElement(value, name) {
     }
 
     if (EVENT_ATTRIBUTE_RE.test(name)) {
-        listen$$1 = name.substring(name.charAt(2) === '-' ? 3 : 2, name.length);
+        listen = name.substring(name.charAt(2) === '-' ? 3 : 2, name.length);
 
-        if (listen$$1 === 'on' && object(value)) {
+        if (listen === 'on' && object(value)) {
             each(value, applyEventAttribute, element);
         }
         else {
-            applyEventAttribute.call(element, value, listen$$1);
+            applyEventAttribute.call(element, value, listen);
         }
     }
     else if (helper.exists(name)) {
@@ -970,7 +964,7 @@ function applyEventAttribute(handler, name) {
     var element = this;
 
     if (method(handler)) {
-        exported$10.on(element, name, handler);
+        on(element, name, handler);
     }
 
     element = null;
@@ -1994,120 +1988,33 @@ var GET_OPACITY = opacityNotSupported;
 var SET_OPACITY = opacityNotSupported;
 var SET_STYLE = styleManipulationNotSupported;
 var GET_STYLE = styleManipulationNotSupported;
+var COMPUTED_STYLE = computedStyleNotSupported;
 var ERROR_INVALID_DOM$1 = exported$9[1101];
-var exported$11 = {
-        add: addClass,
-        remove: removeClass,
-        computedStyle: computedStyleNotSupported,
-        style: setStyle,
-        currentStyle: getStyle,
-        unitValue: getCSSUnitValue,
-        styleOpacity: opacityNotSupported,
-        colorUnit: 'hex',
-        boxRe: BOX_RE,
-        dimensionRe: DIMENSION_RE,
-
-        colorRe: COLOR_RE
-    };
+var DEFAULT_COLOR_UNIT = 'hex';
 var SLICE = Array.prototype.slice;
 
 var CSS_INFO;
 
 
 
-function addClass(element, classNames) {
-    var isString = string;
 
-    if (!DOM.is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM$1);
-    }
-
-    if (isString(classNames)) {
-        classNames = [classNames];
-    }
-
-    if (array(classNames)) {
-        element.className = exported$9.addWord(element.className || '',
-                                           classNames);
-    }
-
-    return get();
-}
-
-function removeClass(element, classNames) {
-    var isString = string;
-
-    if (!DOM.is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM$1);
-    }
-
-    if (!DOM.is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM$1);
-    }
-
-    if (isString(classNames)) {
-        classNames = [classNames];
-    }
-
-    if (array(classNames)) {
-        element.className = exported$9.removeWord(element.className,
-                                              classNames);
-    }
-
-    return get();
-}
 
 function applyStyle() {
     /* jshint validthis: true */
     return arguments.length > 1 ?
                 // setter
-                setStyle.apply(this, arguments) :
+                stylize$1.apply(this, arguments) :
 
                 // getter
-                getStyle.apply(this, arguments);
+                stylify.apply(this, arguments);
 
 
 
 }
 
-function setStyle(element, rules, value) {
-    var context;
 
-    if (!DOM.is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM$1);
-    }
 
-    if (string(rules)) {
-        if (arguments.length > 2) {
-            context = {};
-            context[rules] = value;
-            rules = context;
-        }
-        else {
-            rules = parseCSSText(rules);
-        }
-    }
 
-    if (!object(rules)) {
-        throw new Error(exported$9[1141]);
-    }
-
-    context = [element.style];
-
-    each(rules, onStyleElement, context, true);
-
-    context = context[0] = null;
-
-    return get();
-}
-
-function getStyle(element) {
-    if (!DOM.is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM$1);
-    }
-
-    return parseCSSText(element.style.cssText);
-}
 
 function onStyleElement(value, name) {
     var isNumber = number(value),
@@ -2138,7 +2045,7 @@ function onStyleElement(value, name) {
     }
     // color
     else if (isNumber && COLOR_RE.test(name)) {
-        value = stringify(value, exported$11.colorUnit);
+        value = stringify(value, DEFAULT_COLOR_UNIT);
     }
 
     // non-scalar value is "unset"
@@ -2193,38 +2100,7 @@ function parseCSSText(str) {
     return result;
 }
 
-function getCSSUnitValue(value) {
-    var is = isFinite;
-    var len;
 
-    switch (typeof value) {
-    case 'number':
-        if (is(value)) {
-            return value;
-        }
-        break;
-    case 'string':
-        len = value.length;
-        if (CSS_MEASUREMENT_RE.test(value) &&
-            value.substring(len - 2, len) !== 'px') {
-            return value;
-        }
-        else if (value === 'auto' || value === 'inherit') {
-            return value;
-        }
-        value = parseFloat(value);
-        if (is(value)) {
-            return value;
-        }
-    }
-
-    if (value === null) {
-        return value;
-    }
-
-    return false;
-
-}
 
 function styleManipulationNotSupported() {
     throw new Error(exported$9[2001]);
@@ -2547,7 +2423,7 @@ DOM.helper('style', applyStyle);
 CSS_INFO = DETECTED && DETECTED.css;
 if (CSS_INFO) {
 
-    exported$11.computedStyle = CSS_INFO.w3cStyle ?
+    COMPUTED_STYLE = CSS_INFO.w3cStyle ?
                                 w3cGetCurrentStyle :
                                 CSS_INFO.ieStyle ?
                                     ieGetCurrentStyle :
@@ -2572,11 +2448,125 @@ if (CSS_INFO) {
     }
 
     if (CSS_INFO.alphaColor) {
-        exported$11.colorUnit = 'rgba';
+        DEFAULT_COLOR_UNIT = 'rgba';
     }
 }
 
-var computedStyle = exported$11.computedStyle;
+function addClass(element, classNames) {
+        var isString = string;
+    
+        if (!DOM.is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM$1);
+        }
+    
+        if (isString(classNames)) {
+            classNames = [classNames];
+        }
+    
+        if (array(classNames)) {
+            element.className = exported$9.addWord(element.className || '',
+                                               classNames);
+        }
+    
+        return get();
+    }
+    
+function removeClass(element, classNames) {
+        var isString = string;
+    
+        if (!DOM.is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM$1);
+        }
+    
+        if (!DOM.is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM$1);
+        }
+    
+        if (isString(classNames)) {
+            classNames = [classNames];
+        }
+    
+        if (array(classNames)) {
+            element.className = exported$9.removeWord(element.className,
+                                                  classNames);
+        }
+    
+        return get();
+    }
+    
+    
+function stylize$1(element, rules, value) {
+        var context;
+    
+        if (!DOM.is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM$1);
+        }
+    
+        if (string(rules)) {
+            if (arguments.length > 2) {
+                context = {};
+                context[rules] = value;
+                rules = context;
+            }
+            else {
+                rules = parseCSSText(rules);
+            }
+        }
+    
+        if (!object(rules)) {
+            throw new Error(exported$9[1141]);
+        }
+    
+        context = [element.style];
+    
+        each(rules, onStyleElement, context, true);
+    
+        context = context[0] = null;
+    
+        return get();
+    }
+    
+function stylify(element) {
+        if (!DOM.is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM$1);
+        }
+    
+        return parseCSSText(element.style.cssText);
+    }
+    
+    
+function unitValue(value) {
+        var is = isFinite;
+        var len;
+    
+        switch (typeof value) {
+        case 'number':
+            if (is(value)) {
+                return value;
+            }
+            break;
+        case 'string':
+            len = value.length;
+            if (CSS_MEASUREMENT_RE.test(value) &&
+                value.substring(len - 2, len) !== 'px') {
+                return value;
+            }
+            else if (value === 'auto' || value === 'inherit') {
+                return value;
+            }
+            value = parseFloat(value);
+            if (is(value)) {
+                return value;
+            }
+        }
+    
+        if (value === null) {
+            return value;
+        }
+    
+        return false;
+    
+    }
 
 var ERROR_INVALID_ELEMENT = exported$9[1101];
 var ERROR_INVALID_DOM$2 = exported$9[1102];
@@ -2599,7 +2589,7 @@ var getPageScroll = null;
 var getOffset = null;
 var getSize = null;
 var getScreenSize = null;
-var exported$12 = {
+var exported$10 = {
         offset: offset,
         size: size,
         box: box,
@@ -2696,7 +2686,6 @@ function rectOffset(element, boundingRect) {
 function manualOffset(element) {
     var root = global$1.document[IE_PAGE_STAT_ACCESS],
         body = root.body,
-        css = exported$11,
         
         top = OFFSET_TOP$1,
         left = OFFSET_LEFT$1,
@@ -2708,8 +2697,8 @@ function manualOffset(element) {
 
         findStyles = [mleft, mtop],
         parent = element.offsetParent,
-        style = css.computedStyle(element,
-                        [findStyles]),
+        getStyle = COMPUTED_STYLE,
+        style = getStyle(element, [findStyles]),
         page = screen(element),
         x = element[left],
         y = element[top];
@@ -2721,7 +2710,7 @@ function manualOffset(element) {
         
         if (parent.nodeType === 1) {
             
-            style = css.computedStyle(parent, findStyles);
+            style = getStyle(parent, findStyles);
             
             x += (parent[left] || 0) +
                             (parent.clientLeft || 0) +
@@ -2864,7 +2853,7 @@ function box(element, x, y, width, height) {
             applyStyle = translateBox(element, x, y, null, null, width, height);
             
             if (applyStyle) {
-                exported$11.style(element, applyStyle);
+                stylize$1(element, applyStyle);
             }
             return get();
         }
@@ -2901,8 +2890,7 @@ function box(element, x, y, width, height) {
     }
 
 function translateBox(element, x, y, right, bottom, width, height, target) {
-        var css = exported$11,
-            cssValue = css.unitValue,
+        var cssValue = unitValue,
             parse = parseFloat,
             NUMBER = 'number',
             hasLeft = false,
@@ -2939,7 +2927,7 @@ function translateBox(element, x, y, right, bottom, width, height, target) {
             target = {};
         }
         
-        currentDimension = css.computedStyle(element,
+        currentDimension = COMPUTED_STYLE(element,
                                         'position',
                                         'top',
                                         'left',
@@ -3085,21 +3073,20 @@ function scroll(dom, x, y) {
  * Visibility
  */
 function visible(element, visibility, displayed) {
-        var style = null,
-            css = exported$11,
+        var rules = null,
             isString = string,
             len = arguments.length,
             attached = isViewable(element) === ELEMENT_VIEW;
         
         // setter
         if (len > 1) {
-            style = {};
+            rules = {};
             
             if (isString(visibility)) {
-                style.visibility = visibility;
+                rules.visibility = visibility;
             }
             else if (typeof visiblity === 'boolean') {
-                style.visibility = visibility ? 'visible' : 'hidden';
+                rules.visibility = visibility ? 'visible' : 'hidden';
             }
             
             
@@ -3108,10 +3095,10 @@ function visible(element, visibility, displayed) {
             }
             
             if (isString(displayed)) {
-                style.display = displayed;
+                rules.display = displayed;
             }
             
-            css.style(element, style);
+            stylize$1(element, rules);
             
             return get();
             
@@ -3119,10 +3106,10 @@ function visible(element, visibility, displayed) {
         
         // getter
         if (attached) {
-            style = exported$11.computedStyle(element,
+            rules = COMPUTED_STYLE(element,
                             'display',
                             'visibility');
-            return style.display !== 'none' && style.visibility !== 'hidden';
+            return rules.display !== 'none' && rules.visibility !== 'hidden';
         }
         
         return false;
@@ -3262,7 +3249,7 @@ function w3cClearSelection(document) {
 }
 
 function select(from, to) {
-        var dimension = exported$12;
+        var dimension = exported$10;
         
         if (DOM.is(from, 9)) {
             from = from.body;
@@ -3605,19 +3592,11 @@ var BOX_POSITION = {
         width: 4,
         height: 5
     };
-var BOX_RE$1 = exported$11.boxRe;
-var DIMENSION_RE$1 = exported$11.dimensionRe;
-var COLOR_RE$2 = exported$11.colorRe;
+var DEFAULT_EASING = 'easeOut';
+var DEFAULT_DURATION = 0.5;
+var DEFAULT_INTERVAL = 10;
 var SESSIONS = {};
-var exported$15 = {
-        easing: EASING,
-        defaultEasing: 'easeOut',
-        duration: 0.5,
-        interval: 10,
-        each: animate,
-        has: hasAnimationType,
-        style: animateStyle
-    };
+
 
 /**
  * Stuff to try:
@@ -3627,123 +3606,7 @@ var exported$15 = {
  *      cubic-bezier(n,n,n,n)|initial|inherit
  */
 
-function animate(callback, from, to, type, duration) {
-    var M = Math,
-        string$$1 = exported$9,
-        easing = EASING,
-        isObject = object,
-        list = SESSIONS,
-        defaultInterval = exported$15.interval,
-        clear = clearInterval,
-        set = setInterval,
-        interval = null,
-        alen = arguments.length,
-        frame = 0;
-        
-    var frames, displacements;
-    
-    function stop() {
-        var fn = stop;
-        
-        if (interval) {
-            clear(interval);
-            delete list[interval];
-            delete fn.session;
-            delete fn.update;
-            delete fn.running;
-            interval = null;
-        }
-        fn = null;
-    }
-    
-    function update(updates, initialValues, animationType) {
-        var specs = displacements,
-            typeObject = isObject;
-        
-        if (interval) {
-            if (!typeObject(updates)) {
-                throw new Error(string$$1[1152]);
-            }
-            
-            if (!typeObject(initialValues)) {
-                initialValues = specs[3];
-            }
-            applyDisplacements(specs, initialValues, updates, animationType);
-            // reset frame
-            frame = 0;
-            
-        }
-    }
-    
-    function run() {
-        var specs = displacements,
-            names = specs[0],
-            from = specs[1],
-            to = specs[2],
-            total = frames,
-            current = ++frame,
-            len = names.length,
-            result = {},
-            eased = type(current, 0, 1, total),
-            last = current === total;
-            
-        var start;
-        
-        // normal animation
-        for (; len--;) {
-            start = from[len];
-            result[names[len]] = (to[len] - start) * eased + start;
-        }
-        
-        
-        specs[3] = result;
-        callback(result, current, total);
-        
-        if (last) {
-            stop();
-        }
-        
-    }
-    
-    if (!method(callback)) {
-        throw new Error(string$$1[1151]);
-    }
-    
-    if (!isObject(from) || !isObject(to)) {
-        throw new Error(string$$1[1152]);
-    }
-    
-    // validate type
-    if (alen < 4) {
-        type = exported$15.defaultEasing;
-    }
-    else if (!hasAnimationType(type)) {
-        throw new Error(string$$1[1153]);
-    }
-    
-    // validate duration
-    if (alen < 5) {
-        duration = exported$15.duration;
-    }
-    else if (!number(duration) || duration <= 0) {
-        throw new Error(string$$1[1154]);
-    }
-    
-    // prepare displacements
-    type = easing[type];
-    duration *= 1000;
-    frames = M.max(10, M.round(duration / defaultInterval));
-    
-    displacements = [[], [], [], from, stop];
-    interval = set(run, defaultInterval);
-    stop.session = interval;
-    stop.update = update;
-    stop.running = true;
-    list[interval] = displacements;
-    displacements = applyDisplacements(displacements, from, to);
-    return stop;
-    
-}
+
 
 function validValue(value) {
     if (string(value)) {
@@ -3803,66 +3666,12 @@ function onApplyDisplacement(value, name, to) {
     return true;
 }
 
-function hasAnimationType(type) {
-    return string(type) && contains(EASING, type);
-}
+
 
 /**
  * CSS animation
  */
-function animateStyle(element, styles, type) {
-    var access = SESSION_ACCESS,
-        stat = [[], {}, [], {}];
-    //var values = createElementValues(styles);
-    
-    var session, sessionId, animateObject,
-        names, defaults, animateValues, staticValues;
-        
-    each(styles, eachElementValues, stat);
-    
-    names = stat[0];
-    animateValues = stat[1];
-    staticValues = stat[3];
-        
-    // has animation
-    if (names.length) {
-        sessionId = element.getAttribute(access);
-        defaults = createStyleDefaults(element, names);
-        
-        if (!hasAnimationType(type)) {
-            type = exported$15.defaultEasing;
-        }
-        
-        // create
-        if (!sessionId) {
-            animateObject = {
-                node: element
-            };
-            
-            session = animate(createElementHandler(animateObject),
-                                            defaults,
-                                            animateValues,
-                                            type);
-            
-            animateObject.id = sessionId = session.session;
-            
-            element.setAttribute(access, sessionId);
-            
-        }
-        // update
-        else {
-            
-            session = SESSIONS[sessionId][4];
-            session.update(animateValues, defaults, type);
-            
-        }
-    }
-    
-    if (stat[2].length) {
-        exported$11.style(element, staticValues);
-    }
-    
-}
+
 
 function createElementHandler(animate) {
     function onAnimate(values, current, total) {
@@ -3870,7 +3679,7 @@ function createElementHandler(animate) {
             node = session.node;
         
         // transform dimension
-        exported$12.translate(node,
+        exported$10.translate(node,
                             'left' in values ? values.left : null,
                             'top' in values ? values.top : null,
                             'right' in values ? values.right : null,
@@ -3879,7 +3688,7 @@ function createElementHandler(animate) {
                             'height' in values ? values.height : null,
                             values);
         
-        exported$11.style(node, values);
+        stylize$1(node, values);
         
         if (current === total) {
             node.removeAttribute(SESSION_ACCESS);
@@ -3893,16 +3702,15 @@ function createElementHandler(animate) {
 }
 
 function createStyleDefaults(element, names) {
-    var css = exported$11,
-        values = css.computedStyle(element, names),
-        dimension = exported$12,
+    var values = COMPUTED_STYLE(element, names),
+        dimension = exported$10,
         c = -1,
         l = names.length,
-        cssValue = css.unitValue,
-        dimensionRe = DIMENSION_RE$1,
-        colorRe = COLOR_RE$2,
+        cssUnitValue = unitValue,
+        dimensionMatch = DIMENSION_RE,
+        colorMatch = COLOR_RE,
         parse$$1 = parse,
-        boxRe = BOX_RE$1,
+        boxRe = boxRe,
         boxPosition = BOX_POSITION,
         box$$1 = null;
     var name, value;
@@ -3916,10 +3724,10 @@ function createStyleDefaults(element, names) {
             }
             value = box$$1[boxPosition[name]];
         }
-        else if (dimensionRe.test(name)) {
-            value = cssValue(value);
+        else if (dimensionMatch.test(name)) {
+            value = cssUnitValue(value);
         }
-        else if (colorRe.test(name)) {
+        else if (colorMatch.test(name)) {
             value = parse$$1(value);
         }
         values[name] = parseFloat(value) || 0;
@@ -3944,12 +3752,12 @@ function eachElementValues(value, name) {
         
     }
     // box and dimension
-    else if (BOX_RE$1.test(name) || DIMENSION_RE$1.test(name)) {
-        value = exported$11.unitValue(raw);
+    else if (BOX_RE.test(name) || DIMENSION_RE.test(name)) {
+        value = unitValue(raw);
         
     }
     // color
-    else if (COLOR_RE$2.test(name)) {
+    else if (COLOR_RE.test(name)) {
         value = parse(raw);
         if (value === null) {
             value = false;
@@ -3965,6 +3773,184 @@ function eachElementValues(value, name) {
         statics[name] = value;
     }
 }
+
+
+
+function transition(callback, from, to, type, duration) {
+        var M = Math,
+            string$$1 = exported$9,
+            easing = EASING,
+            isObject = object,
+            list = SESSIONS,
+            defaultInterval = DEFAULT_INTERVAL,
+            clear = clearInterval,
+            set = setInterval,
+            interval = null,
+            alen = arguments.length,
+            frame = 0;
+            
+        var frames, displacements;
+        
+        function stop() {
+            var fn = stop;
+            
+            if (interval) {
+                clear(interval);
+                delete list[interval];
+                delete fn.session;
+                delete fn.update;
+                delete fn.running;
+                interval = null;
+            }
+            fn = null;
+        }
+        
+        function update(updates, initialValues, animationType) {
+            var specs = displacements,
+                typeObject = isObject;
+            
+            if (interval) {
+                if (!typeObject(updates)) {
+                    throw new Error(string$$1[1152]);
+                }
+                
+                if (!typeObject(initialValues)) {
+                    initialValues = specs[3];
+                }
+                applyDisplacements(specs, initialValues, updates, animationType);
+                // reset frame
+                frame = 0;
+                
+            }
+        }
+        
+        function run() {
+            var specs = displacements,
+                names = specs[0],
+                from = specs[1],
+                to = specs[2],
+                total = frames,
+                current = ++frame,
+                len = names.length,
+                result = {},
+                eased = type(current, 0, 1, total),
+                last = current === total;
+                
+            var start;
+            
+            // normal animation
+            for (; len--;) {
+                start = from[len];
+                result[names[len]] = (to[len] - start) * eased + start;
+            }
+            
+            
+            specs[3] = result;
+            callback(result, current, total);
+            
+            if (last) {
+                stop();
+            }
+            
+        }
+        
+        if (!method(callback)) {
+            throw new Error(string$$1[1151]);
+        }
+        
+        if (!isObject(from) || !isObject(to)) {
+            throw new Error(string$$1[1152]);
+        }
+        
+        // validate type
+        if (alen < 4) {
+            type = DEFAULT_EASING;
+        }
+        else if (!has(type)) {
+            throw new Error(string$$1[1153]);
+        }
+        
+        // validate duration
+        if (alen < 5) {
+            duration = DEFAULT_DURATION;
+        }
+        else if (!number(duration) || duration <= 0) {
+            throw new Error(string$$1[1154]);
+        }
+        
+        // prepare displacements
+        type = easing[type];
+        duration *= 1000;
+        frames = M.max(10, M.round(duration / defaultInterval));
+        
+        displacements = [[], [], [], from, stop];
+        interval = set(run, defaultInterval);
+        stop.session = interval;
+        stop.update = update;
+        stop.running = true;
+        list[interval] = displacements;
+        displacements = applyDisplacements(displacements, from, to);
+        return stop;
+        
+    }
+
+function has(type) {
+        return string(type) && contains(EASING, type);
+    }
+    
+function animateStyle(element, styles, type) {
+        var access = SESSION_ACCESS,
+            stat = [[], {}, [], {}];
+        //var values = createElementValues(styles);
+        
+        var session, sessionId, animateObject,
+            names, defaults, animateValues, staticValues;
+            
+        each(styles, eachElementValues, stat);
+        
+        names = stat[0];
+        animateValues = stat[1];
+        staticValues = stat[3];
+            
+        // has animation
+        if (names.length) {
+            sessionId = element.getAttribute(access);
+            defaults = createStyleDefaults(element, names);
+            
+            if (!has(type)) {
+                type = DEFAULT_EASING;
+            }
+            
+            // create
+            if (!sessionId) {
+                animateObject = {
+                    node: element
+                };
+                
+                session = transition(createElementHandler(animateObject),
+                                     defaults,
+                                     animateValues,
+                                     type);
+                
+                animateObject.id = sessionId = session.session;
+                
+                element.setAttribute(access, sessionId);
+                
+            }
+            // update
+            else {
+                
+                session = SESSIONS[sessionId][4];
+                session.update(animateValues, defaults, type);
+                
+            }
+        }
+        
+        if (stat[2].length) {
+            stylize$1(element, staticValues);
+        }
+        
+    }
 
 
 
@@ -3986,14 +3972,14 @@ var exported$1 = Object.freeze({
 	eachNodeLevelorder: eachLevel,
 	addClass: addClass,
 	removeClass: removeClass,
-	computedStyle: computedStyle,
-	stylize: setStyle,
-	stylify: getStyle,
-	on: listen,
-	un: unlisten,
+	get computedStyle () { return COMPUTED_STYLE; },
+	stylize: stylize$1,
+	stylify: stylify,
+	on: on,
+	un: un,
 	purge: purge,
 	dispatch: dispatch,
-	destructor: addDestructor,
+	destructor: destructor,
 	offset: offset,
 	size: size,
 	box: box,
@@ -4005,7 +3991,7 @@ var exported$1 = Object.freeze({
 	parseColor: parse,
 	parseColorType: parseType,
 	formatColor: stringify,
-	transition: animate,
+	transition: transition,
 	animateStyle: animateStyle
 });
 
@@ -4013,7 +3999,7 @@ global$1.libdom = exported$1;
 
 use(exported$1);
 
-export { DETECTED as info, xmlEncode, xmlDecode, isDom as is, isDefaultView as isView, contains$1 as contains, CSS_SELECT as select, add, move, replace, remove, eachPreorder as eachNodePreorder, eachPostorder as eachNodePostorder, eachLevel as eachNodeLevelorder, addClass, removeClass, computedStyle, setStyle as stylize, getStyle as stylify, listen as on, unlisten as un, purge, dispatch, addDestructor as destructor, offset, size, box, scroll, screen, select as highlight, unselectable as unhighlightable, clear as clearHighlight, parse as parseColor, parseType as parseColorType, stringify as formatColor, animate as transition, animateStyle };
+export { DETECTED as info, xmlEncode, xmlDecode, isDom as is, isDefaultView as isView, contains$1 as contains, CSS_SELECT as select, add, move, replace, remove, eachPreorder as eachNodePreorder, eachPostorder as eachNodePostorder, eachLevel as eachNodeLevelorder, addClass, removeClass, COMPUTED_STYLE as computedStyle, stylize$1 as stylize, stylify, on, un, purge, dispatch, destructor, offset, size, box, scroll, screen, select as highlight, unselectable as unhighlightable, clear as clearHighlight, parse as parseColor, parseType as parseColorType, stringify as formatColor, transition, animateStyle };
 export default exported$1;
 export { env } from 'libcore';
 //# sourceMappingURL=libdom.es.js.map

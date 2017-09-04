@@ -27,11 +27,11 @@ export {
         } from "./lib/dom.js";
         
 export {
-            add as addClass,
-            remove as removeClass,
+            addClass,
+            removeClass,
             computedStyle,
-            style as stylize,
-            currentStyle as stylify
+            stylize,
+            stylify
             
         } from "./lib/css.js";
 
@@ -40,7 +40,7 @@ export {
             un,
             purge,
             dispatch,
-            ondestroy as destructor
+            destructor
             
         } from "./lib/event.js";
 
@@ -68,8 +68,8 @@ export {
         } from "./lib/color.js";
 
 export {
-            each as transition,
-            style as animateStyle
+            transition,
+            animateStyle
             
         } from "./lib/animation.js";
 

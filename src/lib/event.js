@@ -23,132 +23,10 @@ var EVENTS = null,
     ERROR_INVALID_HANDLER = STRING[1133],
     IE_ON = 'on',
     IE_BUBBLE_EVENT = 'beforeupdate',
-    IE_NO_BUBBLE_EVENT = 'propertychange',
-    exported = {
-                on: listen,
-                un: unlisten,
-                fire: dispatch,
-                purge: purge,
-                ondestroy: addDestructor
-            };
+    IE_NO_BUBBLE_EVENT = 'propertychange';
+
 
 var RESOLVE, LISTEN, UNLISTEN, DISPATCH, EVENT_INFO, IS_CAPABLE, SUBJECT;
-
-function listen(observable, type, handler, context) {
-    var last = EVENTS;
-    var current, args;
-
-    if (!string(type)) {
-        throw new Error(ERROR_INVALID_TYPE);
-    }
-
-    if (!method(handler)) {
-        throw new Error(ERROR_INVALID_HANDLER);
-    }
-
-    observable = RESOLVE(observable);
-
-    if (!observable) {
-        throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
-    }
-
-    if (typeof context === 'undefined') {
-        context = null;
-    }
-
-    args = [observable, type, handler, context];
-    MIDDLEWARE.run('listen', args);
-
-    observable = args[0];
-    type = args[1];
-    handler = args[2];
-    context = args[3];
-    args.splice(0, 4);
-    args = null;
-
-    current = LISTEN(observable, type, handler, context);
-
-    current.unlisten = createUnlistener(current);
-    current.head = last;
-    current.tail = null;
-
-    if (last) {
-        last.tail = current;
-    }
-    EVENTS = current;
-
-    return current.unlisten;
-
-}
-
-function unlisten(observable, type, handler, context) {
-    var found, len, args;
-
-    if (!string(type)) {
-        throw new Error(ERROR_INVALID_TYPE);
-    }
-
-    if (!method(handler)) {
-        throw new Error(ERROR_INVALID_HANDLER);
-    }
-
-    observable = RESOLVE(observable);
-
-    if (!observable) {
-        throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
-    }
-
-    if (typeof context === 'undefined') {
-        context = null;
-    }
-
-    args = [observable, type, handler, context];
-    MIDDLEWARE.run('unlisten', args);
-
-    observable = args[0];
-    type = args[1];
-    handler = args[2];
-    context = args[3];
-    args.splice(0, 4);
-    args = null;
-
-    found = filter(observable, type, handler, context);
-
-    for (len = found.length; len--;) {
-        found[len].unlisten();
-    }
-
-    return getModule();
-}
-
-
-function dispatch(observable, type, defaults) {
-
-    if (!string(type)) {
-        throw new Error(ERROR_INVALID_TYPE);
-    }
-
-    observable = RESOLVE(observable);
-
-    if (!observable) {
-        throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
-    }
-
-    return DISPATCH(observable, type, defaults);
-
-}
-
-function purge() {
-    var found = filter.apply(null, arguments),
-        len = found.length;
-
-    for (; len--;) {
-        found[len].unlisten();
-    }
-
-    return getModule();
-}
-
 
 function createUnlistener(event) {
     var destroyed = false;
@@ -442,12 +320,7 @@ function onBeforeUnload() {
     }
 }
 
-function addDestructor(handler) {
-    if (method(handler)) {
-        MIDDLEWARE.register('global-destroy', handler);
-    }
-    return getModule();
-}
+
 
 
 RESOLVE = LISTEN = UNLISTEN = DISPATCH = null;
@@ -483,19 +356,134 @@ if (EVENT_INFO) {
         SUBJECT = global;
 
         // register destructors
-        listen(SUBJECT, 'beforeunload', onBeforeUnload);
-        listen(SUBJECT, 'unload', onBeforeUnload);
+        on(SUBJECT, 'beforeunload', onBeforeUnload);
+        on(SUBJECT, 'unload', onBeforeUnload);
         SUBJECT = null;
     }
 }
 
+export
+    function on(observable, type, handler, context) {
+        var last = EVENTS;
+        var current, args;
+    
+        if (!string(type)) {
+            throw new Error(ERROR_INVALID_TYPE);
+        }
+    
+        if (!method(handler)) {
+            throw new Error(ERROR_INVALID_HANDLER);
+        }
+    
+        observable = RESOLVE(observable);
+    
+        if (!observable) {
+            throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
+        }
+    
+        if (typeof context === 'undefined') {
+            context = null;
+        }
+    
+        args = [observable, type, handler, context];
+        MIDDLEWARE.run('listen', args);
+    
+        observable = args[0];
+        type = args[1];
+        handler = args[2];
+        context = args[3];
+        args.splice(0, 4);
+        args = null;
+    
+        current = LISTEN(observable, type, handler, context);
+    
+        current.unlisten = createUnlistener(current);
+        current.head = last;
+        current.tail = null;
+    
+        if (last) {
+            last.tail = current;
+        }
+        EVENTS = current;
+    
+        return current.unlisten;
+    
+    }
 
-export {
-    purge,
-    dispatch,
-    listen as on,
-    unlisten as un,
-    addDestructor as ondestroy
-};
+export
+    function un(observable, type, handler, context) {
+        var found, len, args;
+    
+        if (!string(type)) {
+            throw new Error(ERROR_INVALID_TYPE);
+        }
+    
+        if (!method(handler)) {
+            throw new Error(ERROR_INVALID_HANDLER);
+        }
+    
+        observable = RESOLVE(observable);
+    
+        if (!observable) {
+            throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
+        }
+    
+        if (typeof context === 'undefined') {
+            context = null;
+        }
+    
+        args = [observable, type, handler, context];
+        MIDDLEWARE.run('unlisten', args);
+    
+        observable = args[0];
+        type = args[1];
+        handler = args[2];
+        context = args[3];
+        args.splice(0, 4);
+        args = null;
+    
+        found = filter(observable, type, handler, context);
+    
+        for (len = found.length; len--;) {
+            found[len].unlisten();
+        }
+    
+        return getModule();
+    }
 
-export default exported;
+export
+    function dispatch(observable, type, defaults) {
+    
+        if (!string(type)) {
+            throw new Error(ERROR_INVALID_TYPE);
+        }
+    
+        observable = RESOLVE(observable);
+    
+        if (!observable) {
+            throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
+        }
+    
+        return DISPATCH(observable, type, defaults);
+    
+    }
+
+export
+    function purge() {
+        var found = filter.apply(null, arguments),
+            len = found.length;
+    
+        for (; len--;) {
+            found[len].unlisten();
+        }
+    
+        return getModule();
+    }
+    
+export
+    function destructor(handler) {
+        if (method(handler)) {
+            MIDDLEWARE.register('global-destroy', handler);
+        }
+        return getModule();
+    }

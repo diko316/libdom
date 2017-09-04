@@ -47,6 +47,6 @@
     "rollup-plugin-uglify": "^2.0.1"
   },
   "optionalDependencies": {
-    "libcore": "0.3.6"
+    "libcore": "https://api.github.com/repos/diko316/libcore/tarball/master"
   }
 }

@@ -6,7 +6,7 @@ import {
             method,
             object,
             contains,
-            each
+            each as eachProperty
         } from "libcore";
         
 import STRING from "./string.js";
@@ -15,7 +15,14 @@ import { parse as colorParse } from "./color.js";
 
 import * as EASING from "./easing.js";
 
-import CSS_MODULE from "./css.js";
+import {
+            boxRe,
+            dimensionRe,
+            colorRe,
+            stylize,
+            unitValue,
+            computedStyle
+        } from "./css.js";
 
 import DIMENSION from "./dimension.js";
 
@@ -29,19 +36,11 @@ var SESSION_ACCESS = '__animate_session',
         width: 4,
         height: 5
     },
-    BOX_RE = CSS_MODULE.boxRe,
-    DIMENSION_RE = CSS_MODULE.dimensionRe,
-    COLOR_RE = CSS_MODULE.colorRe,
-    SESSIONS = {},
-    exported = {
-        easing: EASING,
-        defaultEasing: 'easeOut',
-        duration: 0.5,
-        interval: 10,
-        each: animate,
-        has: hasAnimationType,
-        style: animateStyle
-    };
+    DEFAULT_EASING = 'easeOut',
+    DEFAULT_DURATION = 0.5,
+    DEFAULT_INTERVAL = 10,
+    SESSIONS = {};
+
 
 /**
  * Stuff to try:
@@ -51,123 +50,7 @@ var SESSION_ACCESS = '__animate_session',
  *      cubic-bezier(n,n,n,n)|initial|inherit
  */
 
-function animate(callback, from, to, type, duration) {
-    var M = Math,
-        string = STRING,
-        easing = EASING,
-        isObject = object,
-        list = SESSIONS,
-        defaultInterval = exported.interval,
-        clear = clearInterval,
-        set = setInterval,
-        interval = null,
-        alen = arguments.length,
-        frame = 0;
-        
-    var frames, displacements;
-    
-    function stop() {
-        var fn = stop;
-        
-        if (interval) {
-            clear(interval);
-            delete list[interval];
-            delete fn.session;
-            delete fn.update;
-            delete fn.running;
-            interval = null;
-        }
-        fn = null;
-    }
-    
-    function update(updates, initialValues, animationType) {
-        var specs = displacements,
-            typeObject = isObject;
-        
-        if (interval) {
-            if (!typeObject(updates)) {
-                throw new Error(string[1152]);
-            }
-            
-            if (!typeObject(initialValues)) {
-                initialValues = specs[3];
-            }
-            applyDisplacements(specs, initialValues, updates, animationType);
-            // reset frame
-            frame = 0;
-            
-        }
-    }
-    
-    function run() {
-        var specs = displacements,
-            names = specs[0],
-            from = specs[1],
-            to = specs[2],
-            total = frames,
-            current = ++frame,
-            len = names.length,
-            result = {},
-            eased = type(current, 0, 1, total),
-            last = current === total;
-            
-        var start;
-        
-        // normal animation
-        for (; len--;) {
-            start = from[len];
-            result[names[len]] = (to[len] - start) * eased + start;
-        }
-        
-        
-        specs[3] = result;
-        callback(result, current, total);
-        
-        if (last) {
-            stop();
-        }
-        
-    }
-    
-    if (!method(callback)) {
-        throw new Error(string[1151]);
-    }
-    
-    if (!isObject(from) || !isObject(to)) {
-        throw new Error(string[1152]);
-    }
-    
-    // validate type
-    if (alen < 4) {
-        type = exported.defaultEasing;
-    }
-    else if (!hasAnimationType(type)) {
-        throw new Error(string[1153]);
-    }
-    
-    // validate duration
-    if (alen < 5) {
-        duration = exported.duration;
-    }
-    else if (!number(duration) || duration <= 0) {
-        throw new Error(string[1154]);
-    }
-    
-    // prepare displacements
-    type = easing[type];
-    duration *= 1000;
-    frames = M.max(10, M.round(duration / defaultInterval));
-    
-    displacements = [[], [], [], from, stop];
-    interval = set(run, defaultInterval);
-    stop.session = interval;
-    stop.update = update;
-    stop.running = true;
-    list[interval] = displacements;
-    displacements = applyDisplacements(displacements, from, to);
-    return stop;
-    
-}
+
 
 function validValue(value) {
     if (string(value)) {
@@ -178,7 +61,7 @@ function validValue(value) {
 
 function applyDisplacements(session, from, to) {
     
-    each(to, onApplyDisplacement, [from, session], true);
+    eachProperty(to, onApplyDisplacement, [from, session], true);
     
     return session;
 }
@@ -227,66 +110,12 @@ function onApplyDisplacement(value, name, to) {
     return true;
 }
 
-function hasAnimationType(type) {
-    return string(type) && contains(EASING, type);
-}
+
 
 /**
  * CSS animation
  */
-function animateStyle(element, styles, type) {
-    var access = SESSION_ACCESS,
-        stat = [[], {}, [], {}];
-    //var values = createElementValues(styles);
-    
-    var session, sessionId, animateObject,
-        names, defaults, animateValues, staticValues;
-        
-    each(styles, eachElementValues, stat);
-    
-    names = stat[0];
-    animateValues = stat[1];
-    staticValues = stat[3];
-        
-    // has animation
-    if (names.length) {
-        sessionId = element.getAttribute(access);
-        defaults = createStyleDefaults(element, names);
-        
-        if (!hasAnimationType(type)) {
-            type = exported.defaultEasing;
-        }
-        
-        // create
-        if (!sessionId) {
-            animateObject = {
-                node: element
-            };
-            
-            session = animate(createElementHandler(animateObject),
-                                            defaults,
-                                            animateValues,
-                                            type);
-            
-            animateObject.id = sessionId = session.session;
-            
-            element.setAttribute(access, sessionId);
-            
-        }
-        // update
-        else {
-            
-            session = SESSIONS[sessionId][4];
-            session.update(animateValues, defaults, type);
-            
-        }
-    }
-    
-    if (stat[2].length) {
-        CSS_MODULE.style(element, staticValues);
-    }
-    
-}
+
 
 function createElementHandler(animate) {
     function onAnimate(values, current, total) {
@@ -303,7 +132,7 @@ function createElementHandler(animate) {
                             'height' in values ? values.height : null,
                             values);
         
-        CSS_MODULE.style(node, values);
+        stylize(node, values);
         
         if (current === total) {
             node.removeAttribute(SESSION_ACCESS);
@@ -317,16 +146,15 @@ function createElementHandler(animate) {
 }
 
 function createStyleDefaults(element, names) {
-    var css = CSS_MODULE,
-        values = css.computedStyle(element, names),
+    var values = computedStyle(element, names),
         dimension = DIMENSION,
         c = -1,
         l = names.length,
-        cssValue = css.unitValue,
-        dimensionRe = DIMENSION_RE,
-        colorRe = COLOR_RE,
+        cssUnitValue = unitValue,
+        dimensionMatch = dimensionRe,
+        colorMatch = colorRe,
         parse = colorParse,
-        boxRe = BOX_RE,
+        boxRe = boxRe,
         boxPosition = BOX_POSITION,
         box = null;
     var name, value;
@@ -340,10 +168,10 @@ function createStyleDefaults(element, names) {
             }
             value = box[boxPosition[name]];
         }
-        else if (dimensionRe.test(name)) {
-            value = cssValue(value);
+        else if (dimensionMatch.test(name)) {
+            value = cssUnitValue(value);
         }
-        else if (colorRe.test(name)) {
+        else if (colorMatch.test(name)) {
             value = parse(value);
         }
         values[name] = parseFloat(value) || 0;
@@ -368,12 +196,12 @@ function eachElementValues(value, name) {
         
     }
     // box and dimension
-    else if (BOX_RE.test(name) || DIMENSION_RE.test(name)) {
-        value = CSS_MODULE.unitValue(raw);
+    else if (boxRe.test(name) || dimensionRe.test(name)) {
+        value = unitValue(raw);
         
     }
     // color
-    else if (COLOR_RE.test(name)) {
+    else if (colorRe.test(name)) {
         value = colorParse(raw);
         if (value === null) {
             value = false;
@@ -390,17 +218,190 @@ function eachElementValues(value, name) {
     }
 }
 
-export let
-    defaultEasing = exported.defaultEasing,
-    duration = exported.duration,
-    interval = exported.interval;
+
 
 export {
-        EASING as easing,
-        animate as each,
-        hasAnimationType as has,
-        animateStyle as style
+        DEFAULT_EASING as defaultEasing,
+        DEFAULT_DURATION as duration,
+        DEFAULT_INTERVAL as interval,
+        EASING as easing
     };
     
-export default exported;
+export
+    function transition(callback, from, to, type, duration) {
+        var M = Math,
+            string = STRING,
+            easing = EASING,
+            isObject = object,
+            list = SESSIONS,
+            defaultInterval = DEFAULT_INTERVAL,
+            clear = clearInterval,
+            set = setInterval,
+            interval = null,
+            alen = arguments.length,
+            frame = 0;
+            
+        var frames, displacements;
+        
+        function stop() {
+            var fn = stop;
+            
+            if (interval) {
+                clear(interval);
+                delete list[interval];
+                delete fn.session;
+                delete fn.update;
+                delete fn.running;
+                interval = null;
+            }
+            fn = null;
+        }
+        
+        function update(updates, initialValues, animationType) {
+            var specs = displacements,
+                typeObject = isObject;
+            
+            if (interval) {
+                if (!typeObject(updates)) {
+                    throw new Error(string[1152]);
+                }
+                
+                if (!typeObject(initialValues)) {
+                    initialValues = specs[3];
+                }
+                applyDisplacements(specs, initialValues, updates, animationType);
+                // reset frame
+                frame = 0;
+                
+            }
+        }
+        
+        function run() {
+            var specs = displacements,
+                names = specs[0],
+                from = specs[1],
+                to = specs[2],
+                total = frames,
+                current = ++frame,
+                len = names.length,
+                result = {},
+                eased = type(current, 0, 1, total),
+                last = current === total;
+                
+            var start;
+            
+            // normal animation
+            for (; len--;) {
+                start = from[len];
+                result[names[len]] = (to[len] - start) * eased + start;
+            }
+            
+            
+            specs[3] = result;
+            callback(result, current, total);
+            
+            if (last) {
+                stop();
+            }
+            
+        }
+        
+        if (!method(callback)) {
+            throw new Error(string[1151]);
+        }
+        
+        if (!isObject(from) || !isObject(to)) {
+            throw new Error(string[1152]);
+        }
+        
+        // validate type
+        if (alen < 4) {
+            type = DEFAULT_EASING;
+        }
+        else if (!has(type)) {
+            throw new Error(string[1153]);
+        }
+        
+        // validate duration
+        if (alen < 5) {
+            duration = DEFAULT_DURATION;
+        }
+        else if (!number(duration) || duration <= 0) {
+            throw new Error(string[1154]);
+        }
+        
+        // prepare displacements
+        type = easing[type];
+        duration *= 1000;
+        frames = M.max(10, M.round(duration / defaultInterval));
+        
+        displacements = [[], [], [], from, stop];
+        interval = set(run, defaultInterval);
+        stop.session = interval;
+        stop.update = update;
+        stop.running = true;
+        list[interval] = displacements;
+        displacements = applyDisplacements(displacements, from, to);
+        return stop;
+        
+    }
 
+export
+    function has(type) {
+        return string(type) && contains(EASING, type);
+    }
+    
+export
+    function animateStyle(element, styles, type) {
+        var access = SESSION_ACCESS,
+            stat = [[], {}, [], {}];
+        //var values = createElementValues(styles);
+        
+        var session, sessionId, animateObject,
+            names, defaults, animateValues, staticValues;
+            
+        eachProperty(styles, eachElementValues, stat);
+        
+        names = stat[0];
+        animateValues = stat[1];
+        staticValues = stat[3];
+            
+        // has animation
+        if (names.length) {
+            sessionId = element.getAttribute(access);
+            defaults = createStyleDefaults(element, names);
+            
+            if (!has(type)) {
+                type = DEFAULT_EASING;
+            }
+            
+            // create
+            if (!sessionId) {
+                animateObject = {
+                    node: element
+                };
+                
+                session = transition(createElementHandler(animateObject),
+                                     defaults,
+                                     animateValues,
+                                     type);
+                
+                animateObject.id = sessionId = session.session;
+                
+                element.setAttribute(access, sessionId);
+                
+            }
+            // update
+            else {
+                
+                session = SESSIONS[sessionId][4];
+                session.update(animateValues, defaults, type);
+                
+            }
+        }
+        
+        if (stat[2].length) {
+            stylize(element, staticValues);
+        }
+        
+    }

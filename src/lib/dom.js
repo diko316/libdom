@@ -17,7 +17,10 @@ import DETECTED from "./detect.js";
 
 import STRING from "./string.js";
 
-import EVENT from "./event.js";
+import {
+            purge,
+            on
+        } from "./event.js";
 
 
 
@@ -91,7 +94,7 @@ function registerDomHelper(name, handler) {
 }
 
 function purgeEventsFrom(element) {
-    EVENT.purge(element);
+    purge(element);
 }
 
 
@@ -157,7 +160,7 @@ function applyEventAttribute(handler, name) {
     var element = this;
 
     if (method(handler)) {
-        EVENT.on(element, name, handler);
+        on(element, name, handler);
     }
 
     element = null;

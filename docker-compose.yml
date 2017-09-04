@@ -4,7 +4,7 @@ services:
 
   server:
     build: .
-    image: libdom:latest
+    image: libdom
     container_name: "libdom-test"
     hostname: libdom
     command: bin/run-devserver.sh
@@ -16,7 +16,7 @@ services:
       - "3000:3000"
       
   builder:
-    image: libdom:latest
+    image: libdom
     container_name: "libdom-builder"
     command: bin/autosync-builds.sh
     

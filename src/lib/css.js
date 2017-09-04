@@ -52,122 +52,37 @@ var PADDING_BOTTOM = 'paddingBottom',
 
     SET_STYLE = styleManipulationNotSupported,
     GET_STYLE = styleManipulationNotSupported,
+    
+    COMPUTED_STYLE = computedStyleNotSupported,
 
     ERROR_INVALID_DOM = STRING[1101],
+    
+    DEFAULT_COLOR_UNIT = 'hex',
 
-    exported = {
-        add: addClass,
-        remove: removeClass,
-        computedStyle: computedStyleNotSupported,
-        style: setStyle,
-        currentStyle: getStyle,
-        unitValue: getCSSUnitValue,
-        styleOpacity: opacityNotSupported,
-        colorUnit: 'hex',
-        boxRe: BOX_RE,
-        dimensionRe: DIMENSION_RE,
-
-        colorRe: COLOR_RE
-    },
     SLICE = Array.prototype.slice;
 
 var CSS_INFO;
 
 
 
-function addClass(element, classNames) {
-    var isString = string;
 
-    if (!DOM.is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM);
-    }
-
-    if (isString(classNames)) {
-        classNames = [classNames];
-    }
-
-    if (array(classNames)) {
-        element.className = STRING.addWord(element.className || '',
-                                           classNames);
-    }
-
-    return getModule();
-}
-
-function removeClass(element, classNames) {
-    var isString = string;
-
-    if (!DOM.is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM);
-    }
-
-    if (!DOM.is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM);
-    }
-
-    if (isString(classNames)) {
-        classNames = [classNames];
-    }
-
-    if (array(classNames)) {
-        element.className = STRING.removeWord(element.className,
-                                              classNames);
-    }
-
-    return getModule();
-}
 
 function applyStyle() {
     /* jshint validthis: true */
     return arguments.length > 1 ?
                 // setter
-                setStyle.apply(this, arguments) :
+                stylize.apply(this, arguments) :
 
                 // getter
-                getStyle.apply(this, arguments);
+                stylify.apply(this, arguments);
 
 
 
 }
 
-function setStyle(element, rules, value) {
-    var context;
 
-    if (!DOM.is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM);
-    }
 
-    if (string(rules)) {
-        if (arguments.length > 2) {
-            context = {};
-            context[rules] = value;
-            rules = context;
-        }
-        else {
-            rules = parseCSSText(rules);
-        }
-    }
 
-    if (!object(rules)) {
-        throw new Error(STRING[1141]);
-    }
-
-    context = [element.style];
-
-    each(rules, onStyleElement, context, true);
-
-    context = context[0] = null;
-
-    return getModule();
-}
-
-function getStyle(element) {
-    if (!DOM.is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM);
-    }
-
-    return parseCSSText(element.style.cssText);
-}
 
 function onStyleElement(value, name) {
     var isNumber = number(value),
@@ -198,7 +113,7 @@ function onStyleElement(value, name) {
     }
     // color
     else if (isNumber && COLOR_RE.test(name)) {
-        value = COLOR.stringify(value, exported.colorUnit);
+        value = COLOR.stringify(value, DEFAULT_COLOR_UNIT);
     }
 
     // non-scalar value is "unset"
@@ -253,38 +168,7 @@ function parseCSSText(str) {
     return result;
 }
 
-function getCSSUnitValue(value) {
-    var is = isFinite;
-    var len;
 
-    switch (typeof value) {
-    case 'number':
-        if (is(value)) {
-            return value;
-        }
-        break;
-    case 'string':
-        len = value.length;
-        if (CSS_MEASUREMENT_RE.test(value) &&
-            value.substring(len - 2, len) !== 'px') {
-            return value;
-        }
-        else if (value === 'auto' || value === 'inherit') {
-            return value;
-        }
-        value = parseFloat(value);
-        if (is(value)) {
-            return value;
-        }
-    }
-
-    if (value === null) {
-        return value;
-    }
-
-    return false;
-
-}
 
 function styleManipulationNotSupported() {
     throw new Error(STRING[2001]);
@@ -607,7 +491,7 @@ DOM.helper('style', applyStyle);
 CSS_INFO = DETECTED && DETECTED.css;
 if (CSS_INFO) {
 
-    exported.computedStyle = CSS_INFO.w3cStyle ?
+    COMPUTED_STYLE = CSS_INFO.w3cStyle ?
                                 w3cGetCurrentStyle :
                                 CSS_INFO.ieStyle ?
                                     ieGetCurrentStyle :
@@ -632,24 +516,138 @@ if (CSS_INFO) {
     }
 
     if (CSS_INFO.alphaColor) {
-        exported.colorUnit = 'rgba';
+        DEFAULT_COLOR_UNIT = 'rgba';
     }
 }
 
-export let
-        computedStyle = exported.computedStyle,
-        colorUnit = exported.colorUnit;
+export {
+            COMPUTED_STYLE as computedStyle,
+            DEFAULT_COLOR_UNIT as colorUnit
+        };
         
 export {
-        addClass as add,
-        removeClass as remove,
-        setStyle as style,
-        getStyle as currentStyle,
-        getCSSUnitValue as unitValue,
-        opacityNotSupported as styleOpacity,
         BOX_RE as boxRe,
         DIMENSION_RE as dimensionRe,
         COLOR_RE as colorRe
     };
     
-export default exported;
+export
+    function addClass(element, classNames) {
+        var isString = string;
+    
+        if (!DOM.is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+    
+        if (isString(classNames)) {
+            classNames = [classNames];
+        }
+    
+        if (array(classNames)) {
+            element.className = STRING.addWord(element.className || '',
+                                               classNames);
+        }
+    
+        return getModule();
+    }
+    
+export
+    function removeClass(element, classNames) {
+        var isString = string;
+    
+        if (!DOM.is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+    
+        if (!DOM.is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+    
+        if (isString(classNames)) {
+            classNames = [classNames];
+        }
+    
+        if (array(classNames)) {
+            element.className = STRING.removeWord(element.className,
+                                                  classNames);
+        }
+    
+        return getModule();
+    }
+    
+    
+export
+    function stylize(element, rules, value) {
+        var context;
+    
+        if (!DOM.is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+    
+        if (string(rules)) {
+            if (arguments.length > 2) {
+                context = {};
+                context[rules] = value;
+                rules = context;
+            }
+            else {
+                rules = parseCSSText(rules);
+            }
+        }
+    
+        if (!object(rules)) {
+            throw new Error(STRING[1141]);
+        }
+    
+        context = [element.style];
+    
+        each(rules, onStyleElement, context, true);
+    
+        context = context[0] = null;
+    
+        return getModule();
+    }
+    
+export
+    function stylify(element) {
+        if (!DOM.is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+    
+        return parseCSSText(element.style.cssText);
+    }
+    
+    
+export
+    function unitValue(value) {
+        var is = isFinite;
+        var len;
+    
+        switch (typeof value) {
+        case 'number':
+            if (is(value)) {
+                return value;
+            }
+            break;
+        case 'string':
+            len = value.length;
+            if (CSS_MEASUREMENT_RE.test(value) &&
+                value.substring(len - 2, len) !== 'px') {
+                return value;
+            }
+            else if (value === 'auto' || value === 'inherit') {
+                return value;
+            }
+            value = parseFloat(value);
+            if (is(value)) {
+                return value;
+            }
+        }
+    
+        if (value === null) {
+            return value;
+        }
+    
+        return false;
+    
+    }

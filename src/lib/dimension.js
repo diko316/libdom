@@ -15,7 +15,11 @@ import STRING from "./string.js";
 
 import DOM from "./dom.js";
 
-import CSS_MODULE from "./css.js";
+import {
+            computedStyle,
+            stylize,
+            unitValue
+        } from "./css.js";
 
 
 var ERROR_INVALID_ELEMENT = STRING[1101],
@@ -142,7 +146,6 @@ function rectOffset(element, boundingRect) {
 function manualOffset(element) {
     var root = global.document[IE_PAGE_STAT_ACCESS],
         body = root.body,
-        css = CSS_MODULE,
         
         top = OFFSET_TOP,
         left = OFFSET_LEFT,
@@ -154,8 +157,8 @@ function manualOffset(element) {
 
         findStyles = [mleft, mtop],
         parent = element.offsetParent,
-        style = css.computedStyle(element,
-                        [findStyles]),
+        getStyle = computedStyle,
+        style = getStyle(element, [findStyles]),
         page = screen(element),
         x = element[left],
         y = element[top];
@@ -167,7 +170,7 @@ function manualOffset(element) {
         
         if (parent.nodeType === 1) {
             
-            style = css.computedStyle(parent, findStyles);
+            style = getStyle(parent, findStyles);
             
             x += (parent[left] || 0) +
                             (parent.clientLeft || 0) +
@@ -313,7 +316,7 @@ export
             applyStyle = translateBox(element, x, y, null, null, width, height);
             
             if (applyStyle) {
-                CSS_MODULE.style(element, applyStyle);
+                stylize(element, applyStyle);
             }
             return getModule();
         }
@@ -351,8 +354,7 @@ export
 
 export
     function translateBox(element, x, y, right, bottom, width, height, target) {
-        var css = CSS_MODULE,
-            cssValue = css.unitValue,
+        var cssValue = unitValue,
             parse = parseFloat,
             NUMBER = 'number',
             hasLeft = false,
@@ -389,7 +391,7 @@ export
             target = {};
         }
         
-        currentDimension = css.computedStyle(element,
+        currentDimension = computedStyle(element,
                                         'position',
                                         'top',
                                         'left',
@@ -537,21 +539,20 @@ export
  */
 export
     function visible(element, visibility, displayed) {
-        var style = null,
-            css = CSS_MODULE,
+        var rules = null,
             isString = string,
             len = arguments.length,
             attached = isViewable(element) === ELEMENT_VIEW;
         
         // setter
         if (len > 1) {
-            style = {};
+            rules = {};
             
             if (isString(visibility)) {
-                style.visibility = visibility;
+                rules.visibility = visibility;
             }
             else if (typeof visiblity === 'boolean') {
-                style.visibility = visibility ? 'visible' : 'hidden';
+                rules.visibility = visibility ? 'visible' : 'hidden';
             }
             
             
@@ -560,10 +561,10 @@ export
             }
             
             if (isString(displayed)) {
-                style.display = displayed;
+                rules.display = displayed;
             }
             
-            css.style(element, style);
+            stylize(element, rules);
             
             return getModule();
             
@@ -571,10 +572,10 @@ export
         
         // getter
         if (attached) {
-            style = CSS_MODULE.computedStyle(element,
+            rules = computedStyle(element,
                             'display',
                             'visibility');
-            return style.display !== 'none' && style.visibility !== 'hidden';
+            return rules.display !== 'none' && rules.visibility !== 'hidden';
         }
         
         return false;
