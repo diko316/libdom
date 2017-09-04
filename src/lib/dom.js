@@ -433,6 +433,32 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
     return getModule();
 }
 
+
+
+/**
+ * Initialize
+ */
+
+DOM_INFO = DETECTED && DETECTED.dom;
+if (DOM_INFO) {
+    STD_CONTAINS = DOM_INFO.compare ?
+                            w3cContains :
+                            DOM_INFO.contains ?
+                                ieContains :
+                                notSupportedContains;
+
+    if (DOM_INFO.querySelectorAll) {
+        CSS_SELECT = DOM_INFO.listToArray ?
+                            toArrayQuerySelectorAll :
+                            noArrayQuerySelectorAll;
+    }
+}
+
+export {
+    registerDomHelper as helper,
+    CSS_SELECT as select
+};
+
 /**
  * is node
  */
@@ -676,30 +702,6 @@ export
                             ORDER_TYPE_LEVELORDER,
                             includeRoot !== false);
     }
-
-/**
- * Initialize
- */
-
-DOM_INFO = DETECTED && DETECTED.dom;
-if (DOM_INFO) {
-    STD_CONTAINS = DOM_INFO.compare ?
-                            w3cContains :
-                            DOM_INFO.contains ?
-                                ieContains :
-                                notSupportedContains;
-
-    if (DOM_INFO.querySelectorAll) {
-        CSS_SELECT = DOM_INFO.listToArray ?
-                            toArrayQuerySelectorAll :
-                            noArrayQuerySelectorAll;
-    }
-}
-
-export {
-    registerDomHelper as helper,
-    CSS_SELECT as select
-};
 
 export default {
             contains: contains,

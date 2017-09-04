@@ -1237,6 +1237,27 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
     return get();
 }
 
+
+
+/**
+ * Initialize
+ */
+
+DOM_INFO = DETECTED && DETECTED.dom;
+if (DOM_INFO) {
+    STD_CONTAINS = DOM_INFO.compare ?
+                            w3cContains :
+                            DOM_INFO.contains ?
+                                ieContains :
+                                notSupportedContains;
+
+    if (DOM_INFO.querySelectorAll) {
+        CSS_SELECT = DOM_INFO.listToArray ?
+                            toArrayQuerySelectorAll :
+                            noArrayQuerySelectorAll;
+    }
+}
+
 /**
  * is node
  */
@@ -1469,25 +1490,6 @@ function eachLevel(element, callback, context, includeRoot) {
                             ORDER_TYPE_LEVELORDER,
                             includeRoot !== false);
     }
-
-/**
- * Initialize
- */
-
-DOM_INFO = DETECTED && DETECTED.dom;
-if (DOM_INFO) {
-    STD_CONTAINS = DOM_INFO.compare ?
-                            w3cContains :
-                            DOM_INFO.contains ?
-                                ieContains :
-                                notSupportedContains;
-
-    if (DOM_INFO.querySelectorAll) {
-        CSS_SELECT = DOM_INFO.listToArray ?
-                            toArrayQuerySelectorAll :
-                            noArrayQuerySelectorAll;
-    }
-}
 
 var DOM = {
             contains: contains$1,
