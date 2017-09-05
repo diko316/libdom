@@ -9,9 +9,9 @@ import {
             each as eachProperty
         } from "libcore";
         
-import STRING from "./string.js";
+import { ERROR } from "./string.js";
 
-import { parse as colorParse } from "./color.js";
+import { parseColor as colorParse } from "./color.js";
 
 import * as EASING from "./easing.js";
 
@@ -24,7 +24,10 @@ import {
             computedStyle
         } from "./css.js";
 
-import DIMENSION from "./dimension.js";
+import {
+            box as dimensionBox,
+            translate
+        } from "./dimension.js";
 
 
 var SESSION_ACCESS = '__animate_session',
@@ -123,14 +126,14 @@ function createElementHandler(animate) {
             node = session.node;
         
         // transform dimension
-        DIMENSION.translate(node,
-                            'left' in values ? values.left : null,
-                            'top' in values ? values.top : null,
-                            'right' in values ? values.right : null,
-                            'bottom' in values ? values.bottom : null,
-                            'width' in values ? values.width : null,
-                            'height' in values ? values.height : null,
-                            values);
+        translate(node,
+                'left' in values ? values.left : null,
+                'top' in values ? values.top : null,
+                'right' in values ? values.right : null,
+                'bottom' in values ? values.bottom : null,
+                'width' in values ? values.width : null,
+                'height' in values ? values.height : null,
+                values);
         
         stylize(node, values);
         
@@ -147,14 +150,13 @@ function createElementHandler(animate) {
 
 function createStyleDefaults(element, names) {
     var values = computedStyle(element, names),
-        dimension = DIMENSION,
+        domBox = dimensionBox,
         c = -1,
         l = names.length,
         cssUnitValue = unitValue,
         dimensionMatch = dimensionRe,
         colorMatch = colorRe,
         parse = colorParse,
-        boxRe = boxRe,
         boxPosition = BOX_POSITION,
         box = null;
     var name, value;
@@ -164,7 +166,7 @@ function createStyleDefaults(element, names) {
         value = values[name];
         if (boxRe.test(name)) {
             if (!box) {
-                box = dimension.box(element);
+                box = domBox(element);
             }
             value = box[boxPosition[name]];
         }
@@ -230,7 +232,6 @@ export {
 export
     function transition(callback, from, to, type, duration) {
         var M = Math,
-            string = STRING,
             easing = EASING,
             isObject = object,
             list = SESSIONS,
@@ -263,7 +264,7 @@ export
             
             if (interval) {
                 if (!typeObject(updates)) {
-                    throw new Error(string[1152]);
+                    throw new Error(ERROR[1152]);
                 }
                 
                 if (!typeObject(initialValues)) {
@@ -307,11 +308,11 @@ export
         }
         
         if (!method(callback)) {
-            throw new Error(string[1151]);
+            throw new Error(ERROR[1151]);
         }
         
         if (!isObject(from) || !isObject(to)) {
-            throw new Error(string[1152]);
+            throw new Error(ERROR[1152]);
         }
         
         // validate type
@@ -327,7 +328,7 @@ export
             duration = DEFAULT_DURATION;
         }
         else if (!number(duration) || duration <= 0) {
-            throw new Error(string[1154]);
+            throw new Error(ERROR[1154]);
         }
         
         // prepare displacements
@@ -352,7 +353,7 @@ export
     }
     
 export
-    function animateStyle(element, styles, type) {
+    function animateStyle(element, styles, type, duration) {
         var access = SESSION_ACCESS,
             stat = [[], {}, [], {}];
         //var values = createElementValues(styles);
@@ -365,11 +366,15 @@ export
         names = stat[0];
         animateValues = stat[1];
         staticValues = stat[3];
-            
+        
         // has animation
         if (names.length) {
             sessionId = element.getAttribute(access);
             defaults = createStyleDefaults(element, names);
+            
+            if (!number(duration)) {
+                duration = DEFAULT_DURATION;
+            }
             
             if (!has(type)) {
                 type = DEFAULT_EASING;
@@ -384,7 +389,8 @@ export
                 session = transition(createElementHandler(animateObject),
                                      defaults,
                                      animateValues,
-                                     type);
+                                     type,
+                                     duration);
                 
                 animateObject.id = sessionId = session.session;
                 

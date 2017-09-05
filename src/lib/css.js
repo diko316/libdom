@@ -12,11 +12,19 @@ import { get as getModule } from "./chain.js";
 
 import DETECTED from "./detect.js";
 
-import STRING from "./string";
+import {
+            ERROR,
+            stylize as stringStylize,
+            addWord,
+            removeWord
+        } from "./string.js";
 
-import DOM from "./dom.js";
+import {
+            is,
+            helper
+        } from "./dom.js";
 
-import * as COLOR from "./color.js";
+import { formatColor } from "./color.js";
 
 var PADDING_BOTTOM = 'paddingBottom',
     PADDING_TOP = 'paddingTop',
@@ -55,7 +63,7 @@ var PADDING_BOTTOM = 'paddingBottom',
     
     COMPUTED_STYLE = computedStyleNotSupported,
 
-    ERROR_INVALID_DOM = STRING[1101],
+    ERROR_INVALID_DOM = ERROR[1101],
     
     DEFAULT_COLOR_UNIT = 'hex',
 
@@ -92,7 +100,7 @@ function onStyleElement(value, name) {
         set = SET_STYLE,
         applied = false;
 
-    name = STRING.stylize(name);
+    name = stringStylize(name);
 
     // opacity
     if (name === 'opacity') {
@@ -113,7 +121,7 @@ function onStyleElement(value, name) {
     }
     // color
     else if (isNumber && COLOR_RE.test(name)) {
-        value = COLOR.stringify(value, DEFAULT_COLOR_UNIT);
+        value = formatColor(value, DEFAULT_COLOR_UNIT);
     }
 
     // non-scalar value is "unset"
@@ -171,7 +179,7 @@ function parseCSSText(str) {
 
 
 function styleManipulationNotSupported() {
-    throw new Error(STRING[2001]);
+    throw new Error(ERROR[2001]);
 }
 
 /**
@@ -179,15 +187,15 @@ function styleManipulationNotSupported() {
  */
 
 function computedStyleNotSupported() {
-    throw new Error(STRING[2002]);
+    throw new Error(ERROR[2002]);
 }
 
 function w3cGetCurrentStyle(element, ruleNames) {
-    var camel = STRING.stylize,
+    var camel = stringStylize,
         isString = string;
     var style, c, l, name, value, values, access;
 
-    if (!DOM.is(element, 1)) {
+    if (!is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
 
@@ -221,13 +229,13 @@ function ieGetCurrentStyle(element, ruleNames) {
     var dimensionRe = DIMENSION_RE,
         boxRe = BOX_RE,
         isString = string,
-        camel = STRING.stylize,
+        camel = stringStylize,
         getOpacity = GET_OPACITY,
         pixelSize = ieGetPixelSize;
 
     var style, c, l, name, value, access, fontSize, values, dimension;
 
-    if (!DOM.is(element, 1)) {
+    if (!is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
 
@@ -392,7 +400,7 @@ function ieGetPositionStyle(element, style) {
  * opacity
  */
 function opacityNotSupported() {
-    throw new Error(STRING[2006]);
+    throw new Error(ERROR[2006]);
 }
 
 function ieGetOpacity(style) {
@@ -484,8 +492,8 @@ function ieGetStyleValue(style, name) {
 
 
 // register DOM Helpers
-DOM.helper('className', addClass);
-DOM.helper('style', applyStyle);
+helper('className', addClass);
+helper('style', applyStyle);
 
 
 CSS_INFO = DETECTED && DETECTED.css;
@@ -535,7 +543,7 @@ export
     function addClass(element, classNames) {
         var isString = string;
     
-        if (!DOM.is(element, 1)) {
+        if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM);
         }
     
@@ -544,7 +552,7 @@ export
         }
     
         if (array(classNames)) {
-            element.className = STRING.addWord(element.className || '',
+            element.className = addWord(element.className || '',
                                                classNames);
         }
     
@@ -555,11 +563,11 @@ export
     function removeClass(element, classNames) {
         var isString = string;
     
-        if (!DOM.is(element, 1)) {
+        if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM);
         }
     
-        if (!DOM.is(element, 1)) {
+        if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM);
         }
     
@@ -568,7 +576,7 @@ export
         }
     
         if (array(classNames)) {
-            element.className = STRING.removeWord(element.className,
+            element.className = removeWord(element.className,
                                                   classNames);
         }
     
@@ -580,7 +588,7 @@ export
     function stylize(element, rules, value) {
         var context;
     
-        if (!DOM.is(element, 1)) {
+        if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM);
         }
     
@@ -596,7 +604,7 @@ export
         }
     
         if (!object(rules)) {
-            throw new Error(STRING[1141]);
+            throw new Error(ERROR[1141]);
         }
     
         context = [element.style];
@@ -610,7 +618,7 @@ export
     
 export
     function stylify(element) {
-        if (!DOM.is(element, 1)) {
+        if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM);
         }
     
@@ -620,12 +628,12 @@ export
     
 export
     function unitValue(value) {
-        var is = isFinite;
+        var isFiniteNumber = isFinite;
         var len;
     
         switch (typeof value) {
         case 'number':
-            if (is(value)) {
+            if (isFiniteNumber(value)) {
                 return value;
             }
             break;
@@ -639,7 +647,7 @@ export
                 return value;
             }
             value = parseFloat(value);
-            if (is(value)) {
+            if (isFiniteNumber(value)) {
                 return value;
             }
         }

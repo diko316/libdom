@@ -12,17 +12,17 @@ export {
         } from "./lib/string.js";
 
 export {
-            isDom as is,
-            isDefaultView as isView,
+            is,
+            isView,
             contains,
             select,
             add,
             move,
             replace,
             remove,
-            eachPreorder as eachNodePreorder,
-            eachPostorder as eachNodePostorder,
-            eachLevel as eachNodeLevelorder
+            eachNodePreorder,
+            eachNodePostorder,
+            eachNodeLevelorder
             
         } from "./lib/dom.js";
         
@@ -54,16 +54,16 @@ export {
         } from "./lib/dimension.js";
 
 export {
-            select as highlight,
-            unselectable as unhighlightable,
-            clear as clearHighlight
+            highlight,
+            unhighlightable,
+            clearHighlight
             
         } from "./lib/selection.js";
 
 export {
-            parse as parseColor,
-            parseType as parseColorType,
-            stringify as formatColor
+            parseColor,
+            parseColorType,
+            formatColor
             
         } from "./lib/color.js";
 

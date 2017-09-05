@@ -11,51 +11,7 @@ import detect from "./detect.js";
 var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
     STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/,
     HTML_ESCAPE_CHARS_RE = /[^\u0021-\u007e]|[\u003e\u003c\&\"\']/g,
-    TEXTAREA = null,
-    exported = {
-        camelize: camelize,
-        stylize: stylize,
-        addWord: addWord,
-        removeWord: removeWord,
-        
-        xmlEncode: xmlEncode,
-        xmlDecode: xmlDecode,
-        
-        1001: "Invalid [name] parameter.",
-        1011: "Invalid [handler] parameter.",
-    
-        1101: "Invalid DOM [element] parameter.",
-        1102: "Invalid [dom] Object parameter.",
-        1103: "Invalid DOM [node] parameter.",
-        1104: "Invalid DOM [document] parameter.",
-        
-        1111: "Invalid CSS [selector] parameter.",
-        1112: "Invalid tree traverse [callback] parameter.",
-        
-        1121: "Invalid DOM Element [config] parameter.",
-        
-        1131: "Invalid [observable] parameter.",
-        1132: "Invalid Event [type] parameter.",
-        1133: "Invalid Event [handler] parameter.",
-        
-        
-        1141: "Invalid [style] Rule parameter.",
-        //1142: "Invalid Colorset [type] parameter.",
-        //1143: "Invalid [colorValue] integer parameter.",
-        
-        1151: "Invalid Animation [callback] parameter.",
-        1152: "Invalid Animation [displacements] parameter.",
-        1153: "Invalid Animation [type] parameter.",
-        1154: "Invalid Animation [duration] parameter.",
-        
-        2001: "Style Attribute manipulation is not supported",
-        2002: "Computed style is not supported by this browser.",
-        2003 : "CSS Selector query form DOM is not supported.",
-        2004: "DOM position comparison is not supported.",
-        2005: "DOM selection not supported.",
-        2006: "CSS Opacity is not supported by this browser"
-
-    };
+    TEXTAREA = null;
 
 
     
@@ -93,6 +49,47 @@ function initialize() {
 function onDestroy() {
     TEXTAREA = null;
 }
+
+initialize();
+
+export let
+    ERROR = {
+        
+        1001: "Invalid [name] parameter.",
+        1011: "Invalid [handler] parameter.",
+    
+        1101: "Invalid DOM [element] parameter.",
+        1102: "Invalid [dom] Object parameter.",
+        1103: "Invalid DOM [node] parameter.",
+        1104: "Invalid DOM [document] parameter.",
+        
+        1111: "Invalid CSS [selector] parameter.",
+        1112: "Invalid tree traverse [callback] parameter.",
+        
+        1121: "Invalid DOM Element [config] parameter.",
+        
+        1131: "Invalid [observable] parameter.",
+        1132: "Invalid Event [type] parameter.",
+        1133: "Invalid Event [handler] parameter.",
+        
+        
+        1141: "Invalid [style] Rule parameter.",
+        //1142: "Invalid Colorset [type] parameter.",
+        //1143: "Invalid [colorValue] integer parameter.",
+        
+        1151: "Invalid Animation [callback] parameter.",
+        1152: "Invalid Animation [displacements] parameter.",
+        1153: "Invalid Animation [type] parameter.",
+        1154: "Invalid Animation [duration] parameter.",
+        
+        2001: "Style Attribute manipulation is not supported",
+        2002: "Computed style is not supported by this browser.",
+        2003: "CSS Selector query form DOM is not supported.",
+        2004: "DOM position comparison is not supported.",
+        2005: "DOM selection not supported.",
+        2006: "CSS Opacity is not supported by this browser"
+
+    };
 
 export
     function stylize(str) {
@@ -161,6 +158,6 @@ export
     }
 
 
-initialize();
 
-export default exported;
+
+

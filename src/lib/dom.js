@@ -15,7 +15,10 @@ import { get as getModule } from "./chain.js";
 
 import DETECTED from "./detect.js";
 
-import STRING from "./string.js";
+import {
+            ERROR,
+            xmlEncode
+        } from "./string.js";
 
 import {
             purge,
@@ -29,11 +32,11 @@ var ORDER_TYPE_PREORDER = 1,
     ORDER_TYPE_LEVELORDER = 3,
     CSS_SELECT = notSupportedQuerySelector,
 
-    ERROR_INVALID_DOM = STRING[1101],
-    ERROR_INVALID_DOM_NODE = STRING[1103],
-    ERROR_INVALID_CSS_SELECTOR = STRING[1111],
-    ERROR_INVALID_CALLBACK = STRING[1112],
-    ERROR_INVALID_ELEMENT_CONFIG = STRING[1121],
+    ERROR_INVALID_DOM = ERROR[1101],
+    ERROR_INVALID_DOM_NODE = ERROR[1103],
+    ERROR_INVALID_CSS_SELECTOR = ERROR[1111],
+    ERROR_INVALID_CALLBACK = ERROR[1112],
+    ERROR_INVALID_ELEMENT_CONFIG = ERROR[1121],
     INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 },
     STD_CONTAINS = notSupportedContains,
     DOM_ATTRIBUTE_RE = /(^\_|[^a-zA-Z\_])/,
@@ -65,7 +68,7 @@ var DOM_INFO;
 
 
 function notSupportedContains() {
-    throw new Error(STRING[2004]);
+    throw new Error(ERROR[2004]);
 }
 
 function w3cContains(ancestor, descendant) {
@@ -81,11 +84,11 @@ function ieContains(ancestor, descendant) {
  */
 function registerDomHelper(name, handler) {
     if (!string(name)) {
-        throw new Error(STRING[1001]);
+        throw new Error(ERROR[1001]);
     }
 
     if (!method(handler)) {
-        throw new Error(STRING[1011]);
+        throw new Error(ERROR[1011]);
     }
 
     MANIPULATION_HELPERS.set(name, handler);
@@ -221,7 +224,7 @@ function applyConfigToElement(element, config, usedFragment) {
 
             // convert
             if (htmlEncodeChild) {
-                childNodes = STRING.xmlEncode(childNodes);
+                childNodes = xmlEncode(childNodes);
             }
 
             element.innerHTML = childNodes;
@@ -267,7 +270,7 @@ function findChild(element, node, nodeType) {
     var isNumber = number;
     var index, counter, any;
 
-    if (isDom(node, 1, 3, 4, 7, 8) && node.parentNode === element) {
+    if (is(node, 1, 3, 4, 7, 8) && node.parentNode === element) {
         return node;
     }
     else if (isNumber(node) && node > -1) {
@@ -293,7 +296,7 @@ function findChild(element, node, nodeType) {
 function noArrayQuerySelectorAll(dom, selector) {
     var list, c, l, result;
 
-    if (!isDom(dom, 9, 1)) {
+    if (!is(dom, 9, 1)) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
 
@@ -313,7 +316,7 @@ function noArrayQuerySelectorAll(dom, selector) {
 }
 
 function toArrayQuerySelectorAll(dom, selector) {
-    if (!isDom(dom, 9, 1)) {
+    if (!is(dom, 9, 1)) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
 
@@ -325,7 +328,7 @@ function toArrayQuerySelectorAll(dom, selector) {
 }
 
 function notSupportedQuerySelector() {
-    throw new Error(STRING[2003]);
+    throw new Error(ERROR[2003]);
 }
 
 function orderTraverse(element, callback, context, orderType, includeRoot) {
@@ -333,7 +336,7 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
         isPostOrder = 0;
     var queue, last, node, current;
 
-    if (!isDom(element, 1)) {
+    if (!is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
 
@@ -459,11 +462,14 @@ export {
     CSS_SELECT as select
 };
 
+export let
+    documentViewAccess = 'defaultView';
+
 /**
  * is node
  */
 export
-    function isDom(node) {
+    function is(node) {
         var isNumber = number;
 
         var type, c, len, items, match, matched;
@@ -493,7 +499,7 @@ export
     }
 
 export
-    function isDefaultView(defaultView) {
+    function isView(defaultView) {
         var type = typeof defaultView;
 
         return !!defaultView &&
@@ -504,14 +510,14 @@ export
 
 export
     function contains(ancestor, descendant) {
-        var elementErrorString = STRING[1102],
-            is = isDom;
+        var elementErrorString = ERROR[1102],
+            isDom = is;
 
-        if (!is(ancestor, 1, 9, 11)) {
+        if (!isDom(ancestor, 1, 9, 11)) {
             throw new Error(elementErrorString);
         }
 
-        if (!is(descendant) ||
+        if (!isDom(descendant) ||
             (descendant.nodeType in INVALID_DESCENDANT_NODE_TYPES)) {
             throw new Error(elementErrorString);
         }
@@ -536,14 +542,14 @@ export
     function add(element, config, before) {
         var toInsert = null,
             invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
-            is = isDom;
+            isDom = is;
         var tagName;
 
         if (!isDom(element, 1, 11)) {
             throw new Error(ERROR_INVALID_DOM);
         }
 
-        if (is(config)) {
+        if (isDom(config)) {
             toInsert = config;
         }
         else if (object(config)) {
@@ -555,7 +561,7 @@ export
             applyConfigToElement(toInsert, config);
         }
 
-        if (!is(toInsert, 1, 3, 4, 7, 8, 11)) {
+        if (!isDom(toInsert, 1, 3, 4, 7, 8, 11)) {
             throw new Error(invalidConfig);
         }
 
@@ -568,13 +574,13 @@ export
 export
     function remove(node, destroy) {
         var parentNode;
-        if (!isDom(node, 1, 3, 4, 7, 8)) {
+        if (!is(node, 1, 3, 4, 7, 8)) {
             throw new Error(ERROR_INVALID_DOM_NODE);
         }
 
         // unset child events by default
         if (node.nodeType === 1 && destroy !== false) {
-            eachPostorder(node, purgeEventsFrom);
+            eachNodePostorder(node, purgeEventsFrom);
         }
 
         parentNode = node.parentNode;
@@ -587,16 +593,16 @@ export
 
 export
     function move(nodes, element) {
-        var is = isDom,
+        var isDom = is,
             invalidDom = ERROR_INVALID_DOM_NODE,
             created = false;
         var c, l, fragment, newChild;
 
-        if (!is(element, 1)) {
+        if (!isDom(element, 1)) {
             throw new Error(ERROR_INVALID_DOM);
         }
 
-        if (is(nodes, 1, 3, 4, 7, 8)) {
+        if (isDom(nodes, 1, 3, 4, 7, 8)) {
             nodes = [nodes];
             created = true;
         }
@@ -608,7 +614,7 @@ export
         fragment = element.ownerDocument.createDocumentFragment();
         for (c = -1, l = nodes.length; l--;) {
             newChild = nodes[++c];
-            if (is(newChild, 1, 3, 4, 7, 8)) {
+            if (isDom(newChild, 1, 3, 4, 7, 8)) {
                 fragment.appendChild(newChild);
             }
         }
@@ -629,14 +635,14 @@ export
     function replace(node, config, destroy) {
         var toInsert = null,
             invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
-            is = isDom;
+            isDom = is;
         var tagName;
 
-        if (!is(node, 1, 3, 4, 7, 8) || !node.parentNode) {
+        if (!isDom(node, 1, 3, 4, 7, 8) || !node.parentNode) {
             throw new Error(ERROR_INVALID_DOM_NODE);
         }
 
-        if (is(config)) {
+        if (isDom(config)) {
             toInsert = config;
         }
         else if (object(config)) {
@@ -648,13 +654,13 @@ export
             applyConfigToElement(toInsert, config);
         }
 
-        if (!is(toInsert, 1, 3, 4, 7, 8)) {
+        if (!isDom(toInsert, 1, 3, 4, 7, 8)) {
             throw new Error(invalidConfig);
         }
 
         // remove events before replacing it only if mandated
         if (destroy === true && node.nodeType === 1) {
-            eachPostorder(node, purgeEventsFrom);
+            eachNodePostorder(node, purgeEventsFrom);
         }
 
         node.parentNode.replaceChild(toInsert, node);
@@ -664,7 +670,7 @@ export
 
 export
     function find(element, node) {
-        if (!isDom(element, 1, 11)) {
+        if (!is(element, 1, 11)) {
             throw new Error(ERROR_INVALID_DOM);
         }
         return findChild(element, node, 1);
@@ -674,7 +680,7 @@ export
  * DOM Tree walk
  */
 export
-    function eachPreorder(element, callback, context, includeRoot) {
+    function eachNodePreorder(element, callback, context, includeRoot) {
 
         return orderTraverse(element,
                             callback,
@@ -684,7 +690,7 @@ export
     }
 
 export
-    function eachPostorder(element, callback, context, includeRoot) {
+    function eachNodePostorder(element, callback, context, includeRoot) {
 
         return orderTraverse(element,
                             callback,
@@ -694,7 +700,7 @@ export
     }
 
 export
-    function eachLevel(element, callback, context, includeRoot) {
+    function eachNodeLevelorder(element, callback, context, includeRoot) {
 
         return orderTraverse(element,
                             callback,
@@ -702,22 +708,3 @@ export
                             ORDER_TYPE_LEVELORDER,
                             includeRoot !== false);
     }
-
-export default {
-            contains: contains,
-            is: isDom,
-            isView: isDefaultView,
-            eachPreorder: eachPreorder,
-            eachPostorder: eachPostorder,
-            eachLevel: eachLevel,
-            documentViewAccess: 'defaultView',
-            select: CSS_SELECT,
-
-            helper: registerDomHelper,
-
-            add: add,
-            replace: replace,
-            move: move,
-            remove: remove,
-            find: find
-        };

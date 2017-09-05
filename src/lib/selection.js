@@ -4,27 +4,21 @@ import { get as getModule } from "./chain.js";
 
 import DETECTED from "./detect.js";
 
-import STRING from "./string.js";
+import { ERROR } from "./string.js";
 
-import DOM from "./dom.js";
+import { is as isDom } from "./dom.js";
 
-import DIMENSION from "./dimension.js";
+import { visible } from "./dimension.js";
 
 
-var ERROR_DOM = STRING[1102],
+var ERROR_DOM = ERROR[1102],
     SELECT_ELEMENT = null,
     CLEAR_SELECTION = null,
     UNSELECTABLE = attributeUnselectable,
     DETECTED_SELECTION = null,
     DETECTED_DOM = null,
-    
-    CSS_UNSELECT = null,
-    
-    exported = {
-        select: select,
-        clear: clear,
-        unselectable: unselectable
-    };
+    CSS_UNSELECT = null;
+
     
 
 
@@ -43,7 +37,7 @@ function attributeUnselectable(element, selectable) {
 
 
 function selectionNotSupported() {
-    throw new Error(STRING[2005]);
+    throw new Error(ERROR[2005]);
 }
 
 /**
@@ -96,22 +90,21 @@ function w3cClearSelection(document) {
 }
 
 export
-    function select(from, to) {
-        var dimension = DIMENSION;
+    function highlight(from, to) {
         
-        if (DOM.is(from, 9)) {
+        if (isDom(from, 9)) {
             from = from.body;
         }
         
-        if (!dimension.visible(from)) {
-            throw new Error(STRING[1101]);
+        if (!visible(from)) {
+            throw new Error(ERROR[1101]);
         }
         
         if (arguments.length < 2) {
             to = null;
         }
         
-        if (to !== null && !dimension.visible(to)) {
+        if (to !== null && !visible(to)) {
             throw new Error(ERROR_DOM);
         }
         
@@ -122,10 +115,10 @@ export
     }
 
 export
-    function clear(documentNode) {
-        if (!DOM.is(documentNode, 9)) {
+    function clearHighlight(documentNode) {
+        if (!isDom(documentNode, 9)) {
             if (arguments.length > 0) {
-                throw new Error(STRING[1104]);
+                throw new Error(ERROR[1104]);
             }
             else {
                 documentNode = global.document;
@@ -138,8 +131,8 @@ export
     }
 
 export
-    function unselectable(element, disableSelect) {
-        if (!DOM.is(element, 1)) {
+    function unhighlightable(element, disableSelect) {
+        if (!isDom(element, 1)) {
             throw new Error(ERROR_DOM);
         }
         
@@ -173,4 +166,3 @@ if (DETECTED) {
 
 }
 
-export default exported;

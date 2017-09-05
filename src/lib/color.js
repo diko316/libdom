@@ -76,7 +76,7 @@ function parseColorStringType(str) {
 }
 
 export
-    function parseType(subject) {
+    function parseColorType(subject) {
 
         if (!string(subject, true)) {
             throw new Error(ERROR_SUBJECT);
@@ -90,7 +90,7 @@ export
     }
 
 export
-    function parse(subject) {
+    function parseColor(subject) {
         var F = format,
             formatPercent = F.PERCENT,
             formatNumber = F.NUMBER,
@@ -152,7 +152,7 @@ export
     }
 
 export
-    function stringify(colorValue, type) {
+    function formatColor(colorValue, type) {
         var list = TO_COLOR;
 
         if (!number(colorValue) || colorValue < 0) {
@@ -175,8 +175,4 @@ export
         return list[type].toString(colorValue);
     }
 
-export default {
-                    parse: parse,
-                    parseType: parseType,
-                    stringify: stringify
-                };
+

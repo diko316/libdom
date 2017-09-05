@@ -11,9 +11,15 @@ import { get as getModule } from "./chain.js";
 
 import DETECTED from "./detect.js";
 
-import STRING from "./string.js";
+import { ERROR } from "./string.js";
 
-import DOM from "./dom.js";
+import {
+            is as isDom,
+            isView,
+            contains,
+            documentViewAccess
+            
+        } from "./dom.js";
 
 import {
             computedStyle,
@@ -22,8 +28,8 @@ import {
         } from "./css.js";
 
 
-var ERROR_INVALID_ELEMENT = STRING[1101],
-    ERROR_INVALID_DOM = STRING[1102],
+var ERROR_INVALID_ELEMENT = ERROR[1101],
+    ERROR_INVALID_DOM = ERROR[1102],
     
     OFFSET_TOP = 'offsetTop',
     OFFSET_LEFT = 'offsetLeft',
@@ -49,27 +55,17 @@ var ERROR_INVALID_ELEMENT = STRING[1101],
     getOffset = null,
     getSize = null,
     //getBox = null,
-    getScreenSize = null,
-    exported = {
-        offset: offset,
-        size: size,
-        box: box,
-        scroll: scroll,
-        screen: screen,
-        visible: visible,
-        translate: translateBox
-    };
+    getScreenSize = null;
 
 var DIMENSION_INFO, IEVERSION;
 
 function pageBox(dom) {
     var M = Math,
-        help = DOM,
         subject = dom,
         box = screen();
     
     // page size
-    if (help.isView(subject)) {
+    if (isView(subject)) {
         subject = subject.document;
     }
     
@@ -250,23 +246,22 @@ function getZoomFactor() {
  * checking
  */
 function isViewable(dom) {
-    var help = DOM;
     var body, viewable;
     
-    if (help.is(dom, 1, 9)) {
+    if (isDom(dom, 1, 9)) {
         
         if (dom.nodeType === 9) {
             return PAGE_VIEW;
         }
         
         body = dom.ownerDocument.body;
-        viewable = (dom === body || help.contains(body, dom)) && ELEMENT_VIEW;
+        viewable = (dom === body || contains(body, dom)) && ELEMENT_VIEW;
         body = null;
         return viewable;
         
     }
     
-    return help.isView(dom) ? PAGE_VIEW : false;
+    return isView(dom) ? PAGE_VIEW : false;
 }
 
 
@@ -313,7 +308,7 @@ export
         // setter
         if (arguments.length > 1) {
             
-            applyStyle = translateBox(element, x, y, null, null, width, height);
+            applyStyle = translate(element, x, y, null, null, width, height);
             
             if (applyStyle) {
                 stylize(element, applyStyle);
@@ -353,7 +348,7 @@ export
     }
 
 export
-    function translateBox(element, x, y, right, bottom, width, height, target) {
+    function translate(element, x, y, right, bottom, width, height, target) {
         var cssValue = unitValue,
             parse = parseFloat,
             NUMBER = 'number',
@@ -503,7 +498,7 @@ export
         
         switch (isViewable(dom)) {
         case PAGE_VIEW:
-            window = DOM.is(dom) ?
+            window = isDom(dom) ?
                             dom[DEFAULTVIEW] : dom;
             current = getPageScroll(window);
             
@@ -586,15 +581,14 @@ export
  */
 export
     function screen(dom) {
-        var help = DOM,
-            subject = dom;
+        var subject = dom;
         var box, size;
-        if (help.is(subject, 1, 9)) {
+        if (isDom(subject, 1, 9)) {
             subject = (subject.nodeType === 1 ?
                             subject.ownerDocument : subject)[
-                                help.documentViewAccess];
+                                documentViewAccess];
         }
-        if (!help.isView(subject)) {
+        if (!isView(subject)) {
             subject = global.window;
         }
         box = getPageScroll(subject);
@@ -607,7 +601,6 @@ export
         
     }
 
-export default exported;
 
 /**
  * initialize

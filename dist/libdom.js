@@ -212,50 +212,6 @@ var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/;
 var STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/;
 var HTML_ESCAPE_CHARS_RE = /[^\u0021-\u007e]|[\u003e\u003c\&\"\']/g;
 var TEXTAREA = null;
-var exported$9 = {
-        camelize: libcore.camelize,
-        stylize: stylize,
-        addWord: addWord,
-        removeWord: removeWord,
-        
-        xmlEncode: xmlEncode,
-        xmlDecode: xmlDecode,
-        
-        1001: "Invalid [name] parameter.",
-        1011: "Invalid [handler] parameter.",
-    
-        1101: "Invalid DOM [element] parameter.",
-        1102: "Invalid [dom] Object parameter.",
-        1103: "Invalid DOM [node] parameter.",
-        1104: "Invalid DOM [document] parameter.",
-        
-        1111: "Invalid CSS [selector] parameter.",
-        1112: "Invalid tree traverse [callback] parameter.",
-        
-        1121: "Invalid DOM Element [config] parameter.",
-        
-        1131: "Invalid [observable] parameter.",
-        1132: "Invalid Event [type] parameter.",
-        1133: "Invalid Event [handler] parameter.",
-        
-        
-        1141: "Invalid [style] Rule parameter.",
-        //1142: "Invalid Colorset [type] parameter.",
-        //1143: "Invalid [colorValue] integer parameter.",
-        
-        1151: "Invalid Animation [callback] parameter.",
-        1152: "Invalid Animation [displacements] parameter.",
-        1153: "Invalid Animation [type] parameter.",
-        1154: "Invalid Animation [duration] parameter.",
-        
-        2001: "Style Attribute manipulation is not supported",
-        2002: "Computed style is not supported by this browser.",
-        2003 : "CSS Selector query form DOM is not supported.",
-        2004: "DOM position comparison is not supported.",
-        2005: "DOM selection not supported.",
-        2006: "CSS Opacity is not supported by this browser"
-
-    };
 
 
     
@@ -293,6 +249,46 @@ function initialize() {
 function onDestroy() {
     TEXTAREA = null;
 }
+
+initialize();
+
+var ERROR = {
+        
+        1001: "Invalid [name] parameter.",
+        1011: "Invalid [handler] parameter.",
+    
+        1101: "Invalid DOM [element] parameter.",
+        1102: "Invalid [dom] Object parameter.",
+        1103: "Invalid DOM [node] parameter.",
+        1104: "Invalid DOM [document] parameter.",
+        
+        1111: "Invalid CSS [selector] parameter.",
+        1112: "Invalid tree traverse [callback] parameter.",
+        
+        1121: "Invalid DOM Element [config] parameter.",
+        
+        1131: "Invalid [observable] parameter.",
+        1132: "Invalid Event [type] parameter.",
+        1133: "Invalid Event [handler] parameter.",
+        
+        
+        1141: "Invalid [style] Rule parameter.",
+        //1142: "Invalid Colorset [type] parameter.",
+        //1143: "Invalid [colorValue] integer parameter.",
+        
+        1151: "Invalid Animation [callback] parameter.",
+        1152: "Invalid Animation [displacements] parameter.",
+        1153: "Invalid Animation [type] parameter.",
+        1154: "Invalid Animation [duration] parameter.",
+        
+        2001: "Style Attribute manipulation is not supported",
+        2002: "Computed style is not supported by this browser.",
+        2003: "CSS Selector query form DOM is not supported.",
+        2004: "DOM position comparison is not supported.",
+        2005: "DOM selection not supported.",
+        2006: "CSS Opacity is not supported by this browser"
+
+    };
 
 function stylize(str) {
         str = libcore.camelize(str);
@@ -355,16 +351,13 @@ function xmlEncode(subject) {
         return subject.replace(HTML_ESCAPE_CHARS_RE, htmlescapeCallback);
     }
 
-
-initialize();
-
 var EVENTS = null;
 var PAGE_UNLOADED = false;
 var MIDDLEWARE = libcore.middleware('libdom.event');
 var IE_CUSTOM_EVENTS = {};
-var ERROR_OBSERVABLE_NO_SUPPORT = exported$9[1131];
-var ERROR_INVALID_TYPE = exported$9[1132];
-var ERROR_INVALID_HANDLER = exported$9[1133];
+var ERROR_OBSERVABLE_NO_SUPPORT = ERROR[1131];
+var ERROR_INVALID_TYPE = ERROR[1132];
+var ERROR_INVALID_HANDLER = ERROR[1133];
 var IE_ON = 'on';
 var IE_BUBBLE_EVENT = 'beforeupdate';
 var IE_NO_BUBBLE_EVENT = 'propertychange';
@@ -837,11 +830,11 @@ var ORDER_TYPE_PREORDER = 1;
 var ORDER_TYPE_POSTORDER = 2;
 var ORDER_TYPE_LEVELORDER = 3;
 exports.select = notSupportedQuerySelector;
-var ERROR_INVALID_DOM = exported$9[1101];
-var ERROR_INVALID_DOM_NODE = exported$9[1103];
-var ERROR_INVALID_CSS_SELECTOR = exported$9[1111];
-var ERROR_INVALID_CALLBACK = exported$9[1112];
-var ERROR_INVALID_ELEMENT_CONFIG = exported$9[1121];
+var ERROR_INVALID_DOM = ERROR[1101];
+var ERROR_INVALID_DOM_NODE = ERROR[1103];
+var ERROR_INVALID_CSS_SELECTOR = ERROR[1111];
+var ERROR_INVALID_CALLBACK = ERROR[1112];
+var ERROR_INVALID_ELEMENT_CONFIG = ERROR[1121];
 var INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 };
 var STD_CONTAINS = notSupportedContains;
 var DOM_ATTRIBUTE_RE = /(^\_|[^a-zA-Z\_])/;
@@ -873,7 +866,7 @@ var DOM_INFO;
 
 
 function notSupportedContains() {
-    throw new Error(exported$9[2004]);
+    throw new Error(ERROR[2004]);
 }
 
 function w3cContains(ancestor, descendant) {
@@ -889,11 +882,11 @@ function ieContains(ancestor, descendant) {
  */
 function registerDomHelper(name, handler) {
     if (!libcore.string(name)) {
-        throw new Error(exported$9[1001]);
+        throw new Error(ERROR[1001]);
     }
 
     if (!libcore.method(handler)) {
-        throw new Error(exported$9[1011]);
+        throw new Error(ERROR[1011]);
     }
 
     MANIPULATION_HELPERS.set(name, handler);
@@ -1029,7 +1022,7 @@ function applyConfigToElement(element, config, usedFragment) {
 
             // convert
             if (htmlEncodeChild) {
-                childNodes = exported$9.xmlEncode(childNodes);
+                childNodes = xmlEncode(childNodes);
             }
 
             element.innerHTML = childNodes;
@@ -1075,7 +1068,7 @@ function findChild(element, node, nodeType) {
     var isNumber = libcore.number;
     var index, counter, any;
 
-    if (isDom(node, 1, 3, 4, 7, 8) && node.parentNode === element) {
+    if (is(node, 1, 3, 4, 7, 8) && node.parentNode === element) {
         return node;
     }
     else if (isNumber(node) && node > -1) {
@@ -1101,7 +1094,7 @@ function findChild(element, node, nodeType) {
 function noArrayQuerySelectorAll(dom, selector) {
     var list, c, l, result;
 
-    if (!isDom(dom, 9, 1)) {
+    if (!is(dom, 9, 1)) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
 
@@ -1121,7 +1114,7 @@ function noArrayQuerySelectorAll(dom, selector) {
 }
 
 function toArrayQuerySelectorAll(dom, selector) {
-    if (!isDom(dom, 9, 1)) {
+    if (!is(dom, 9, 1)) {
         throw new Error(ERROR_INVALID_DOM_NODE);
     }
 
@@ -1133,7 +1126,7 @@ function toArrayQuerySelectorAll(dom, selector) {
 }
 
 function notSupportedQuerySelector() {
-    throw new Error(exported$9[2003]);
+    throw new Error(ERROR[2003]);
 }
 
 function orderTraverse(element, callback, context, orderType, includeRoot) {
@@ -1141,7 +1134,7 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
         isPostOrder = 0;
     var queue, last, node, current;
 
-    if (!isDom(element, 1)) {
+    if (!is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM);
     }
 
@@ -1262,10 +1255,12 @@ if (DOM_INFO) {
     }
 }
 
+var documentViewAccess = 'defaultView';
+
 /**
  * is node
  */
-function isDom(node) {
+function is(node) {
         var isNumber = libcore.number;
 
         var type, c, len, items, match, matched;
@@ -1294,7 +1289,7 @@ function isDom(node) {
         return false;
     }
 
-function isDefaultView(defaultView) {
+function isView(defaultView) {
         var type = typeof defaultView;
 
         return !!defaultView &&
@@ -1304,14 +1299,14 @@ function isDefaultView(defaultView) {
     }
 
 function contains$1(ancestor, descendant) {
-        var elementErrorString = exported$9[1102],
-            is = isDom;
+        var elementErrorString = ERROR[1102],
+            isDom = is;
 
-        if (!is(ancestor, 1, 9, 11)) {
+        if (!isDom(ancestor, 1, 9, 11)) {
             throw new Error(elementErrorString);
         }
 
-        if (!is(descendant) ||
+        if (!isDom(descendant) ||
             (descendant.nodeType in INVALID_DESCENDANT_NODE_TYPES)) {
             throw new Error(elementErrorString);
         }
@@ -1335,14 +1330,14 @@ function contains$1(ancestor, descendant) {
 function add(element, config, before) {
         var toInsert = null,
             invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
-            is = isDom;
+            isDom = is;
         var tagName;
 
         if (!isDom(element, 1, 11)) {
             throw new Error(ERROR_INVALID_DOM);
         }
 
-        if (is(config)) {
+        if (isDom(config)) {
             toInsert = config;
         }
         else if (libcore.object(config)) {
@@ -1354,7 +1349,7 @@ function add(element, config, before) {
             applyConfigToElement(toInsert, config);
         }
 
-        if (!is(toInsert, 1, 3, 4, 7, 8, 11)) {
+        if (!isDom(toInsert, 1, 3, 4, 7, 8, 11)) {
             throw new Error(invalidConfig);
         }
 
@@ -1366,13 +1361,13 @@ function add(element, config, before) {
 
 function remove(node, destroy) {
         var parentNode;
-        if (!isDom(node, 1, 3, 4, 7, 8)) {
+        if (!is(node, 1, 3, 4, 7, 8)) {
             throw new Error(ERROR_INVALID_DOM_NODE);
         }
 
         // unset child events by default
         if (node.nodeType === 1 && destroy !== false) {
-            eachPostorder(node, purgeEventsFrom);
+            eachNodePostorder(node, purgeEventsFrom);
         }
 
         parentNode = node.parentNode;
@@ -1384,16 +1379,16 @@ function remove(node, destroy) {
     }
 
 function move(nodes, element) {
-        var is = isDom,
+        var isDom = is,
             invalidDom = ERROR_INVALID_DOM_NODE,
             created = false;
         var c, l, fragment, newChild;
 
-        if (!is(element, 1)) {
+        if (!isDom(element, 1)) {
             throw new Error(ERROR_INVALID_DOM);
         }
 
-        if (is(nodes, 1, 3, 4, 7, 8)) {
+        if (isDom(nodes, 1, 3, 4, 7, 8)) {
             nodes = [nodes];
             created = true;
         }
@@ -1405,7 +1400,7 @@ function move(nodes, element) {
         fragment = element.ownerDocument.createDocumentFragment();
         for (c = -1, l = nodes.length; l--;) {
             newChild = nodes[++c];
-            if (is(newChild, 1, 3, 4, 7, 8)) {
+            if (isDom(newChild, 1, 3, 4, 7, 8)) {
                 fragment.appendChild(newChild);
             }
         }
@@ -1425,14 +1420,14 @@ function move(nodes, element) {
 function replace(node, config, destroy) {
         var toInsert = null,
             invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
-            is = isDom;
+            isDom = is;
         var tagName;
 
-        if (!is(node, 1, 3, 4, 7, 8) || !node.parentNode) {
+        if (!isDom(node, 1, 3, 4, 7, 8) || !node.parentNode) {
             throw new Error(ERROR_INVALID_DOM_NODE);
         }
 
-        if (is(config)) {
+        if (isDom(config)) {
             toInsert = config;
         }
         else if (libcore.object(config)) {
@@ -1444,13 +1439,13 @@ function replace(node, config, destroy) {
             applyConfigToElement(toInsert, config);
         }
 
-        if (!is(toInsert, 1, 3, 4, 7, 8)) {
+        if (!isDom(toInsert, 1, 3, 4, 7, 8)) {
             throw new Error(invalidConfig);
         }
 
         // remove events before replacing it only if mandated
         if (destroy === true && node.nodeType === 1) {
-            eachPostorder(node, purgeEventsFrom);
+            eachNodePostorder(node, purgeEventsFrom);
         }
 
         node.parentNode.replaceChild(toInsert, node);
@@ -1458,17 +1453,12 @@ function replace(node, config, destroy) {
         return toInsert;
     }
 
-function find(element, node) {
-        if (!isDom(element, 1, 11)) {
-            throw new Error(ERROR_INVALID_DOM);
-        }
-        return findChild(element, node, 1);
-    }
+
 
 /**
  * DOM Tree walk
  */
-function eachPreorder(element, callback, context, includeRoot) {
+function eachNodePreorder(element, callback, context, includeRoot) {
 
         return orderTraverse(element,
                             callback,
@@ -1477,7 +1467,7 @@ function eachPreorder(element, callback, context, includeRoot) {
                             includeRoot !== false);
     }
 
-function eachPostorder(element, callback, context, includeRoot) {
+function eachNodePostorder(element, callback, context, includeRoot) {
 
         return orderTraverse(element,
                             callback,
@@ -1486,7 +1476,7 @@ function eachPostorder(element, callback, context, includeRoot) {
                             includeRoot !== false);
     }
 
-function eachLevel(element, callback, context, includeRoot) {
+function eachNodeLevelorder(element, callback, context, includeRoot) {
 
         return orderTraverse(element,
                             callback,
@@ -1494,25 +1484,6 @@ function eachLevel(element, callback, context, includeRoot) {
                             ORDER_TYPE_LEVELORDER,
                             includeRoot !== false);
     }
-
-var DOM = {
-            contains: contains$1,
-            is: isDom,
-            isView: isDefaultView,
-            eachPreorder: eachPreorder,
-            eachPostorder: eachPostorder,
-            eachLevel: eachLevel,
-            documentViewAccess: 'defaultView',
-            select: exports.select,
-
-            helper: registerDomHelper,
-
-            add: add,
-            replace: replace,
-            move: move,
-            remove: remove,
-            find: find
-        };
 
 var NUMBER = 1;
 var HEX = 2;
@@ -1871,7 +1842,7 @@ function parseColorStringType(str) {
 
 }
 
-function parseType(subject) {
+function parseColorType(subject) {
 
         if (!libcore.string(subject, true)) {
             throw new Error(ERROR_SUBJECT);
@@ -1884,7 +1855,7 @@ function parseType(subject) {
         return null;
     }
 
-function parse(subject) {
+function parseColor(subject) {
         var F = format$1,
             formatPercent = F.PERCENT,
             formatNumber = F.NUMBER,
@@ -1945,7 +1916,7 @@ function parse(subject) {
         return null;
     }
 
-function stringify(colorValue, type) {
+function formatColor(colorValue, type) {
         var list = TO_COLOR;
 
         if (!libcore.number(colorValue) || colorValue < 0) {
@@ -1995,7 +1966,7 @@ var SET_OPACITY = opacityNotSupported;
 var SET_STYLE = styleManipulationNotSupported;
 var GET_STYLE = styleManipulationNotSupported;
 exports.computedStyle = computedStyleNotSupported;
-var ERROR_INVALID_DOM$1 = exported$9[1101];
+var ERROR_INVALID_DOM$1 = ERROR[1101];
 var DEFAULT_COLOR_UNIT = 'hex';
 var SLICE = Array.prototype.slice;
 
@@ -2030,7 +2001,7 @@ function onStyleElement(value, name) {
         set = SET_STYLE,
         applied = false;
 
-    name = exported$9.stylize(name);
+    name = stylize(name);
 
     // opacity
     if (name === 'opacity') {
@@ -2051,7 +2022,7 @@ function onStyleElement(value, name) {
     }
     // color
     else if (isNumber && COLOR_RE.test(name)) {
-        value = stringify(value, DEFAULT_COLOR_UNIT);
+        value = formatColor(value, DEFAULT_COLOR_UNIT);
     }
 
     // non-scalar value is "unset"
@@ -2109,7 +2080,7 @@ function parseCSSText(str) {
 
 
 function styleManipulationNotSupported() {
-    throw new Error(exported$9[2001]);
+    throw new Error(ERROR[2001]);
 }
 
 /**
@@ -2117,15 +2088,15 @@ function styleManipulationNotSupported() {
  */
 
 function computedStyleNotSupported() {
-    throw new Error(exported$9[2002]);
+    throw new Error(ERROR[2002]);
 }
 
 function w3cGetCurrentStyle(element, ruleNames) {
-    var camel = exported$9.stylize,
+    var camel = stylize,
         isString = libcore.string;
     var style, c, l, name, value, values, access;
 
-    if (!DOM.is(element, 1)) {
+    if (!is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM$1);
     }
 
@@ -2159,13 +2130,13 @@ function ieGetCurrentStyle(element, ruleNames) {
     var dimensionRe = DIMENSION_RE,
         boxRe = BOX_RE,
         isString = libcore.string,
-        camel = exported$9.stylize,
+        camel = stylize,
         getOpacity = GET_OPACITY,
         pixelSize = ieGetPixelSize;
 
     var style, c, l, name, value, access, fontSize, values, dimension;
 
-    if (!DOM.is(element, 1)) {
+    if (!is(element, 1)) {
         throw new Error(ERROR_INVALID_DOM$1);
     }
 
@@ -2257,7 +2228,7 @@ function ieGetPositionStyle(element, style) {
     var parent = element.offsetParent,
         parentStyle = parent.currentStyle,
         ieAdjust = DETECTED.browser.ieVersion < 9,
-        parse$$1 = parseFloat,
+        parse = parseFloat,
 
         ptop = PADDING_TOP,
         pleft = PADDING_LEFT,
@@ -2277,8 +2248,8 @@ function ieGetPositionStyle(element, style) {
 
     switch (style.position) {
     case 'relative':
-        left -= (parse$$1(parentStyle[pleft]) || 0);
-        top -= (parse$$1(parentStyle[ptop]) || 0);
+        left -= (parse(parentStyle[pleft]) || 0);
+        top -= (parse(parentStyle[ptop]) || 0);
 
         if (ieAdjust) {
             node = element.parentNode;
@@ -2286,33 +2257,33 @@ function ieGetPositionStyle(element, style) {
             for (; node !== parent; node = node.parentNode) {
                 nodeStyle = node.currentStyle;
                 if (nodeStyle.position === 'static') {
-                    left -= (parse$$1(nodeStyle.paddingLeft) || 0) +
-                            (parse$$1(nodeStyle.borderLeftWidth) || 0);
-                    top -= (parse$$1(nodeStyle.paddingTop) || 0) +
-                            (parse$$1(nodeStyle.borderTopWidth) || 0);
+                    left -= (parse(nodeStyle.paddingLeft) || 0) +
+                            (parse(nodeStyle.borderLeftWidth) || 0);
+                    top -= (parse(nodeStyle.paddingTop) || 0) +
+                            (parse(nodeStyle.borderTopWidth) || 0);
                 }
             }
 
             if (parent === element.ownerDocument.body) {
-                left -= parse$$1(parentStyle.marginLeft) || 0;
-                top -= parse$$1(parentStyle.marginTop) || 0;
+                left -= parse(parentStyle.marginLeft) || 0;
+                top -= parse(parentStyle.marginTop) || 0;
             }
         }
 
     /* falls through */
     case 'absolute':
     case 'fixed':
-        left -= (parse$$1(parentStyle.borderLeftWidth) || 0);
-        top -= (parse$$1(parentStyle.borderTopWidth) || 0);
+        left -= (parse(parentStyle.borderLeftWidth) || 0);
+        top -= (parse(parentStyle.borderTopWidth) || 0);
     }
 
 
     right -= left;
     bottom -= top;
-    width -= (parse$$1(style[pleft]) || 0) +
-                (parse$$1(style[pright]) || 0);
-    height -= (parse$$1(style[ptop]) || 0) +
-                (parse$$1(style[pbottom]) || 0);
+    width -= (parse(style[pleft]) || 0) +
+                (parse(style[pright]) || 0);
+    height -= (parse(style[ptop]) || 0) +
+                (parse(style[pbottom]) || 0);
 
     parent = parentStyle = null;
 
@@ -2330,7 +2301,7 @@ function ieGetPositionStyle(element, style) {
  * opacity
  */
 function opacityNotSupported() {
-    throw new Error(exported$9[2006]);
+    throw new Error(ERROR[2006]);
 }
 
 function ieGetOpacity(style) {
@@ -2422,8 +2393,8 @@ function ieGetStyleValue(style, name) {
 
 
 // register DOM Helpers
-DOM.helper('className', addClass);
-DOM.helper('style', applyStyle);
+registerDomHelper('className', addClass);
+registerDomHelper('style', applyStyle);
 
 
 CSS_INFO = DETECTED && DETECTED.css;
@@ -2461,7 +2432,7 @@ if (CSS_INFO) {
 function addClass(element, classNames) {
         var isString = libcore.string;
     
-        if (!DOM.is(element, 1)) {
+        if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM$1);
         }
     
@@ -2470,7 +2441,7 @@ function addClass(element, classNames) {
         }
     
         if (libcore.array(classNames)) {
-            element.className = exported$9.addWord(element.className || '',
+            element.className = addWord(element.className || '',
                                                classNames);
         }
     
@@ -2480,11 +2451,11 @@ function addClass(element, classNames) {
 function removeClass(element, classNames) {
         var isString = libcore.string;
     
-        if (!DOM.is(element, 1)) {
+        if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM$1);
         }
     
-        if (!DOM.is(element, 1)) {
+        if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM$1);
         }
     
@@ -2493,7 +2464,7 @@ function removeClass(element, classNames) {
         }
     
         if (libcore.array(classNames)) {
-            element.className = exported$9.removeWord(element.className,
+            element.className = removeWord(element.className,
                                                   classNames);
         }
     
@@ -2504,7 +2475,7 @@ function removeClass(element, classNames) {
 function stylize$1(element, rules, value) {
         var context;
     
-        if (!DOM.is(element, 1)) {
+        if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM$1);
         }
     
@@ -2520,7 +2491,7 @@ function stylize$1(element, rules, value) {
         }
     
         if (!libcore.object(rules)) {
-            throw new Error(exported$9[1141]);
+            throw new Error(ERROR[1141]);
         }
     
         context = [element.style];
@@ -2533,7 +2504,7 @@ function stylize$1(element, rules, value) {
     }
     
 function stylify(element) {
-        if (!DOM.is(element, 1)) {
+        if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM$1);
         }
     
@@ -2542,12 +2513,12 @@ function stylify(element) {
     
     
 function unitValue(value) {
-        var is = isFinite;
+        var isFiniteNumber = isFinite;
         var len;
     
         switch (typeof value) {
         case 'number':
-            if (is(value)) {
+            if (isFiniteNumber(value)) {
                 return value;
             }
             break;
@@ -2561,7 +2532,7 @@ function unitValue(value) {
                 return value;
             }
             value = parseFloat(value);
-            if (is(value)) {
+            if (isFiniteNumber(value)) {
                 return value;
             }
         }
@@ -2574,8 +2545,8 @@ function unitValue(value) {
     
     }
 
-var ERROR_INVALID_ELEMENT = exported$9[1101];
-var ERROR_INVALID_DOM$2 = exported$9[1102];
+var ERROR_INVALID_ELEMENT = ERROR[1101];
+var ERROR_INVALID_DOM$2 = ERROR[1102];
 var OFFSET_TOP$1 = 'offsetTop';
 var OFFSET_LEFT$1 = 'offsetLeft';
 var OFFSET_WIDTH$1 = 'offsetWidth';
@@ -2595,27 +2566,17 @@ var getPageScroll = null;
 var getOffset = null;
 var getSize = null;
 var getScreenSize = null;
-var exported$10 = {
-        offset: offset,
-        size: size,
-        box: box,
-        scroll: scroll,
-        screen: screen,
-        visible: visible,
-        translate: translateBox
-    };
 
 var DIMENSION_INFO;
 var IEVERSION;
 
 function pageBox(dom) {
     var M = Math,
-        help = DOM,
         subject = dom,
         box = screen();
     
     // page size
-    if (help.isView(subject)) {
+    if (isView(subject)) {
         subject = subject.document;
     }
     
@@ -2796,23 +2757,22 @@ function getZoomFactor() {
  * checking
  */
 function isViewable(dom) {
-    var help = DOM;
     var body, viewable;
     
-    if (help.is(dom, 1, 9)) {
+    if (is(dom, 1, 9)) {
         
         if (dom.nodeType === 9) {
             return PAGE_VIEW;
         }
         
         body = dom.ownerDocument.body;
-        viewable = (dom === body || help.contains(body, dom)) && ELEMENT_VIEW;
+        viewable = (dom === body || contains$1(body, dom)) && ELEMENT_VIEW;
         body = null;
         return viewable;
         
     }
     
-    return help.isView(dom) ? PAGE_VIEW : false;
+    return isView(dom) ? PAGE_VIEW : false;
 }
 
 
@@ -2856,7 +2816,7 @@ function box(element, x, y, width, height) {
         // setter
         if (arguments.length > 1) {
             
-            applyStyle = translateBox(element, x, y, null, null, width, height);
+            applyStyle = translate(element, x, y, null, null, width, height);
             
             if (applyStyle) {
                 stylize$1(element, applyStyle);
@@ -2895,7 +2855,7 @@ function box(element, x, y, width, height) {
         return dimension;
     }
 
-function translateBox(element, x, y, right, bottom, width, height, target) {
+function translate(element, x, y, right, bottom, width, height, target) {
         var cssValue = unitValue,
             parse = parseFloat,
             NUMBER = 'number',
@@ -3044,7 +3004,7 @@ function scroll(dom, x, y) {
         
         switch (isViewable(dom)) {
         case PAGE_VIEW:
-            window = DOM.is(dom) ?
+            window = is(dom) ?
                             dom[DEFAULTVIEW] : dom;
             current = getPageScroll(window);
             
@@ -3125,15 +3085,14 @@ function visible(element, visibility, displayed) {
  * Screen offset and size
  */
 function screen(dom) {
-        var help = DOM,
-            subject = dom;
+        var subject = dom;
         var box, size;
-        if (help.is(subject, 1, 9)) {
+        if (is(subject, 1, 9)) {
             subject = (subject.nodeType === 1 ?
                             subject.ownerDocument : subject)[
-                                help.documentViewAccess];
+                                documentViewAccess];
         }
-        if (!help.isView(subject)) {
+        if (!isView(subject)) {
             subject = global$1.window;
         }
         box = getPageScroll(subject);
@@ -3145,6 +3104,7 @@ function screen(dom) {
         return box;
         
     }
+
 
 /**
  * initialize
@@ -3177,13 +3137,14 @@ if (DIMENSION_INFO) {
     getSize = boundingRect ? rectSize : manualSize;
 }
 
-var ERROR_DOM = exported$9[1102];
+var ERROR_DOM = ERROR[1102];
 var SELECT_ELEMENT = null;
 var CLEAR_SELECTION = null;
 var UNSELECTABLE = attributeUnselectable;
 var DETECTED_SELECTION = null;
 var DETECTED_DOM = null;
 var CSS_UNSELECT = null;
+
     
 
 
@@ -3202,7 +3163,7 @@ function attributeUnselectable(element, selectable) {
 
 
 function selectionNotSupported() {
-    throw new Error(exported$9[2005]);
+    throw new Error(ERROR[2005]);
 }
 
 /**
@@ -3254,22 +3215,21 @@ function w3cClearSelection(document) {
     document[DETECTED_DOM.defaultView].getSelection().removeAllRanges();
 }
 
-function select(from, to) {
-        var dimension = exported$10;
+function highlight(from, to) {
         
-        if (DOM.is(from, 9)) {
+        if (is(from, 9)) {
             from = from.body;
         }
         
-        if (!dimension.visible(from)) {
-            throw new Error(exported$9[1101]);
+        if (!visible(from)) {
+            throw new Error(ERROR[1101]);
         }
         
         if (arguments.length < 2) {
             to = null;
         }
         
-        if (to !== null && !dimension.visible(to)) {
+        if (to !== null && !visible(to)) {
             throw new Error(ERROR_DOM);
         }
         
@@ -3279,10 +3239,10 @@ function select(from, to) {
         
     }
 
-function clear(documentNode) {
-        if (!DOM.is(documentNode, 9)) {
+function clearHighlight(documentNode) {
+        if (!is(documentNode, 9)) {
             if (arguments.length > 0) {
-                throw new Error(exported$9[1104]);
+                throw new Error(ERROR[1104]);
             }
             else {
                 documentNode = global$1.document;
@@ -3294,8 +3254,8 @@ function clear(documentNode) {
         return get();
     }
 
-function unselectable(element, disableSelect) {
-        if (!DOM.is(element, 1)) {
+function unhighlightable(element, disableSelect) {
+        if (!is(element, 1)) {
             throw new Error(ERROR_DOM);
         }
         
@@ -3685,14 +3645,14 @@ function createElementHandler(animate) {
             node = session.node;
         
         // transform dimension
-        exported$10.translate(node,
-                            'left' in values ? values.left : null,
-                            'top' in values ? values.top : null,
-                            'right' in values ? values.right : null,
-                            'bottom' in values ? values.bottom : null,
-                            'width' in values ? values.width : null,
-                            'height' in values ? values.height : null,
-                            values);
+        translate(node,
+                'left' in values ? values.left : null,
+                'top' in values ? values.top : null,
+                'right' in values ? values.right : null,
+                'bottom' in values ? values.bottom : null,
+                'width' in values ? values.width : null,
+                'height' in values ? values.height : null,
+                values);
         
         stylize$1(node, values);
         
@@ -3709,14 +3669,13 @@ function createElementHandler(animate) {
 
 function createStyleDefaults(element, names) {
     var values = exports.computedStyle(element, names),
-        dimension = exported$10,
+        domBox = box,
         c = -1,
         l = names.length,
         cssUnitValue = unitValue,
         dimensionMatch = DIMENSION_RE,
         colorMatch = COLOR_RE,
-        parse$$1 = parse,
-        boxRe = boxRe,
+        parse = parseColor,
         boxPosition = BOX_POSITION,
         box$$1 = null;
     var name, value;
@@ -3724,9 +3683,9 @@ function createStyleDefaults(element, names) {
     for (; l--;) {
         name = names[++c];
         value = values[name];
-        if (boxRe.test(name)) {
+        if (BOX_RE.test(name)) {
             if (!box$$1) {
-                box$$1 = dimension.box(element);
+                box$$1 = domBox(element);
             }
             value = box$$1[boxPosition[name]];
         }
@@ -3734,7 +3693,7 @@ function createStyleDefaults(element, names) {
             value = cssUnitValue(value);
         }
         else if (colorMatch.test(name)) {
-            value = parse$$1(value);
+            value = parse(value);
         }
         values[name] = parseFloat(value) || 0;
     }
@@ -3764,7 +3723,7 @@ function eachElementValues(value, name) {
     }
     // color
     else if (COLOR_RE.test(name)) {
-        value = parse(raw);
+        value = parseColor(raw);
         if (value === null) {
             value = false;
         }
@@ -3784,7 +3743,6 @@ function eachElementValues(value, name) {
 
 function transition(callback, from, to, type, duration) {
         var M = Math,
-            string$$1 = exported$9,
             easing = EASING,
             isObject = libcore.object,
             list = SESSIONS,
@@ -3817,7 +3775,7 @@ function transition(callback, from, to, type, duration) {
             
             if (interval) {
                 if (!typeObject(updates)) {
-                    throw new Error(string$$1[1152]);
+                    throw new Error(ERROR[1152]);
                 }
                 
                 if (!typeObject(initialValues)) {
@@ -3861,11 +3819,11 @@ function transition(callback, from, to, type, duration) {
         }
         
         if (!libcore.method(callback)) {
-            throw new Error(string$$1[1151]);
+            throw new Error(ERROR[1151]);
         }
         
         if (!isObject(from) || !isObject(to)) {
-            throw new Error(string$$1[1152]);
+            throw new Error(ERROR[1152]);
         }
         
         // validate type
@@ -3873,7 +3831,7 @@ function transition(callback, from, to, type, duration) {
             type = DEFAULT_EASING;
         }
         else if (!has(type)) {
-            throw new Error(string$$1[1153]);
+            throw new Error(libcore.string[1153]);
         }
         
         // validate duration
@@ -3881,7 +3839,7 @@ function transition(callback, from, to, type, duration) {
             duration = DEFAULT_DURATION;
         }
         else if (!libcore.number(duration) || duration <= 0) {
-            throw new Error(string$$1[1154]);
+            throw new Error(ERROR[1154]);
         }
         
         // prepare displacements
@@ -3904,7 +3862,7 @@ function has(type) {
         return libcore.string(type) && libcore.contains(EASING, type);
     }
     
-function animateStyle(element, styles, type) {
+function animateStyle(element, styles, type, duration) {
         var access = SESSION_ACCESS,
             stat = [[], {}, [], {}];
         //var values = createElementValues(styles);
@@ -3917,11 +3875,15 @@ function animateStyle(element, styles, type) {
         names = stat[0];
         animateValues = stat[1];
         staticValues = stat[3];
-            
+        
         // has animation
         if (names.length) {
             sessionId = element.getAttribute(access);
             defaults = createStyleDefaults(element, names);
+            
+            if (!libcore.number(duration)) {
+                duration = DEFAULT_DURATION;
+            }
             
             if (!has(type)) {
                 type = DEFAULT_EASING;
@@ -3936,7 +3898,8 @@ function animateStyle(element, styles, type) {
                 session = transition(createElementHandler(animateObject),
                                      defaults,
                                      animateValues,
-                                     type);
+                                     type,
+                                     duration);
                 
                 animateObject.id = sessionId = session.session;
                 
@@ -3965,17 +3928,17 @@ var exported$1 = Object.freeze({
 	info: DETECTED,
 	xmlEncode: xmlEncode,
 	xmlDecode: xmlDecode,
-	is: isDom,
-	isView: isDefaultView,
+	is: is,
+	isView: isView,
 	contains: contains$1,
 	get select () { return exports.select; },
 	add: add,
 	move: move,
 	replace: replace,
 	remove: remove,
-	eachNodePreorder: eachPreorder,
-	eachNodePostorder: eachPostorder,
-	eachNodeLevelorder: eachLevel,
+	eachNodePreorder: eachNodePreorder,
+	eachNodePostorder: eachNodePostorder,
+	eachNodeLevelorder: eachNodeLevelorder,
 	addClass: addClass,
 	removeClass: removeClass,
 	get computedStyle () { return exports.computedStyle; },
@@ -3991,12 +3954,12 @@ var exported$1 = Object.freeze({
 	box: box,
 	scroll: scroll,
 	screen: screen,
-	highlight: select,
-	unhighlightable: unselectable,
-	clearHighlight: clear,
-	parseColor: parse,
-	parseColorType: parseType,
-	formatColor: stringify,
+	highlight: highlight,
+	unhighlightable: unhighlightable,
+	clearHighlight: clearHighlight,
+	parseColor: parseColor,
+	parseColorType: parseColorType,
+	formatColor: formatColor,
 	transition: transition,
 	animateStyle: animateStyle
 });
@@ -4010,16 +3973,16 @@ exports.env = libcore.env;
 exports.info = DETECTED;
 exports.xmlEncode = xmlEncode;
 exports.xmlDecode = xmlDecode;
-exports.is = isDom;
-exports.isView = isDefaultView;
+exports.is = is;
+exports.isView = isView;
 exports.contains = contains$1;
 exports.add = add;
 exports.move = move;
 exports.replace = replace;
 exports.remove = remove;
-exports.eachNodePreorder = eachPreorder;
-exports.eachNodePostorder = eachPostorder;
-exports.eachNodeLevelorder = eachLevel;
+exports.eachNodePreorder = eachNodePreorder;
+exports.eachNodePostorder = eachNodePostorder;
+exports.eachNodeLevelorder = eachNodeLevelorder;
 exports.addClass = addClass;
 exports.removeClass = removeClass;
 exports.stylize = stylize$1;
@@ -4034,12 +3997,12 @@ exports.size = size;
 exports.box = box;
 exports.scroll = scroll;
 exports.screen = screen;
-exports.highlight = select;
-exports.unhighlightable = unselectable;
-exports.clearHighlight = clear;
-exports.parseColor = parse;
-exports.parseColorType = parseType;
-exports.formatColor = stringify;
+exports.highlight = highlight;
+exports.unhighlightable = unhighlightable;
+exports.clearHighlight = clearHighlight;
+exports.parseColor = parseColor;
+exports.parseColorType = parseColorType;
+exports.formatColor = formatColor;
 exports.transition = transition;
 exports.animateStyle = animateStyle;
 

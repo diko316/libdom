@@ -7,7 +7,7 @@ import {
             middleware
         } from "libcore";
 
-import STRING from "./string";
+import { ERROR } from "./string.js";
 
 import INFO from "./detect.js";
 
@@ -18,9 +18,9 @@ var EVENTS = null,
     PAGE_UNLOADED = false,
     MIDDLEWARE = middleware('libdom.event'),
     IE_CUSTOM_EVENTS = {},
-    ERROR_OBSERVABLE_NO_SUPPORT = STRING[1131],
-    ERROR_INVALID_TYPE = STRING[1132],
-    ERROR_INVALID_HANDLER = STRING[1133],
+    ERROR_OBSERVABLE_NO_SUPPORT = ERROR[1131],
+    ERROR_INVALID_TYPE = ERROR[1132],
+    ERROR_INVALID_HANDLER = ERROR[1133],
     IE_ON = 'on',
     IE_BUBBLE_EVENT = 'beforeupdate',
     IE_NO_BUBBLE_EVENT = 'propertychange';
