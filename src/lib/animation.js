@@ -127,12 +127,12 @@ function createElementHandler(animate) {
         
         // transform dimension
         translate(node,
-                'left' in values ? values.left : null,
-                'top' in values ? values.top : null,
-                'right' in values ? values.right : null,
-                'bottom' in values ? values.bottom : null,
-                'width' in values ? values.width : null,
-                'height' in values ? values.height : null,
+                'left' in values ? values.left : false,
+                'top' in values ? values.top : false,
+                'right' in values ? values.right : false,
+                'bottom' in values ? values.bottom : false,
+                'width' in values ? values.width : false,
+                'height' in values ? values.height : false,
                 values);
         
         stylize(node, values);

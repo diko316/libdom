@@ -1965,6 +1965,7 @@ var GET_OPACITY = opacityNotSupported;
 var SET_OPACITY = opacityNotSupported;
 var SET_STYLE = styleManipulationNotSupported;
 var GET_STYLE = styleManipulationNotSupported;
+var STRING_TRIM_RE = /^\s+|\s+$/g;
 exports.computedStyle = computedStyleNotSupported;
 var ERROR_INVALID_DOM$1 = ERROR[1101];
 var DEFAULT_COLOR_UNIT = 'hex';
@@ -2037,43 +2038,25 @@ function onStyleElement(value, name) {
 }
 
 function parseCSSText(str) {
-    var STATE_NAME = 1,
-        STATE_VALUE = 2,
-        state = STATE_NAME,
+    
+    var trimRe = STRING_TRIM_RE,
+        pairs = str.split(';'),
         c = -1,
-        l = str.length,
-        il = 0,
-        name = [],
+        l = pairs.length,
         result = {};
-    var chr, value;
-
+    var pair, name, value;
+        
     for (; l--;) {
-        chr = str.charAt(++c);
-
-        switch (state) {
-        case STATE_NAME:
-            if (chr === ':') {
-                name = name.join('');
-                value = [];
-                il = 0;
-            }
-            else {
-                name[il++] = chr;
-            }
-            break;
-
-        case STATE_VALUE:
-            if (chr === ';' || !l) {
-                result[name] = value.join('');
-                name = [];
-                il = 0;
-            }
-            else {
-                value[il++] = chr;
-            }
+        pair = pairs[++c].split(':');
+        name = pair[0].replace(trimRe, '');
+        value = pair.slice(1).join(':').replace(trimRe, '');
+        
+        if (name && value) {
+            result[name] = value;
         }
-    }
 
+    }
+    
     return result;
 }
 
@@ -2507,7 +2490,7 @@ function stylify(element) {
         if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM$1);
         }
-    
+        
         return parseCSSText(element.style.cssText);
     }
     
@@ -3646,12 +3629,12 @@ function createElementHandler(animate) {
         
         // transform dimension
         translate(node,
-                'left' in values ? values.left : null,
-                'top' in values ? values.top : null,
-                'right' in values ? values.right : null,
-                'bottom' in values ? values.bottom : null,
-                'width' in values ? values.width : null,
-                'height' in values ? values.height : null,
+                'left' in values ? values.left : false,
+                'top' in values ? values.top : false,
+                'right' in values ? values.right : false,
+                'bottom' in values ? values.bottom : false,
+                'width' in values ? values.width : false,
+                'height' in values ? values.height : false,
                 values);
         
         stylize$1(node, values);

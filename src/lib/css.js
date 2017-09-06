@@ -61,6 +61,8 @@ var PADDING_BOTTOM = 'paddingBottom',
     SET_STYLE = styleManipulationNotSupported,
     GET_STYLE = styleManipulationNotSupported,
     
+    STRING_TRIM_RE = /^\s+|\s+$/g,
+    
     COMPUTED_STYLE = computedStyleNotSupported,
 
     ERROR_INVALID_DOM = ERROR[1101],
@@ -136,43 +138,25 @@ function onStyleElement(value, name) {
 }
 
 function parseCSSText(str) {
-    var STATE_NAME = 1,
-        STATE_VALUE = 2,
-        state = STATE_NAME,
+    
+    var trimRe = STRING_TRIM_RE,
+        pairs = str.split(';'),
         c = -1,
-        l = str.length,
-        il = 0,
-        name = [],
+        l = pairs.length,
         result = {};
-    var chr, value;
-
+    var pair, name, value;
+        
     for (; l--;) {
-        chr = str.charAt(++c);
-
-        switch (state) {
-        case STATE_NAME:
-            if (chr === ':') {
-                name = name.join('');
-                value = [];
-                il = 0;
-            }
-            else {
-                name[il++] = chr;
-            }
-            break;
-
-        case STATE_VALUE:
-            if (chr === ';' || !l) {
-                result[name] = value.join('');
-                name = [];
-                il = 0;
-            }
-            else {
-                value[il++] = chr;
-            }
+        pair = pairs[++c].split(':');
+        name = pair[0].replace(trimRe, '');
+        value = pair.slice(1).join(':').replace(trimRe, '');
+        
+        if (name && value) {
+            result[name] = value;
         }
-    }
 
+    }
+    
     return result;
 }
 
@@ -621,7 +605,7 @@ export
         if (!is(element, 1)) {
             throw new Error(ERROR_INVALID_DOM);
         }
-    
+        
         return parseCSSText(element.style.cssText);
     }
     
