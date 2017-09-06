@@ -3555,6 +3555,9 @@ var SESSIONS = {};
  *      cubic-bezier(n,n,n,n)|initial|inherit
  */
 
+function empty() {
+    
+}
 
 
 function validValue(value) {
@@ -3847,11 +3850,19 @@ function has(type) {
     
 function animateStyle(element, styles, type, duration) {
         var access = SESSION_ACCESS,
-            stat = [[], {}, [], {}];
+            defaultEasing = DEFAULT_EASING,
+            defaultDuration = DEFAULT_DURATION,
+            stat = [[], {}, [], {}],
+            alen = arguments.length,
+            session = null;
         //var values = createElementValues(styles);
         
-        var session, sessionId, animateObject,
+        var sessionId, animateObject,
             names, defaults, animateValues, staticValues;
+            
+        if (!libcore.object(styles)) {
+            throw new Error(ERROR[1152]);
+        }
             
         libcore.each(styles, eachElementValues, stat);
         
@@ -3859,18 +3870,30 @@ function animateStyle(element, styles, type, duration) {
         animateValues = stat[1];
         staticValues = stat[3];
         
+        
+        if (alen < 4) {
+            duration = defaultDuration;
+            
+            if (alen < 3) {
+                type = defaultEasing;
+            }
+        }
+        
+        if (!libcore.string(type, true)) {
+            throw new Error(libcore.string[1153]);
+        }
+        else if (!has(type)) {
+            type = defaultEasing;
+        }
+        
+        if (!libcore.number(duration) || duration <= 0) {
+            throw new Error(ERROR[1154]);
+        }
+        
         // has animation
         if (names.length) {
             sessionId = element.getAttribute(access);
             defaults = createStyleDefaults(element, names);
-            
-            if (!libcore.number(duration)) {
-                duration = DEFAULT_DURATION;
-            }
-            
-            if (!has(type)) {
-                type = DEFAULT_EASING;
-            }
             
             // create
             if (!sessionId) {
@@ -3901,6 +3924,8 @@ function animateStyle(element, styles, type, duration) {
         if (stat[2].length) {
             stylize$1(element, staticValues);
         }
+        
+        return session || empty;
         
     }
 

@@ -11,3 +11,4 @@ import "./color/format-color.js";
 
 
 import "./animation/transition.js";
+import "./animation/animate-style.js";
