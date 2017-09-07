@@ -5,6 +5,11 @@ import "./prepare.js";
 
 //global.libcore = require("libcore");
 
+
+import "./dom/is.js";
+import "./dom/is-view.js";
+import "./dom/contains.js";
+
 import "./color/parse-color.js";
 import "./color/parse-color-type.js";
 import "./color/format-color.js";

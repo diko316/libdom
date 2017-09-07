@@ -835,8 +835,39 @@ var ERROR_INVALID_DOM_NODE = ERROR[1103];
 var ERROR_INVALID_CSS_SELECTOR = ERROR[1111];
 var ERROR_INVALID_CALLBACK = ERROR[1112];
 var ERROR_INVALID_ELEMENT_CONFIG = ERROR[1121];
-var INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 };
-var STD_CONTAINS = notSupportedContains;
+var ALLOW_DESCENDANT_NODE_TYPES = {
+        // CDATA_SECTION_NODE
+        4: {
+            1: 1,
+            11: 1
+        },
+        // COMMENT_NODE
+        8: {
+            1: 1,
+            11: 1
+        },
+        // DOCUMENT_FRAGMENT_NODE
+        //11: [],
+        // DOCUMENT_NODE
+        //9: [],
+        // ELEMENT_NODE
+        1: {
+            1: 1,
+            9: 1,
+            11: 1
+        },
+        // PROCESSING_INSTRUCTION_NODE
+        7: {
+            1: 1,
+            11: 1
+        },
+        // TEXT_NODE
+        3: {
+            1: 1,
+            11: 1
+        }
+    };
+var NORMALIZED_CONTAINS = notSupportedContains;
 var DOM_ATTRIBUTE_RE = /(^\_|[^a-zA-Z\_])/;
 var DOM_ATTRIBUTE_LIST = [
         'nodeType',
@@ -1088,6 +1119,15 @@ function findChild(element, node, nodeType) {
     return null;
 }
 
+function hasParent(child, parent) {
+    for (; child; child = child.parentNode) {
+        if (child === parent) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * DOM select
  */
@@ -1242,7 +1282,7 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
 
 DOM_INFO = DETECTED && DETECTED.dom;
 if (DOM_INFO) {
-    STD_CONTAINS = DOM_INFO.compare ?
+    NORMALIZED_CONTAINS = DOM_INFO.compare ?
                             w3cContains :
                             DOM_INFO.contains ?
                                 ieContains :
@@ -1300,27 +1340,37 @@ function isView(defaultView) {
 
 function contains$1(ancestor, descendant) {
         var elementErrorString = ERROR[1102],
+            allowList = ALLOW_DESCENDANT_NODE_TYPES,
             isDom = is;
-
-        if (!isDom(ancestor, 1, 9, 11)) {
+        var ancestorType, descendantType;
+        
+        if (!isDom(ancestor) || !isDom(descendant)) {
             throw new Error(elementErrorString);
         }
-
-        if (!isDom(descendant) ||
-            (descendant.nodeType in INVALID_DESCENDANT_NODE_TYPES)) {
-            throw new Error(elementErrorString);
+        
+        // primary checking if in allow list
+        ancestorType = ancestor.nodeType;
+        descendantType = descendant.nodeType;
+        if (!(descendantType in allowList) ||
+            !(ancestorType in allowList[descendantType])) {
+            return false;
         }
-
-        switch (ancestor.nodeType) {
+        
+        // normalize ancestory
+        switch (ancestorType) {
         case 9:
             ancestor = ancestor.documentElement;
+            if (ancestor === descendant) {
+                return true;
+            }
             break;
+        // for document fragment, it requires manual checking if it has a
+        // fragment ancestor node.
         case 11:
-            ancestor = ancestor.firstChild;
-            break;
+            return hasParent(descendant, ancestor);
         }
 
-        return STD_CONTAINS(ancestor, descendant);
+        return NORMALIZED_CONTAINS(ancestor, descendant);
 
     }
 
