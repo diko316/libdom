@@ -9,6 +9,8 @@ import "./prepare.js";
 import "./dom/is.js";
 import "./dom/is-view.js";
 import "./dom/contains.js";
+import "./dom/select.js";
+import "./dom/add.js";
 
 import "./color/parse-color.js";
 import "./color/parse-color-type.js";
