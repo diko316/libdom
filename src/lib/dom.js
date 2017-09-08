@@ -38,6 +38,7 @@ var ORDER_TYPE_PREORDER = 1,
     ERROR_INVALID_CSS_SELECTOR = ERROR[1111],
     ERROR_INVALID_CALLBACK = ERROR[1112],
     ERROR_INVALID_ELEMENT_CONFIG = ERROR[1121],
+    ERROR_INVALID_DESTROY = ERROR[1002],
     
     ALLOW_DESCENDANT_NODE_TYPES = {
         // CDATA_SECTION_NODE
@@ -655,7 +656,7 @@ export
         // unset child events by default
         if (arguments.length > 1) {
             if (typeof destroy !== 'boolean') {
-                throw new Error(ERROR[1002]);
+                throw new Error(ERROR_INVALID_DESTROY);
             }
 
             if (node.nodeType === 1 && destroy) {
@@ -720,8 +721,11 @@ export
             throw new Error(ERROR_INVALID_DOM_NODE);
         }
 
-        if (isDom(config)) {
+        if (isDom(config, 1, 3, 4, 7, 8, 11)) {
             toInsert = config;
+            if (config.nodeType !== 11 && contains(config, node)) {
+                throw new Error(invalidConfig);
+            }
         }
         else if (object(config)) {
             tagName = getTagNameFromConfig(config);
@@ -731,19 +735,27 @@ export
             toInsert = node.ownerDocument.createElement(tagName);
             applyConfigToElement(toInsert, config);
         }
-
-        if (!isDom(toInsert, 1, 3, 4, 7, 8)) {
+        else {
             throw new Error(invalidConfig);
         }
 
         // remove events before replacing it only if mandated
-        if (destroy === true && node.nodeType === 1) {
-            eachNodePostorder(node, purgeEventsFrom);
+        if (arguments.length > 2) {
+            if (typeof destroy !== 'boolean') {
+                throw new Error(ERROR_INVALID_DESTROY);
+            }
+
+            if (node.nodeType === 1 && destroy) {
+                eachNodePostorder(node, purgeEventsFrom);
+            }
         }
 
+        inserted = resolveCreatedNode(toInsert);
         node.parentNode.replaceChild(toInsert, node);
+        toInsert = null;
 
-        return toInsert;
+        return inserted;
+
     }
 
 export

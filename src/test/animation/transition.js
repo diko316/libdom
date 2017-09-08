@@ -1,13 +1,13 @@
 'use strict';
 
 
-describe('Traverse displacement of Object [from] until it reaches ' +
-         'Object [to] running [callback] on each transition using ' +
-         'transition(callback:Function, ' +
-                    'from:Object,' +
-                    'to:Object,' +
-                    'type:String,' +
-                    'duration:Number) method',
+describe(`Traverse displacement of Object [from] until it reaches
+         Object [to] running [callback] on each transition using 
+         transition(callback:Function, 
+                    from:Object,
+                    to:Object,
+                    type:String,
+                    duration:Number) method`,
     () => {
         var libcore = global.libcore,
             transition = global.libdom.transition,
@@ -24,8 +24,8 @@ describe('Traverse displacement of Object [from] until it reaches ' +
             
         }
         
-        it('1. Should not accept non-Function [callback] parameter and ' +
-           'throw an error',
+        it(`1. Should not accept non-Function [callback] parameter and 
+           throw an error`,
            () => {
                 expect(() => transition(null, from, to, 'easeOut', 1)).
                     toThrow();
@@ -39,8 +39,8 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                     toThrow();
             });
         
-        it('2. Should not accept non-Object [from] parameter and ' +
-           'throw an error',
+        it(`2. Should not accept non-Object [from] parameter and
+           throw an error`,
            () => {
                 expect(() => transition(empty, null, to, 'easeOut', 1)).
                     toThrow();
@@ -54,8 +54,8 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                     toThrow();
             });
         
-        it('3. Should not accept non-Object [to] parameter and ' +
-           'throw an error',
+        it(`3. Should not accept non-Object [to] parameter and 
+           throw an error`,
            () => {
                 expect(() => transition(empty, from, null, 'easeOut', 1)).
                     toThrow();
@@ -69,8 +69,8 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                     toThrow();
             });
         
-        it('4. Should not accept non-String or non-existent [type] parameter ' +
-           'and throw an error',
+        it(`4. Should not accept non-String or non-existent [type] parameter 
+           and throw an error`,
            () => {
                 expect(() => transition(empty, from, to, null, 1)).
                     toThrow();
@@ -86,8 +86,8 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                     toThrow();
             });
         
-        it('5. Should not accept non-Number [duration] parameter ' +
-           'and throw an error',
+        it(`5. Should not accept non-Number [duration] parameter 
+           and throw an error`,
            () => {
                 expect(() => transition(empty, from, to, 'easeOut', null)).
                     toThrow();
@@ -103,8 +103,8 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                     toThrow();
             });
         
-        it('6. Should accept valid parameters and returns stop() transition ' +
-           'Function',
+        it(`6. Should accept valid parameters and returns stop() transition 
+           Function`,
            (done) => {
                 expect(libcore.method(transition(empty,
                                                  from,
@@ -127,9 +127,9 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                                          'easeOut', 1));
             });
         
-        it('7. Should accept valid parameters without [type] and' +
-           '[duration] parameter which defaults easing [type] to "linear" ' +
-           'and [duration] to 1 second and returns stop() transition Function',
+        it(`7. Should accept valid parameters without [type] and
+           [duration] parameter which defaults easing [type] to "linear"
+           and [duration] to 1 second and returns stop() transition Function`,
            (done) => {
                 expect(() => libcore.method(transition(empty,
                                                  from,
@@ -150,9 +150,9 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                                          to));
             });
         
-        it('8. Should accept valid parameters without [duration] parameter ' +
-           'which defaults [duration] to 1 second and ' +
-           'returns stop() transition Function',
+        it(`8. Should accept valid parameters without [duration] parameter 
+           which defaults [duration] to 1 second and 
+           returns stop() transition Function`,
            (done) => {
                 expect(() => libcore.method(transition(empty,
                                                  from,
@@ -175,8 +175,8 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                                          'linear'));
             });
         
-        it('9. Should accept valid parameters and Number [duration] parameter ' +
-           'greater than zero and returns stop() transition Function',
+        it(`9. Should accept valid parameters and Number [duration] parameter 
+           greater than zero and returns stop() transition Function`,
            () => {
                 expect(() => libcore.method(transition(empty,
                                                  from,
@@ -200,8 +200,8 @@ describe('Traverse displacement of Object [from] until it reaches ' +
                     not.toThrow();
             });
         
-        it('10. Should not accept Number [duration] parameter ' +
-           'lesser than or equal to zero and throws exception.',
+        it(`10. Should not accept Number [duration] parameter
+           lesser than or equal to zero and throws exception.`,
            () => {
                 expect(() => libcore.method(transition(empty,
                                                  from,

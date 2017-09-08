@@ -1,13 +1,13 @@
 'use strict';
 
 
-describe('Returns integer representation of color from String [subject] ' +
-         'using parseColor(subject:String) method.',
+describe(`Returns integer representation of color from String [subject]
+         using parseColor(subject:String) method.`,
     () => {
         var lib = global.libdom;
         
-        it('1. Should not accept non-String [subject] and throws error ' +
-           'instead.',
+        it(`1. Should not accept non-String [subject] and throws error
+            instead.`,
            () => {
                 expect(() => lib.parseColor(null)).toThrow();
                 expect(() => lib.parseColor(new Date())).toThrow();
@@ -15,8 +15,8 @@ describe('Returns integer representation of color from String [subject] ' +
                 expect(() => lib.parseColor({})).toThrow();
            });
         
-        it('2. Should accept String [subject] containing invalid color format' +
-           'and returns null.',
+        it(`2. Should accept String [subject] containing invalid color format
+           and returns null.`,
            () => {
                 expect(lib.parseColor('buang')).toBe(null);
                 expect(lib.parseColor('YYYY-MM-DD')).toBe(null);
@@ -24,8 +24,8 @@ describe('Returns integer representation of color from String [subject] ' +
                 expect(lib.parseColor('rgba()')).toBe(null);
            });
         
-        it('3. Should accept String [subject] in rgb color format and ' +
-           'returns an integer presentation of [subject] parameter.',
+        it(`3. Should accept String [subject] in rgb color format and
+           returns an integer presentation of [subject] parameter.`,
            () => {
                 // red
                 expect(lib.parseColor('rgb(255, 0, 0)')).
@@ -38,8 +38,8 @@ describe('Returns integer representation of color from String [subject] ' +
                     toBe(842189040);
            });
         
-        it('4. Should accept String [subject] in rgba color format and ' +
-           'returns an integer presentation of [subject] parameter.',
+        it(`4. Should accept String [subject] in rgba color format and 
+           returns an integer presentation of [subject] parameter.`,
            () => {
                 // red
                 expect(lib.parseColor('rgba(255, 0, 0, 1)')).
@@ -52,9 +52,9 @@ describe('Returns integer representation of color from String [subject] ' +
                     toBe(842189040);
            });
         
-        it('5. Should accept String [subject] in hexadecimal color format ' +
-           '(in #fff or #ffffff format)' + 
-           'and returns an integer presentation of [subject] parameter.',
+        it(`5. Should accept String [subject] in hexadecimal color format 
+           (in #fff or #ffffff format)
+           and returns an integer presentation of [subject] parameter.`,
            () => {
                 // red
                 expect(lib.parseColor('#f00')).
@@ -75,9 +75,9 @@ describe('Returns integer representation of color from String [subject] ' +
                     toBe(842189040);
            });
         
-        it('6. Should accept String [subject] in hsl color format ' +
-           '(in #fff or #ffffff format)' + 
-           'and returns an integer presentation of [subject] parameter.',
+        it(`6. Should accept String [subject] in hsl color format 
+           (in #fff or #ffffff format)
+           and returns an integer presentation of [subject] parameter.`,
            () => {
                 // red
                 expect(lib.parseColor('hsl(0,100%,50%)')).
@@ -92,9 +92,9 @@ describe('Returns integer representation of color from String [subject] ' +
                     toBe(842189040);
            });
         
-        it('7. Should accept String [subject] in hsla color format ' +
-           '(in #fff or #ffffff format)' + 
-           'and returns an integer presentation of [subject] parameter.',
+        it(`7. Should accept String [subject] in hsla color format
+           (in #fff or #ffffff format)
+           and returns an integer presentation of [subject] parameter.`,
            () => {
                 // red
                 expect(lib.parseColor('hsla(0,100%,50%, 100%)')).

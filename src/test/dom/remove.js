@@ -1,8 +1,8 @@
 'use strict';
 
 
-describe('Removes DOM [node] child from its parent Node using ' +
-        'remove(node:Node[, destroy:Boolean]) method.',
+describe(`Removes DOM [node] child from its parent Node using
+        remove(node:Node[, destroy:Boolean]) method.`,
     () => {
         var remove = global.libdom.remove,
             doc = global.document;
@@ -23,9 +23,9 @@ describe('Removes DOM [node] child from its parent Node using ' +
             fragment.appendChild(element);
         });
 
-        it('1. Should accept DOM [node] of type Element, CDATA, text, ' +
-            'Comment, and Processing instruction parameter and detach it ' +
-            'from their parent node then returns the DOM node removed.',
+        it(`1. Should accept DOM [node] of type Element, CDATA, text, 
+            Comment, and Processing instruction parameter and detach it
+            from their parent node then returns the DOM node removed.`,
             () => {
                 var item = doc.getElementById('item1');
                 var child;
@@ -43,9 +43,9 @@ describe('Removes DOM [node] child from its parent Node using ' +
 
             });
 
-        it('2. Should accept Boolean true [destroy] optional parameter and ' +
-            'purge registered libdom Element event handlers of ' +
-            '[node] Element including its descendant Elements.',
+        it(`2. Should accept Boolean true [destroy] optional parameter and 
+            purge registered libdom Element event handlers of 
+            [node] Element including its descendant Elements.`,
             () => {
                 var item = doc.getElementById('item1');
                 var child;
@@ -63,8 +63,8 @@ describe('Removes DOM [node] child from its parent Node using ' +
 
             });
 
-        it('3. Should not accept non-DOM or DOM Document or DOM Document ' +
-            'Fragment [node] parameter and throws an exception.',
+        it(`3. Should not accept non-DOM or DOM Document or DOM Document 
+            Fragment [node] parameter and throws an exception.`,
             () => {
 
                 expect(() => remove(true)).toThrow();
@@ -74,8 +74,8 @@ describe('Removes DOM [node] child from its parent Node using ' +
                 expect(() => remove(doc.createDocumentFragment())).toThrow();
             });
 
-        it('4. Should not accept non-Boolean [destroy] parameter and ' +
-            'throws an exception.',
+        it(`4. Should not accept non-Boolean [destroy] parameter and 
+            throws an exception.`,
             () => {
                 var item = doc.getElementById('item2');
 

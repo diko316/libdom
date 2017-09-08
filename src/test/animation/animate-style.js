@@ -1,11 +1,11 @@
 'use strict';
 
 
-describe('Animate DOM CSS rules having number, and color values using ' +
-        'animateStyle(element:Node,' +
-                    'styles:Object, ' +
-                    '[type:String, ' +
-                    'duration:Number]) method',
+describe(`Animate DOM CSS rules having number, and color values using
+        animateStyle(element:Node,
+                    styles:Object,
+                    [type:String,
+                    duration:Number]) method`,
     () => {
         var libcore = global.libcore,
             libdom = global.libdom,
@@ -39,8 +39,8 @@ describe('Animate DOM CSS rules having number, and color values using ' +
             
         });
         
-        it('1. Should accept [element] DOM Node and [styles] ' +
-           'transition Object leaving out [type] and [duration] parameters.',
+        it(`1. Should accept [element] DOM Node and [styles] 
+           transition Object leaving out [type] and [duration] parameters.`,
            (done) => {
                 expect(() => animateStyle(mockElement,
                                           mockStyle)).
@@ -58,9 +58,9 @@ describe('Animate DOM CSS rules having number, and color values using ' +
                 
            });
         
-        it('2. Should accept [element] DOM Node and [styles] ' +
-           'transition Object with optional Easing String [type] parameters ' +
-           'and leaving out [duration] parameters.',
+        it(`2. Should accept [element] DOM Node and [styles]
+           transition Object with optional Easing String [type] parameters
+           and leaving out [duration] parameters.`,
            (done) => {
                 expect(() => animateStyle(mockElement,
                                           mockStyle,
@@ -78,9 +78,9 @@ describe('Animate DOM CSS rules having number, and color values using ' +
                 
            });
         
-        it('3. Should accept [element] DOM Node and [styles] ' +
-           'transition Object with optional Easing String [type] and ' +
-           'Seconds Number [duration] parameter.',
+        it(`3. Should accept [element] DOM Node and [styles]
+           transition Object with optional Easing String [type] and 
+           Seconds Number [duration] parameter.`,
            (done) => {
                 expect(() => animateStyle(mockElement,
                                           mockStyle,
@@ -99,7 +99,7 @@ describe('Animate DOM CSS rules having number, and color values using ' +
                 
            });
         
-        it('4. Should return stop() Function when all parameters are valid.',
+        it(`4. Should return stop() Function when all parameters are valid.`,
            () => {
                 expect(libcore.method(animateStyle(mockElement,
                                                     mockStyle,
@@ -108,8 +108,8 @@ describe('Animate DOM CSS rules having number, and color values using ' +
                     toBe(true);
            });
         
-        it('5. Should not accept non-DOM Node [element] parameter and ' +
-           'throws an exception.',
+        it(`5. Should not accept non-DOM Node [element] parameter and 
+           throws an exception.`,
            () => {
                 expect(() => animateStyle(null,
                                             mockStyle,
@@ -138,8 +138,8 @@ describe('Animate DOM CSS rules having number, and color values using ' +
                     toThrow();
            });
         
-        it('6. Should not accept non Object [style] parameter and ' +
-           'throws an exception.',
+        it(`6. Should not accept non Object [style] parameter and 
+           throws an exception.`,
            () => {
                 expect(() => animateStyle(mockElement,
                                             null,
@@ -169,8 +169,8 @@ describe('Animate DOM CSS rules having number, and color values using ' +
                     toThrow();
            });
         
-        it('6. Should not accept non-String [easing] parameter and ' +
-           'throws an exception.',
+        it(`6. Should not accept non-String [easing] parameter and 
+           throws an exception.`,
            () => {
                 expect(() => animateStyle(mockElement,
                                             mockStyle,
@@ -200,8 +200,8 @@ describe('Animate DOM CSS rules having number, and color values using ' +
                     toThrow();
            });
         
-        it('7. Should not accept non-Number [duration] or less than or equal ' +
-           'to zero parameter and throws an exception.',
+        it(`7. Should not accept non-Number [duration] or less than or equal
+           to zero parameter and throws an exception.`,
            () => {
                 expect(() => animateStyle(mockElement,
                                             mockStyle,

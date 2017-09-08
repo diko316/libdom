@@ -1,8 +1,8 @@
 'use strict';
 
 
-describe('Inspect if DOM Node [ancestor] contains DOM Node [descendant] ' +
-        'contains(ancestor:Node, descendant:Node) method',
+describe(`Inspect if DOM Node [ancestor] contains DOM Node [descendant]
+        contains(ancestor:Node, descendant:Node) method`,
     () => {
         var contains = global.libdom.contains;
         var fragment;
@@ -25,9 +25,9 @@ describe('Inspect if DOM Node [ancestor] contains DOM Node [descendant] ' +
             fragment.appendChild(element);
         });
         
-        it('1. Should accept any DOM Node [ancestor] and [descendant] ' +
-           'parameters and returns true if [ancestor] ' +
-           'contains [descendant] Node',
+        it(`1. Should accept any DOM Node [ancestor] and [descendant]
+           parameters and returns true if [ancestor] 
+           contains [descendant] Node`,
             () => {
                 var doc = global.document,
                     ancestor = doc,
@@ -59,9 +59,9 @@ describe('Inspect if DOM Node [ancestor] contains DOM Node [descendant] ' +
                 
             });
         
-        it('2. Should accept any DOM Node [ancestor] and [descendant] ' +
-           'parameters and returns false if [ancestor] ' +
-           'does not contain [descendant] Node',
+        it(`2. Should accept any DOM Node [ancestor] and [descendant] 
+           parameters and returns false if [ancestor] 
+           does not contain [descendant] Node`,
             () => {
                 var doc = global.document,
                     ancestor = doc.getElementById('item2'),
@@ -93,8 +93,8 @@ describe('Inspect if DOM Node [ancestor] contains DOM Node [descendant] ' +
                 
             });
         
-        it('3. Should not accept non-DOM Node [ancestor] parameter and ' +
-           'throws an exception.',
+        it(`3. Should not accept non-DOM Node [ancestor] parameter and 
+           throws an exception.`,
            () => {
                 var descendant = global.document.getElementById('item2');
                 
@@ -108,8 +108,8 @@ describe('Inspect if DOM Node [ancestor] contains DOM Node [descendant] ' +
            });
         
         
-        it('4. Should not accept non-DOM Node [descendant] parameter and ' +
-           'throws an exception.',
+        it(`4. Should not accept non-DOM Node [descendant] parameter and 
+           throws an exception.`,
            () => {
                 var ancestor = global.document.getElementById('item2');
                 

@@ -16,7 +16,8 @@ import {
             ERROR,
             stylize as stringStylize,
             addWord,
-            removeWord
+            removeWord,
+            TRIM_RE
         } from "./string.js";
 
 import {
@@ -60,8 +61,6 @@ var PADDING_BOTTOM = 'paddingBottom',
 
     SET_STYLE = styleManipulationNotSupported,
     GET_STYLE = styleManipulationNotSupported,
-    
-    STRING_TRIM_RE = /^\s+|\s+$/g,
     
     COMPUTED_STYLE = computedStyleNotSupported,
 
@@ -140,7 +139,7 @@ function onStyleElement(value, name) {
 
 function parseCSSText(str) {
     
-    var trimRe = STRING_TRIM_RE,
+    var trimRe = TRIM_RE,
         pairs = str.split(';'),
         c = -1,
         l = pairs.length,

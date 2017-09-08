@@ -1,13 +1,13 @@
 'use strict';
 
 
-describe('Inspect Mixed [defaultView] if it is a "Window" Object using ' +
-         'isView(defaultView:Mixed) method',
+describe(`Inspect Mixed [defaultView] if it is a "Window" Object using 
+         isView(defaultView:Mixed) method`,
     () => {
         var isView = global.libdom.isView;
         
-        it('1. Should accept any [defaultView] parameter and returns true ' +
-           'if it is an instance of a "Window" Object.',
+        it(`1. Should accept any [defaultView] parameter and returns true
+           if it is an instance of a "Window" Object.`,
            () => {
                 expect(() => isView(global)).not.toThrow();
                 expect(isView(global)).toBe(true);
@@ -17,8 +17,8 @@ describe('Inspect Mixed [defaultView] if it is a "Window" Object using ' +
             
            });
         
-        it('2. Should accept any [defaultView] parameter and returns false ' +
-           'if it is not an instance of a "Window" Object.',
+        it(`2. Should accept any [defaultView] parameter and returns false 
+           if it is not an instance of a "Window" Object.`,
            () => {
                 
                 expect(() => isView(null)).not.toThrow();

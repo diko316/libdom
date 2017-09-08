@@ -2,9 +2,9 @@
 
 
 
-describe('Selects all DOM Elements matching CSS [selector] within the given ' +
-        '[dom] Document or Element Node using select(dom:Node,' +
-                                                    'selector:String) method',
+describe(`Selects all DOM Elements matching CSS [selector] within the given
+        [dom] Document or Element Node using select(dom:Node,
+                                                    'selector:String) method`,
     () => {
         var select = global.libdom.select,
             libcore = global.libcore,
@@ -28,8 +28,8 @@ describe('Selects all DOM Elements matching CSS [selector] within the given ' +
             fragment.appendChild(element);
         });
 
-        it('1. Should accept [dom] Document Node and String [selector] ' +
-            'parameter and returns an Array of DOM Elements result.',
+        it(`1. Should accept [dom] Document Node and String [selector]
+            parameter and returns an Array of DOM Elements result.`,
             () => {
 
                 expect(() => select(doc, 'div ul li')).
@@ -43,8 +43,8 @@ describe('Selects all DOM Elements matching CSS [selector] within the given ' +
 
             });
 
-        it('2. Should accept [dom] Element Node and String [selector] ' +
-            'parameter and returns an Array of DOM Elements result.',
+        it(`2. Should accept [dom] Element Node and String [selector]
+            parameter and returns an Array of DOM Elements result.`,
             () => {
                 var element = doc.getElementById('container');
 
@@ -59,8 +59,8 @@ describe('Selects all DOM Elements matching CSS [selector] within the given ' +
 
             });
 
-        it('3. Should not accept non-Element or non-Document Node [dom] ' +
-            'parameter and throws an exception.',
+        it(`3. Should not accept non-Element or non-Document Node [dom] 
+            parameter and throws an exception.`,
             () => {
 
                 // document fragment
@@ -73,8 +73,8 @@ describe('Selects all DOM Elements matching CSS [selector] within the given ' +
             });
 
 
-        it('4. Should not accept non-DOM Node [dom] ' +
-            'parameter and throws an exception.',
+        it(`4. Should not accept non-DOM Node [dom]
+            parameter and throws an exception.`,
             () => {
 
                 expect(() => select(null, 'ul li')).toThrow();
@@ -86,8 +86,8 @@ describe('Selects all DOM Elements matching CSS [selector] within the given ' +
 
             });
 
-        it('5. Should not accept non-String or empty String [selector] ' +
-            'parameter and throws an exception.',
+        it(`5. Should not accept non-String or empty String [selector] 
+            parameter and throws an exception.`,
             () => {
                 var element = doc.getElementById('container');
                 

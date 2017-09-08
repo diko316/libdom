@@ -1,8 +1,8 @@
 'use strict';
 
 
-describe('Inspect Mixed [node] if it is a DOM node using ' +
-         'is(node:Mixed) method',
+describe(`Inspect Mixed [node] if it is a DOM node using
+         is(node:Mixed) method`,
     () => {
         var isDom = global.libdom.is;
         
@@ -16,8 +16,8 @@ describe('Inspect Mixed [node] if it is a DOM node using ' +
             
         });
         
-        it('1. Should accept any [node] parameter and returns true ' +
-           'if it is an instance of a DOM Node.',
+        it(`1. Should accept any [node] parameter and returns true
+           if it is an instance of a DOM Node.`,
            () => {
                 expect(() => isDom(sampleElement)).not.toThrow();
                 expect(isDom(sampleElement)).toBe(true);
@@ -27,8 +27,8 @@ describe('Inspect Mixed [node] if it is a DOM node using ' +
             
            });
         
-        it('2. Should accept any [node] parameter and returns false ' +
-           'if it is not an instance of a DOM Node.',
+        it(`2. Should accept any [node] parameter and returns false
+           if it is not an instance of a DOM Node.`,
            () => {
                 expect(() => isDom(sampleElement.tagName)).not.toThrow();
                 expect(isDom(sampleElement.nodeName)).toBe(false);

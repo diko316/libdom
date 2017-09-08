@@ -1,12 +1,12 @@
 'use strict';
 
 
-describe('Moves DOM Document Fragment [nodes] or DOM Element, Text, Comment, ' +
-        'CDATA and Processing Instructions or an Array List of those Nodes ' +
-        'into [element] DOM Element or DOM Document Fragment using ' +
-        'move(nodes:Array(Node)|Node, ' +
-            'element:Node[, before:Node|Number|null]) ' +
-        'method',
+describe(`Moves DOM Document Fragment [nodes] or DOM Element, Text, Comment,
+        CDATA and Processing Instructions or an Array List of those Nodes
+        into [element] DOM Element or DOM Document Fragment using
+        move(nodes:Array(Node)|Node,
+            element:Node
+            [, before:Node|Number|null]) method`,
     () => {
 
         var move = global.libdom.move,
@@ -29,8 +29,8 @@ describe('Moves DOM Document Fragment [nodes] or DOM Element, Text, Comment, ' +
         });
 
 
-        it('1. Should move DOM [nodes] DOM Node into [element] DOM Element ' +
-            'and returns the inserted DOM Node',
+        it(`1. Should move DOM [nodes] DOM Node into [element] DOM Element 
+            and returns the inserted DOM Node`,
             () => {
                 var container = doc.body,
                     insert = doc.createElement('div');
@@ -45,8 +45,8 @@ describe('Moves DOM Document Fragment [nodes] or DOM Element, Text, Comment, ' +
                 expect(insert.parentNode).toBe(container);
             });
 
-        it('2. Should move [nodes] Array containing DOM Nodes into ' +
-            '[element] DOM Element and returns the inserted DOM Nodes',
+        it(`2. Should move [nodes] Array containing DOM Nodes into
+            [element] DOM Element and returns the inserted DOM Nodes`,
             () => {
                 var container = doc.body,
                     insert = [fragment.firstChild,
@@ -64,8 +64,8 @@ describe('Moves DOM Document Fragment [nodes] or DOM Element, Text, Comment, ' +
                 expect(insert[1].parentNode).toBe(container);
             });
 
-        it('3. Should move [nodes] Dom Document Fragment into [element] ' +
-            'DOM Element and returns the inserted DOM Node',
+        it(`3. Should move [nodes] Dom Document Fragment into [element]
+            DOM Element and returns the inserted DOM Node`,
             () => {
                 var container = doc.body,
                 item1 = doc.createElement('div'),
@@ -85,242 +85,187 @@ describe('Moves DOM Document Fragment [nodes] or DOM Element, Text, Comment, ' +
                 expect(item2.parentNode).toBe(container);
             });
 
-        // it('3. Should append [config] Dom Document Fragment childNodes in ' +
-        //     '[element] DOM Element and returns the Array list of inserted ' +
-        //     'DOM Nodes',
-        //     () => {
-        //         var container = doc.body,
-        //             item1 = doc.createElement('div'),
-        //             item2 = doc.createElement('span');
-
-        //         expect(() => add(container, fragment)).not.toThrow();
-
-        //         fragment = doc.createDocumentFragment();
-        //         fragment.appendChild(item1);
-        //         fragment.appendChild(item2);
-
-        //         expect(add(container, fragment)).toEqual([item1, item2]);
-                
-        //         // check if really appended
-        //         expect(container.lastChild).toBe(item2);
-        //         expect(item2.parentNode).toBe(container);
-        //     });
-
-        // it('4. Should append [config] Dom Document Fragment childNodes in ' +
-        //     '[element] DOM Document Fragment and returns the Array list of ' +
-        //     'inserted DOM Nodes',
-        //     () => {
-        //         var container = fragment,
-        //             insert = doc.createDocumentFragment(),
-        //             item1 = doc.createElement('div'),
-        //             item2 = doc.createElement('span');
+        it(`4. Should move [nodes] into [element] DOM Document Fragment and
+            returns the Array list of inserted DOM Nodes`,
+            () => {
+                var container = fragment,
+                    insert = doc.createDocumentFragment(),
+                    item1 = doc.createElement('div'),
+                    item2 = doc.createElement('span');
 
                     
-        //         expect(() => add(container, insert)).not.toThrow();
+                expect(() => move(insert, container)).not.toThrow();
 
-        //         insert = doc.createDocumentFragment();
-        //         insert.appendChild(item1);
-        //         insert.appendChild(item2);
+                insert = doc.createDocumentFragment();
+                insert.appendChild(item1);
+                insert.appendChild(item2);
 
-        //         expect(add(container, insert)).toEqual([item1, item2]);
-                
-        //         // check if really appended
-        //         expect(container.lastChild).toBe(item2);
-        //         expect(item2.parentNode).toBe(container);
-        //     });
+                expect(move(insert, container)).toEqual([item1, item2]);
+            
+                // check if really appended
+                expect(container.lastChild).toBe(item2);
+                expect(item2.parentNode).toBe(container);
+            });
 
-        // it('5. Should append [config] Element configuration Object in ' +
-        //     '[element] DOM Element and returns the inserted DOM Node',
-        //     () => {
-        //         var container = doc.body;
-        //         var element;
+        it(`5. Should move [nodes] into [element] DOM Element and
+            returns the inserted DOM Node`,
+            () => {
+                var container = doc.body,
+                    insert = doc.getElementById('item1');
+                var element;
                     
-        //         expect(() => add(container, {
-        //                                 tagName: "div"
-        //                     })).not.toThrow();
-                
-        //         element = add(container, {
-        //                 tagName: "div",
-        //                 className: "lib-inserted"
-        //         });
+                expect(() => element = move(insert, container)).not.toThrow();
 
-        //         expect(element.tagName.toLowerCase()).toBe('div');
-        //         expect(element.className).toBe('lib-inserted');
+                expect(element).toBe(insert);
                 
-        //         // check if really appended
-        //         expect(container.lastChild).toBe(element);
-        //         expect(element.parentNode).toBe(container);
-        //     });
+                // check if really appended
+                expect(container.lastChild).toBe(element);
+                expect(element.parentNode).toBe(container);
+            });
 
-        // it('6. Should append [config] Element configuration Object in ' +
-        //     '[element] DOM Document Fragment and returns the inserted DOM Node',
-        //     () => {
-        //         var container = fragment;
-        //         var element;
-                    
-        //         expect(() => add(container, {
-        //                                 tagName: "div"
-        //                     })).not.toThrow();
-                
-        //         element = add(container, {
-        //                 tagName: "div",
-        //                 className: "lib-inserted"
-        //         });
-
-        //         expect(element.tagName.toLowerCase()).toBe('div');
-        //         expect(element.className).toBe('lib-inserted');
-                
-        //         // check if really appended
-        //         expect(container.lastChild).toBe(element);
-        //         expect(element.parentNode).toBe(container);
-        //     });
-
-        // it('7. Should insert resolved [config] DOM Node in ' +
-        //     '[element] DOM Document Fragment or DOM element before ' +
-        //     'the given [before] childNode and returns the inserted DOM Node/s',
-        //     () => {
-        //         var container = fragment,
-        //             insertTargetNode = container.firstChild,
-        //             insert = doc.createElement('div'),
-        //             item1 = insert,
-        //             item2 = doc.createElement('span');
+        it(`6. Should insert resolved [nodes] DOM Node/s in
+            [element] DOM Document Fragment or DOM element before
+            the given [before] childNode and returns the inserted DOM Node/s`,
+            () => {
+                var container = fragment,
+                    insertTargetNode = container.firstChild,
+                    insert = doc.createElement('div'),
+                    item1 = insert,
+                    item2 = doc.createElement('span');
 
                     
-        //         expect(() => add(container,
-        //                         insert,
-        //                         insertTargetNode)).
-        //             not.toThrow();
+                expect(() => move(insert,
+                                container,
+                                insertTargetNode)).
+                    not.toThrow();
                 
-        //         expect(insert.nextSibling).toBe(insertTargetNode);
+                expect(insert.nextSibling).toBe(insertTargetNode);
 
-        //         container = doc.body;
-        //         insert = doc.createDocumentFragment();
-        //         insert.appendChild(item1);
-        //         insert.appendChild(item2);
-        //         insertTargetNode = container.lastChild;
+                container = doc.body;
+                insert = doc.createDocumentFragment();
+                insert.appendChild(item1);
+                insert.appendChild(item2);
+                insertTargetNode = container.lastChild;
                 
 
-        //         expect(add(container,
-        //                 insert,
-        //                 insertTargetNode)).
-        //             toEqual([item1, item2]);
+                expect(move(insert,
+                        container,
+                        insertTargetNode)).
+                    toEqual([item1, item2]);
                 
-        //         // check if really appended
-        //         expect(container.lastChild).toBe(insertTargetNode);
-        //         expect(item1.nextSibling).toBe(item2);
-        //         expect(item2.nextSibling).toBe(insertTargetNode);
-        //         expect(item2.parentNode).toBe(container);
+                // check if really appended
+                expect(container.lastChild).toBe(insertTargetNode);
+                expect(item1.nextSibling).toBe(item2);
+                expect(item2.nextSibling).toBe(insertTargetNode);
+                expect(item2.parentNode).toBe(container);
 
-        //     });
+            });
 
-        // it('8. Should insert resolved [config] DOM Node in ' +
-        //     '[element] DOM Document Fragment or DOM element positioning ' +
-        //     'the inserted [element] with the given zero-indexed [before] ' +
-        //     ' Number within the given childnodes collection list.',
-        //     () => {
-        //         var container = fragment,
-        //             position = 0,
-        //             insert = doc.createElement('div'),
-        //             item1 = insert,
-        //             item2 = doc.createElement('span');
+        it(`7. Should insert resolved [config] DOM Node in
+            [element] DOM Document Fragment or DOM element positioning
+            the inserted [element] with the given zero-indexed [before] 
+            Number within the given childnodes collection list.`,
+            () => {
+                var container = fragment,
+                    position = 0,
+                    insert = doc.createElement('div'),
+                    item1 = insert,
+                    item2 = doc.createElement('span');
 
                     
-        //         expect(() => add(container,
-        //                         insert,
-        //                         position)).
-        //             not.toThrow();
+                expect(() => move(insert,
+                                container,
+                                position)).
+                    not.toThrow();
                 
-        //         expect(container.childNodes[position]).
-        //             toBe(insert);
+                expect(container.childNodes[position]).
+                    toBe(insert);
 
-        //         container = doc.body;
-        //         insert = doc.createDocumentFragment();
-        //         insert.appendChild(item1);
-        //         insert.appendChild(item2);
-        //         position = 1;
+                container = doc.body;
+                insert = doc.createDocumentFragment();
+                insert.appendChild(item1);
+                insert.appendChild(item2);
+                position = 1;
                 
 
-        //         expect(add(container,
-        //                 insert,
-        //                 position)).
-        //             toEqual([item1, item2]);
+                expect(move(insert,
+                        container,
+                        position)).
+                    toEqual([item1, item2]);
                 
-        //         // check if really appended
-        //         expect(container.childNodes[position]).
-        //             toBe(item1);
-        //         expect(item1.nextSibling).toBe(item2);
+                // check if really appended
+                expect(container.childNodes[position]).
+                    toBe(item1);
+                expect(item1.nextSibling).toBe(item2);
 
-        //     });
+            });
 
-        // it('10. Should append resolved [config] DOM Node in ' +
-        //     '[element] DOM Document Fragment or DOM element when [before] ' +
-        //     'parameter is null.',
-        //     () => {
-        //         var container = fragment,
-        //             insert = doc.createElement('div'),
-        //             item1 = insert,
-        //             item2 = doc.createElement('span');
+        it(`8. Should append resolved [config] DOM Node in 
+            [element] DOM Document Fragment or DOM element when [before] 
+            parameter is null.`,
+            () => {
+                var container = fragment,
+                    insert = doc.createElement('div'),
+                    item1 = insert,
+                    item2 = doc.createElement('span');
 
                     
-        //         expect(() => add(container,
-        //                         insert,
-        //                         null)).
-        //             not.toThrow();
+                expect(() => move(insert,
+                                container,
+                                null)).
+                    not.toThrow();
                 
-        //         expect(container.lastChild).toBe(insert);
+                expect(container.lastChild).toBe(insert);
 
-        //         container = doc.body;
-        //         insert = doc.createDocumentFragment();
-        //         insert.appendChild(item1);
-        //         insert.appendChild(item2);
+                container = doc.body;
+                insert = doc.createDocumentFragment();
+                insert.appendChild(item1);
+                insert.appendChild(item2);
                 
 
-        //         expect(add(container,
-        //                 insert,
-        //                 null)).
-        //             toEqual([item1, item2]);
+                expect(move(insert,
+                        container,
+                        null)).
+                    toEqual([item1, item2]);
                 
-        //         // check if really appended
-        //         expect(container.lastChild).toBe(item2);
-        //         expect(item1.nextSibling).toBe(item2);
-        //         expect(item2.parentNode).toBe(container);
-        //     });
+                // check if really appended
+                expect(container.lastChild).toBe(item2);
+                expect(item1.nextSibling).toBe(item2);
+                expect(item2.parentNode).toBe(container);
+            });
 
-        // it('11. Should not accept non-DOM Element or Document Fragment ' +
-        //     '[element] parameter and throws an exception.',
-        //     () => {
-        //         expect(() => add(null, fragment)).toThrow();
-        //         expect(() => add(1, fragment)).toThrow();
-        //         expect(() => add(doc, fragment)).toThrow();
-        //         expect(() => add(doc.createTextNode('test'),
-        //                         fragment)).
-        //             toThrow();
-        //         expect(() => add({}, fragment)).toThrow();
-        //         expect(() => add([], fragment)).toThrow();
-        //     });
+        it(`9. Should not accept non-DOM Element or DOM document or
+            non-Array [nodes] parameter and throws an exception.`,
+            () => {
+                expect(() => move(null, fragment)).toThrow();
+                expect(() => move(1, fragment)).toThrow();
+                expect(() => move(doc, fragment)).toThrow();
+                expect(() => move(/test/, fragment)).toThrow();
+                expect(() => move({}, fragment)).toThrow();
+                
+            });
 
-        // it('12. Should not accept DOM document or non-Object ' +
-        //     'Element configuration [config] parameter and ' +
-        //     'throws an exception.',
-        //     () => {
-        //         expect(() => add(fragment, null)).toThrow();
-        //         expect(() => add(fragment, 1)).toThrow();
-        //         expect(() => add(fragment, doc)).toThrow();
-        //         expect(() => add(fragment, [])).toThrow();
-        //     });
+        it(`10. Should not accept DOM document or non-DOM Element or 
+            non-Document Fragment [element] parameter and 
+            throws an exception.`,
+            () => {
+                expect(() => move(fragment, null)).toThrow();
+                expect(() => move(fragment, 1)).toThrow();
+                expect(() => move(fragment, doc)).toThrow();
+                expect(() => move(fragment, [])).toThrow();
+            });
 
-        // it('13. Should not accept DOM Node [config] that is not a child of ' +
-        //     '[before] parameter or not a number or not null and ' +
-        //     'throws an exception.',
-        //     () => {
-        //         var item = doc.createElement('div'),
-        //             body = doc.body;
+        it(`11. Should not accept DOM Node [before] that is not a child of
+            [element] parameter or not a number or not null and 
+            throws an exception.`,
+            () => {
+                var item = doc.createElement('div');
 
-        //         expect(() => add(fragment, item, /test/)).toThrow();
-        //         expect(() => add(fragment, item, new Date())).toThrow();
-        //         expect(() => add(fragment, item, doc)).toThrow();
-        //         expect(() => add(fragment, item, doc.createTextNode('test'))).
-        //             toThrow();
-        //         expect(() => add(fragment, item, [])).toThrow();
-        //     });
+                expect(() => move(fragment, item, /test/)).toThrow();
+                expect(() => move(fragment, item, new Date())).toThrow();
+                expect(() => move(fragment, item, doc)).toThrow();
+                expect(() => move(fragment, item, doc.createTextNode('test'))).
+                    toThrow();
+                expect(() => move(fragment, item, [])).toThrow();
+            });
     });

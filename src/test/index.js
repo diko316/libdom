@@ -13,6 +13,7 @@ import "./dom/select.js";
 import "./dom/add.js";
 import "./dom/remove.js";
 import "./dom/move.js";
+import "./dom/replace.js";
 
 import "./color/parse-color.js";
 import "./color/parse-color-type.js";

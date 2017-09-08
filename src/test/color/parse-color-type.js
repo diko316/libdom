@@ -1,16 +1,16 @@
 'use strict';
 
 
-describe('Retrieves String color format info [type:String,' +
-                                            'hexadecimal:Boolean' +
-                                            'items:String|Array(String)]' +
-        'from String [subject] using parseType(subject:String) method.',
+describe(`Retrieves String color format info [type:String,
+                                            hexadecimal:Boolean,
+                                            items:String|Array(String)]
+        from String [subject] using parseType(subject:String) method.`,
     () => {
         var lib = global.libdom,
             type = lib.parseColorType;
         
-        it('1. Should not accept non String [subject] parameter and ' +
-           'throws error instead.',
+        it(`1. Should not accept non String [subject] parameter and
+           throws error instead.`,
            () => {
                 expect(() => type(null)).toThrow();
                 expect(() => type(1)).toThrow();
@@ -18,8 +18,8 @@ describe('Retrieves String color format info [type:String,' +
                 expect(() => type({})).toThrow();
            });
         
-        it('2. Should accept invalid color String [subject] parameter and ' +
-           'returns null.',
+        it(`2. Should accept invalid color String [subject] parameter and
+           returns null.`,
            () => {
                 expect(type('buang')).toBe(null);
                 expect(type('#098-x-l')).toBe(null);
@@ -27,8 +27,8 @@ describe('Retrieves String color format info [type:String,' +
                 expect(type('rgb(x2)')).toBe(null);
            });
         
-        it('3. Should accept valid color String [subject] parameter and ' +
-           'returns Array color information.',
+        it(`3. Should accept valid color String [subject] parameter and
+           returns Array color information.`,
            () => {
                 expect(type('rgba(255, 0,1, .5)')).
                     toEqual(['rgba', false, ['255', '0', '1', '.5']]);

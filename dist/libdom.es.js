@@ -1,4 +1,4 @@
-import { array, camelize, contains, createRegistry, each, env, method, middleware, number, object, register, string } from 'libcore';
+import { array, camelize, contains, createRegistry, each, env, method, middleware, number, object, register, string, unionList } from 'libcore';
 
 var global$1 = typeof global !== "undefined" ? global :
             typeof self !== "undefined" ? self :
@@ -208,6 +208,7 @@ var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/;
 var STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/;
 var HTML_ESCAPE_CHARS_RE = /[^\u0021-\u007e]|[\u003e\u003c\&\"\']/g;
 var TEXTAREA = null;
+var TRIM_RE = /^\s+|\s+$/g;
 
 
     
@@ -318,49 +319,68 @@ function stylize(subject) {
 
 function addWord(subject, items) {
         var isString = string,
-            c = -1,
-            l = items.length;
-        var cl, name;
-        
-        if (!string(subject, true)) {
+            trimRe = TRIM_RE;
+        var c, l, item, cl, combined;
+
+        if (!isString(subject, true)) {
             throw new Error(ERROR[1021]);
         }
 
-        subject = subject ? subject.split(SEPARATE_RE) : [];
-        cl = subject.length;
-        for (; l--;) {
-            name = items[++c];
-            if (isString(name) && subject.indexOf(name) === -1) {
-                subject[cl++] = name;
+        cl = 0;
+        combined = [];
+        subject = subject.replace(trimRe, '');
+
+        for (c = -1, l = items.length; l--;) {
+            item = items[++c];
+
+            if (!isString(item)) {
+                continue;
+            }
+
+            item = item.replace(trimRe, '');
+
+            if (item) {
+                combined[cl++] = item;
             }
         }
-        
-        return subject.join(' ');
+
+        return subject ?
+                    unionList(subject.split(SEPARATE_RE), combined).join(' ') :
+                    cl ?
+                        combined.join(' ') :
+                        '';
+
     }
 
 function removeWord(subject, items) {
-        var c = -1,
-            l = items.length;
-        var cl, total, name;
+        var isString = string,
+            trimRe = TRIM_RE;
+        var c, l, item, index;
 
-        if (!string(subject, true)) {
+        if (!isString(subject, true)) {
             throw new Error(ERROR[1021]);
         }
+
+        subject = subject.replace(trimRe, '');
+
+        if (!subject) {
+            return '';
+        }
+
+        subject = unionList(subject.split(SEPARATE_RE), []);
         
-        subject = subject ? subject.split(SEPARATE_RE) : [];
-        total = subject.length;
-        
-        for (; l--;) {
-            name = items[++c];
-            for (cl = total; cl--;) {
-                if (name === subject[cl]) {
-                    subject.splice(cl, 1);
-                    total--;
-                }
+        for (c = -1, l = items.length; l--;) {
+            if (!isString(item = items[++c])) {
+                continue;
+            }
+            index = subject.indexOf(item.replace(trimRe, ''));
+            if (index !== -1) {
+                subject.splice(index, 1);
             }
         }
-        
-        return subject.join(' ');    
+
+        return subject.join(' ');
+  
     }
 
 function xmlDecode(subject) {
@@ -877,6 +897,7 @@ var ERROR_INVALID_DOM_NODES = ERROR[1105];
 var ERROR_INVALID_CSS_SELECTOR = ERROR[1111];
 var ERROR_INVALID_CALLBACK = ERROR[1112];
 var ERROR_INVALID_ELEMENT_CONFIG = ERROR[1121];
+var ERROR_INVALID_DESTROY = ERROR[1002];
 var ALLOW_DESCENDANT_NODE_TYPES = {
         // CDATA_SECTION_NODE
         4: {
@@ -1482,7 +1503,7 @@ function remove(node, destroy) {
         // unset child events by default
         if (arguments.length > 1) {
             if (typeof destroy !== 'boolean') {
-                throw new Error(ERROR[1002]);
+                throw new Error(ERROR_INVALID_DESTROY);
             }
 
             if (node.nodeType === 1 && destroy) {
@@ -1545,8 +1566,11 @@ function replace(node, config, destroy) {
             throw new Error(ERROR_INVALID_DOM_NODE);
         }
 
-        if (isDom(config)) {
+        if (isDom(config, 1, 3, 4, 7, 8, 11)) {
             toInsert = config;
+            if (config.nodeType !== 11 && contains$1(config, node)) {
+                throw new Error(invalidConfig);
+            }
         }
         else if (object(config)) {
             tagName = getTagNameFromConfig(config);
@@ -1556,19 +1580,27 @@ function replace(node, config, destroy) {
             toInsert = node.ownerDocument.createElement(tagName);
             applyConfigToElement(toInsert, config);
         }
-
-        if (!isDom(toInsert, 1, 3, 4, 7, 8)) {
+        else {
             throw new Error(invalidConfig);
         }
 
         // remove events before replacing it only if mandated
-        if (destroy === true && node.nodeType === 1) {
-            eachNodePostorder(node, purgeEventsFrom);
+        if (arguments.length > 2) {
+            if (typeof destroy !== 'boolean') {
+                throw new Error(ERROR_INVALID_DESTROY);
+            }
+
+            if (node.nodeType === 1 && destroy) {
+                eachNodePostorder(node, purgeEventsFrom);
+            }
         }
 
+        inserted = resolveCreatedNode(toInsert);
         node.parentNode.replaceChild(toInsert, node);
+        toInsert = null;
 
-        return toInsert;
+        return inserted;
+
     }
 
 
@@ -2106,7 +2138,6 @@ var GET_OPACITY = opacityNotSupported;
 var SET_OPACITY = opacityNotSupported;
 var SET_STYLE = styleManipulationNotSupported;
 var GET_STYLE = styleManipulationNotSupported;
-var STRING_TRIM_RE = /^\s+|\s+$/g;
 var COMPUTED_STYLE = computedStyleNotSupported;
 var ERROR_INVALID_DOM$1 = ERROR[1101];
 var ERROR_INVALID_CLASSNAMES = ERROR[1113];
@@ -2181,7 +2212,7 @@ function onStyleElement(value, name) {
 
 function parseCSSText(str) {
     
-    var trimRe = STRING_TRIM_RE,
+    var trimRe = TRIM_RE,
         pairs = str.split(';'),
         c = -1,
         l = pairs.length,

@@ -3,7 +3,8 @@
 import {
             string,
             camelize,
-            register
+            register,
+            unionList
         } from "libcore";
         
 import detect from "./detect.js";
@@ -11,7 +12,8 @@ import detect from "./detect.js";
 var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
     STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/,
     HTML_ESCAPE_CHARS_RE = /[^\u0021-\u007e]|[\u003e\u003c\&\"\']/g,
-    TEXTAREA = null;
+    TEXTAREA = null,
+    TRIM_RE = /^\s+|\s+$/g;
 
 
     
@@ -51,6 +53,10 @@ function onDestroy() {
 }
 
 initialize();
+
+export {
+        TRIM_RE
+    };
 
 export let
     ERROR = {
@@ -125,50 +131,69 @@ export
 export
     function addWord(subject, items) {
         var isString = string,
-            c = -1,
-            l = items.length;
-        var cl, name;
-        
-        if (!string(subject, true)) {
+            trimRe = TRIM_RE;
+        var c, l, item, cl, combined;
+
+        if (!isString(subject, true)) {
             throw new Error(ERROR[1021]);
         }
 
-        subject = subject ? subject.split(SEPARATE_RE) : [];
-        cl = subject.length;
-        for (; l--;) {
-            name = items[++c];
-            if (isString(name) && subject.indexOf(name) === -1) {
-                subject[cl++] = name;
+        cl = 0;
+        combined = [];
+        subject = subject.replace(trimRe, '');
+
+        for (c = -1, l = items.length; l--;) {
+            item = items[++c];
+
+            if (!isString(item)) {
+                continue;
+            }
+
+            item = item.replace(trimRe, '');
+
+            if (item) {
+                combined[cl++] = item;
             }
         }
-        
-        return subject.join(' ');
+
+        return subject ?
+                    unionList(subject.split(SEPARATE_RE), combined).join(' ') :
+                    cl ?
+                        combined.join(' ') :
+                        '';
+
     }
 
 export
     function removeWord(subject, items) {
-        var c = -1,
-            l = items.length;
-        var cl, total, name;
+        var isString = string,
+            trimRe = TRIM_RE;
+        var c, l, item, index;
 
-        if (!string(subject, true)) {
+        if (!isString(subject, true)) {
             throw new Error(ERROR[1021]);
         }
+
+        subject = subject.replace(trimRe, '');
+
+        if (!subject) {
+            return '';
+        }
+
+        subject = unionList(subject.split(SEPARATE_RE), []);
         
-        subject = subject ? subject.split(SEPARATE_RE) : [];
-        total = subject.length;
-        
-        for (; l--;) {
-            name = items[++c];
-            for (cl = total; cl--;) {
-                if (name === subject[cl]) {
-                    subject.splice(cl, 1);
-                    total--;
-                }
+        for (c = -1, l = items.length; l--;) {
+            if (!isString(item = items[++c])) {
+                continue;
+            }
+            index = subject.indexOf(item.replace(trimRe, ''));
+            if (index !== -1) {
+                subject.splice(index, 1);
             }
         }
-        
-        return subject.join(' ');    
+
+        return subject.join(' ');
+  
     }
 
 export
