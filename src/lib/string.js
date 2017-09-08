@@ -154,7 +154,7 @@ export
             throw new Error(ERROR[1021]);
         }
         
-        subject = subject ? [] : subject.split(SEPARATE_RE);
+        subject = subject ? subject.split(SEPARATE_RE) : [];
         total = subject.length;
         
         for (; l--;) {

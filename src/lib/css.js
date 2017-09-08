@@ -540,7 +540,6 @@ export
             throw new Error(ERROR_INVALID_CLASSNAMES);
         }
     
-        console.log("class names: ", classNames);
         element.className = addWord(element.className || '', classNames);
         return getModule();
     }
