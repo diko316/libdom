@@ -66,6 +66,7 @@ var PADDING_BOTTOM = 'paddingBottom',
     COMPUTED_STYLE = computedStyleNotSupported,
 
     ERROR_INVALID_DOM = ERROR[1101],
+    ERROR_INVALID_CLASSNAMES = ERROR[1113],
     
     DEFAULT_COLOR_UNIT = 'hex',
 
@@ -534,12 +535,13 @@ export
         if (isString(classNames)) {
             classNames = [classNames];
         }
-    
-        if (array(classNames)) {
-            element.className = addWord(element.className || '',
-                                               classNames);
+
+        if (!array(classNames)) {
+            throw new Error(ERROR_INVALID_CLASSNAMES);
         }
     
+        
+        element.className = addWord(element.className || '', classNames);
         return getModule();
     }
     
@@ -551,18 +553,16 @@ export
             throw new Error(ERROR_INVALID_DOM);
         }
     
-        if (!is(element, 1)) {
-            throw new Error(ERROR_INVALID_DOM);
-        }
-    
         if (isString(classNames)) {
             classNames = [classNames];
         }
-    
-        if (array(classNames)) {
-            element.className = removeWord(element.className,
-                                                  classNames);
+
+        if (!array(classNames)) {
+            throw new Error(ERROR_INVALID_CLASSNAMES);
         }
+        
+        element.className = removeWord(element.className,
+                                                classNames);
     
         return getModule();
     }
@@ -631,7 +631,7 @@ export
 export
     function unitValue(value) {
         var isFiniteNumber = isFinite;
-        var len;
+        var len, matched;
         
         // direct value test
         switch (value) {
@@ -650,11 +650,16 @@ export
             break;
         case 'string':
             len = value.length;
-            if (CSS_MEASUREMENT_RE.test(value) &&
-                value.substring(len - 2, len) !== 'px') {
-                return value;
+            matched = value.match(CSS_MEASUREMENT_RE);
+            if (matched) {
+                // return as is
+                if (matched[2] !== 'px') {
+                    return value;
+                }
+                value = matched[1];
             }
-            value = parseFloat(value);
+
+            value = 1 * value;
             if (isFiniteNumber(value)) {
                 return value;
             }

@@ -55,16 +55,23 @@ initialize();
 export let
     ERROR = {
         
-        1001: "Invalid [name] parameter.",
-        1011: "Invalid [handler] parameter.",
+        1001: "Invalid String [name] parameter.",
+        1011: "Invalid Function [handler] parameter.",
+        1021: "Invalid String [subject] parameter.",
+        
     
         1101: "Invalid DOM [element] parameter.",
         1102: "Invalid [dom] Object parameter.",
         1103: "Invalid DOM [node] parameter.",
         1104: "Invalid DOM [document] parameter.",
+        1105: "Invalid DOM [nodes] parameter.",
+
+        1106: "Invalid DOM [from] parameter.",
+        1107: "Invalid DOM [to] parameter.",
         
         1111: "Invalid CSS [selector] parameter.",
         1112: "Invalid tree traverse [callback] parameter.",
+        1113: "Invalid [classNames] parameter.",
         
         1121: "Invalid DOM Element [config] parameter.",
         
@@ -73,7 +80,7 @@ export let
         1133: "Invalid Event [handler] parameter.",
         
         
-        1141: "Invalid [style] Rule parameter.",
+        1141: "Invalid Style [rule] parameter.",
         //1142: "Invalid Colorset [type] parameter.",
         //1143: "Invalid [colorValue] integer parameter.",
         
@@ -100,46 +107,60 @@ export let
     };
 
 export
-    function stylize(str) {
-        str = camelize(str);
-        return STYLIZE_RE.test(str) ?
-                    str.charAt(0).toUpperCase() + str.substring(1, str.length) :
-                    str;
+    function stylize(subject) {
+        if (!string(subject)) {
+            throw new Error(ERROR[1021]);
+        }
+
+        subject = camelize(subject);
+        return STYLIZE_RE.test(subject) ?
+                    subject.charAt(0).toUpperCase() +
+                        subject.substring(1,
+                                        subject.length) :
+                    subject;
     }
 
 export
-    function addWord(str, items) {
+    function addWord(subject, items) {
         var isString = string,
             c = -1,
             l = items.length;
         var cl, name;
         
-        str = str.split(SEPARATE_RE);
-        cl = str.length;
+        if (!string(subject)) {
+            throw new Error(ERROR[1021]);
+        }
+
+        subject = subject.split(SEPARATE_RE);
+        cl = subject.length;
         for (; l--;) {
             name = items[++c];
-            if (isString(name) && str.indexOf(name) === -1) {
-                str[cl++] = name;
+            if (isString(name) && subject.indexOf(name) === -1) {
+                subject[cl++] = name;
             }
         }
         
-        return str.join(' ');
+        return subject.join(' ');
     }
 
 export
-    function removeWord(str, items) {
+    function removeWord(subject, items) {
         var c = -1,
             l = items.length;
         var cl, total, name;
+
+        if (!string(subject)) {
+            throw new Error(ERROR[1021]);
+        }
         
-        str = str.split(SEPARATE_RE);
-        total = str.length;
+        subject = subject.split(SEPARATE_RE);
+        total = subject.length;
         
         for (; l--;) {
             name = items[++c];
             for (cl = total; cl--;) {
-                if (name === str[cl]) {
-                    str.splice(cl, 1);
+                if (name === subject[cl]) {
+                    subject.splice(cl, 1);
                     total--;
                 }
             }
@@ -152,16 +173,27 @@ export
     function xmlDecode(subject) {
         var textarea = TEXTAREA;
         var value = '';
+
+        if (!string(subject)) {
+            throw new Error(ERROR[1021]);
+        }
+
         if (textarea) {
             textarea.innerHTML = subject;
             value = textarea.value;
         }
+
         textarea = null;
         return value;
     }
     
 export
     function xmlEncode(subject) {
+        
+        if (!string(subject)) {
+            throw new Error(ERROR[1021]);
+        }
+
         return subject.replace(HTML_ESCAPE_CHARS_RE, htmlescapeCallback);
     }
 

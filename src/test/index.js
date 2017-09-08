@@ -23,3 +23,6 @@ import "./dimension/size.js";
 import "./dimension/box.js";
 import "./dimension/scroll.js";
 import "./dimension/screen.js";
+
+import "./string/xml-encode.js";
+import "./string/xml-decode.js";

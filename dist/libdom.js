@@ -254,16 +254,23 @@ initialize();
 
 var ERROR = {
         
-        1001: "Invalid [name] parameter.",
-        1011: "Invalid [handler] parameter.",
+        1001: "Invalid String [name] parameter.",
+        1011: "Invalid Function [handler] parameter.",
+        1021: "Invalid String [subject] parameter.",
+        
     
         1101: "Invalid DOM [element] parameter.",
         1102: "Invalid [dom] Object parameter.",
         1103: "Invalid DOM [node] parameter.",
         1104: "Invalid DOM [document] parameter.",
+        1105: "Invalid DOM [nodes] parameter.",
+
+        1106: "Invalid DOM [from] parameter.",
+        1107: "Invalid DOM [to] parameter.",
         
         1111: "Invalid CSS [selector] parameter.",
         1112: "Invalid tree traverse [callback] parameter.",
+        1113: "Invalid [classNames] parameter.",
         
         1121: "Invalid DOM Element [config] parameter.",
         
@@ -272,7 +279,7 @@ var ERROR = {
         1133: "Invalid Event [handler] parameter.",
         
         
-        1141: "Invalid [style] Rule parameter.",
+        1141: "Invalid Style [rule] parameter.",
         //1142: "Invalid Colorset [type] parameter.",
         //1143: "Invalid [colorValue] integer parameter.",
         
@@ -298,44 +305,58 @@ var ERROR = {
 
     };
 
-function stylize(str) {
-        str = libcore.camelize(str);
-        return STYLIZE_RE.test(str) ?
-                    str.charAt(0).toUpperCase() + str.substring(1, str.length) :
-                    str;
+function stylize(subject) {
+        if (!libcore.string(subject)) {
+            throw new Error(ERROR[1021]);
+        }
+
+        subject = libcore.camelize(subject);
+        return STYLIZE_RE.test(subject) ?
+                    subject.charAt(0).toUpperCase() +
+                        subject.substring(1,
+                                        subject.length) :
+                    subject;
     }
 
-function addWord(str, items) {
+function addWord(subject, items) {
         var isString = libcore.string,
             c = -1,
             l = items.length;
         var cl, name;
         
-        str = str.split(SEPARATE_RE);
-        cl = str.length;
+        if (!libcore.string(subject)) {
+            throw new Error(ERROR[1021]);
+        }
+
+        subject = subject.split(SEPARATE_RE);
+        cl = subject.length;
         for (; l--;) {
             name = items[++c];
-            if (isString(name) && str.indexOf(name) === -1) {
-                str[cl++] = name;
+            if (isString(name) && subject.indexOf(name) === -1) {
+                subject[cl++] = name;
             }
         }
         
-        return str.join(' ');
+        return subject.join(' ');
     }
 
-function removeWord(str, items) {
+function removeWord(subject, items) {
         var c = -1,
             l = items.length;
         var cl, total, name;
+
+        if (!libcore.string(subject)) {
+            throw new Error(ERROR[1021]);
+        }
         
-        str = str.split(SEPARATE_RE);
-        total = str.length;
+        subject = subject.split(SEPARATE_RE);
+        total = subject.length;
         
         for (; l--;) {
             name = items[++c];
             for (cl = total; cl--;) {
-                if (name === str[cl]) {
-                    str.splice(cl, 1);
+                if (name === subject[cl]) {
+                    subject.splice(cl, 1);
                     total--;
                 }
             }
@@ -347,15 +368,26 @@ function removeWord(str, items) {
 function xmlDecode(subject) {
         var textarea = TEXTAREA;
         var value = '';
+
+        if (!libcore.string(subject)) {
+            throw new Error(ERROR[1021]);
+        }
+
         if (textarea) {
             textarea.innerHTML = subject;
             value = textarea.value;
         }
+
         textarea = null;
         return value;
     }
     
 function xmlEncode(subject) {
+        
+        if (!libcore.string(subject)) {
+            throw new Error(ERROR[1021]);
+        }
+
         return subject.replace(HTML_ESCAPE_CHARS_RE, htmlescapeCallback);
     }
 
@@ -828,9 +860,12 @@ function purge() {
     }
     
 function destructor(handler) {
-        if (libcore.method(handler)) {
-            MIDDLEWARE.register('global-destroy', handler);
+        if (!libcore.method(handler)) {
+            throw new Error(ERROR_INVALID_HANDLER);
         }
+
+        MIDDLEWARE.register('global-destroy', handler);
+
         return get();
     }
 
@@ -840,6 +875,7 @@ var ORDER_TYPE_LEVELORDER = 3;
 exports.select = notSupportedQuerySelector;
 var ERROR_INVALID_DOM = ERROR[1101];
 var ERROR_INVALID_DOM_NODE = ERROR[1103];
+var ERROR_INVALID_DOM_NODES = ERROR[1105];
 var ERROR_INVALID_CSS_SELECTOR = ERROR[1111];
 var ERROR_INVALID_CALLBACK = ERROR[1112];
 var ERROR_INVALID_ELEMENT_CONFIG = ERROR[1121];
@@ -1182,14 +1218,6 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
         isPostOrder = 0;
     var queue, last, node, current;
 
-    if (!is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM);
-    }
-
-    if (!libcore.method(callback)) {
-        throw new Error(ERROR_INVALID_CALLBACK);
-    }
-
     if (typeof context === 'undefined') {
         context = null;
     }
@@ -1438,7 +1466,6 @@ function remove(node, destroy) {
 
 function move(nodes, element) {
         var isDom = is,
-            invalidDom = ERROR_INVALID_DOM_NODE,
             created = false;
         var c, l, fragment, newChild;
 
@@ -1452,7 +1479,7 @@ function move(nodes, element) {
         }
 
         if (!libcore.array(nodes)) {
-            throw new Error(invalidDom);
+            throw new Error(ERROR_INVALID_DOM_NODES);
         }
 
         fragment = element.ownerDocument.createDocumentFragment();
@@ -1517,6 +1544,13 @@ function replace(node, config, destroy) {
  * DOM Tree walk
  */
 function eachNodePreorder(element, callback, context, includeRoot) {
+        if (!is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+
+        if (!libcore.method(callback)) {
+            throw new Error(ERROR_INVALID_CALLBACK);
+        }
 
         return orderTraverse(element,
                             callback,
@@ -1527,6 +1561,14 @@ function eachNodePreorder(element, callback, context, includeRoot) {
 
 function eachNodePostorder(element, callback, context, includeRoot) {
 
+        if (!is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+
+        if (!libcore.method(callback)) {
+            throw new Error(ERROR_INVALID_CALLBACK);
+        }
+
         return orderTraverse(element,
                             callback,
                             context,
@@ -1536,6 +1578,14 @@ function eachNodePostorder(element, callback, context, includeRoot) {
 
 function eachNodeLevelorder(element, callback, context, includeRoot) {
 
+        if (!is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+
+        if (!libcore.method(callback)) {
+            throw new Error(ERROR_INVALID_CALLBACK);
+        }
+        
         return orderTraverse(element,
                             callback,
                             context,
@@ -2026,6 +2076,7 @@ var GET_STYLE = styleManipulationNotSupported;
 var STRING_TRIM_RE = /^\s+|\s+$/g;
 exports.computedStyle = computedStyleNotSupported;
 var ERROR_INVALID_DOM$1 = ERROR[1101];
+var ERROR_INVALID_CLASSNAMES = ERROR[1113];
 var DEFAULT_COLOR_UNIT = 'hex';
 var SLICE = Array.prototype.slice;
 
@@ -2480,12 +2531,13 @@ function addClass(element, classNames) {
         if (isString(classNames)) {
             classNames = [classNames];
         }
-    
-        if (libcore.array(classNames)) {
-            element.className = addWord(element.className || '',
-                                               classNames);
+
+        if (!libcore.array(classNames)) {
+            throw new Error(ERROR_INVALID_CLASSNAMES);
         }
     
+        
+        element.className = addWord(element.className || '', classNames);
         return get();
     }
     
@@ -2496,18 +2548,16 @@ function removeClass(element, classNames) {
             throw new Error(ERROR_INVALID_DOM$1);
         }
     
-        if (!is(element, 1)) {
-            throw new Error(ERROR_INVALID_DOM$1);
-        }
-    
         if (isString(classNames)) {
             classNames = [classNames];
         }
-    
-        if (libcore.array(classNames)) {
-            element.className = removeWord(element.className,
-                                                  classNames);
+
+        if (!libcore.array(classNames)) {
+            throw new Error(ERROR_INVALID_CLASSNAMES);
         }
+        
+        element.className = removeWord(element.className,
+                                                classNames);
     
         return get();
     }
@@ -2572,7 +2622,7 @@ function validUnitValue(value) {
     }
 function unitValue(value) {
         var isFiniteNumber = isFinite;
-        var len;
+        var len, matched;
         
         // direct value test
         switch (value) {
@@ -2591,11 +2641,16 @@ function unitValue(value) {
             break;
         case 'string':
             len = value.length;
-            if (CSS_MEASUREMENT_RE.test(value) &&
-                value.substring(len - 2, len) !== 'px') {
-                return value;
+            matched = value.match(CSS_MEASUREMENT_RE);
+            if (matched) {
+                // return as is
+                if (matched[2] !== 'px') {
+                    return value;
+                }
+                value = matched[1];
             }
-            value = parseFloat(value);
+
+            value = 1 * value;
             if (isFiniteNumber(value)) {
                 return value;
             }
@@ -3345,7 +3400,6 @@ if (DIMENSION_INFO) {
     getSize = boundingRect ? rectSize : manualSize;
 }
 
-var ERROR_DOM = ERROR[1102];
 var SELECT_ELEMENT = null;
 var CLEAR_SELECTION = null;
 var UNSELECTABLE = attributeUnselectable;
@@ -3423,55 +3477,7 @@ function w3cClearSelection(document) {
     document[DETECTED_DOM.defaultView].getSelection().removeAllRanges();
 }
 
-function highlight(from, to) {
-        
-        if (is(from, 9)) {
-            from = from.body;
-        }
-        
-        if (!visible(from)) {
-            throw new Error(ERROR[1101]);
-        }
-        
-        if (arguments.length < 2) {
-            to = null;
-        }
-        
-        if (to !== null && !visible(to)) {
-            throw new Error(ERROR_DOM);
-        }
-        
-        SELECT_ELEMENT(from, to);
-        
-        return get();
-        
-    }
 
-function clearHighlight(documentNode) {
-        if (!is(documentNode, 9)) {
-            if (arguments.length > 0) {
-                throw new Error(ERROR[1104]);
-            }
-            else {
-                documentNode = global$1.document;
-            }
-        }
-        
-        CLEAR_SELECTION(documentNode);
-        
-        return get();
-    }
-
-function unhighlightable(element, disableSelect) {
-        if (!is(element, 1)) {
-            throw new Error(ERROR_DOM);
-        }
-        
-        UNSELECTABLE(element,
-                     disableSelect === false);
-        
-        return get();
-    }
 
 if (DETECTED) {
     DETECTED_DOM = DETECTED.dom;
@@ -3496,6 +3502,56 @@ if (DETECTED) {
     }
 
 }
+
+function highlight(from, to) {
+        
+        if (is(from, 9)) {
+            from = from.body;
+        }
+        
+        if (!visible(from)) {
+            throw new Error(ERROR[1106]);
+        }
+        
+        if (arguments.length < 2) {
+            to = null;
+        }
+        
+        if (to !== null && !visible(to)) {
+            throw new Error(ERROR[1107]);
+        }
+        
+        SELECT_ELEMENT(from, to);
+        
+        return get();
+        
+    }
+
+function clearHighlight(document) {
+        if (!is(document, 9)) {
+            if (arguments.length > 0) {
+                throw new Error(ERROR[1104]);
+            }
+            else {
+                document = global$1.document;
+            }
+        }
+        
+        CLEAR_SELECTION(document);
+        
+        return get();
+    }
+
+function unhighlightable(element, disableSelect) {
+        if (!is(element, 1)) {
+            throw new Error(ERROR[1102]);
+        }
+        
+        UNSELECTABLE(element,
+                    disableSelect === false);
+        
+        return get();
+    }
 
 // simple linear tweening - no easing, no acceleration
 function linearTween(currentFrame, startValue, endValue, totalFrames) {

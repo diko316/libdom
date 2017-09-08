@@ -11,8 +11,7 @@ import { is as isDom } from "./dom.js";
 import { visible } from "./dimension.js";
 
 
-var ERROR_DOM = ERROR[1102],
-    SELECT_ELEMENT = null,
+var SELECT_ELEMENT = null,
     CLEAR_SELECTION = null,
     UNSELECTABLE = attributeUnselectable,
     DETECTED_SELECTION = null,
@@ -89,58 +88,7 @@ function w3cClearSelection(document) {
     document[DETECTED_DOM.defaultView].getSelection().removeAllRanges();
 }
 
-export
-    function highlight(from, to) {
-        
-        if (isDom(from, 9)) {
-            from = from.body;
-        }
-        
-        if (!visible(from)) {
-            throw new Error(ERROR[1101]);
-        }
-        
-        if (arguments.length < 2) {
-            to = null;
-        }
-        
-        if (to !== null && !visible(to)) {
-            throw new Error(ERROR_DOM);
-        }
-        
-        SELECT_ELEMENT(from, to);
-        
-        return getModule();
-        
-    }
 
-export
-    function clearHighlight(documentNode) {
-        if (!isDom(documentNode, 9)) {
-            if (arguments.length > 0) {
-                throw new Error(ERROR[1104]);
-            }
-            else {
-                documentNode = global.document;
-            }
-        }
-        
-        CLEAR_SELECTION(documentNode);
-        
-        return getModule();
-    }
-
-export
-    function unhighlightable(element, disableSelect) {
-        if (!isDom(element, 1)) {
-            throw new Error(ERROR_DOM);
-        }
-        
-        UNSELECTABLE(element,
-                     disableSelect === false);
-        
-        return getModule();
-    }
 
 if (DETECTED) {
     DETECTED_DOM = DETECTED.dom;
@@ -166,3 +114,55 @@ if (DETECTED) {
 
 }
 
+export
+    function highlight(from, to) {
+        
+        if (isDom(from, 9)) {
+            from = from.body;
+        }
+        
+        if (!visible(from)) {
+            throw new Error(ERROR[1106]);
+        }
+        
+        if (arguments.length < 2) {
+            to = null;
+        }
+        
+        if (to !== null && !visible(to)) {
+            throw new Error(ERROR[1107]);
+        }
+        
+        SELECT_ELEMENT(from, to);
+        
+        return getModule();
+        
+    }
+
+export
+    function clearHighlight(document) {
+        if (!isDom(document, 9)) {
+            if (arguments.length > 0) {
+                throw new Error(ERROR[1104]);
+            }
+            else {
+                document = global.document;
+            }
+        }
+        
+        CLEAR_SELECTION(document);
+        
+        return getModule();
+    }
+
+export
+    function unhighlightable(element, disableSelect) {
+        if (!isDom(element, 1)) {
+            throw new Error(ERROR[1102]);
+        }
+        
+        UNSELECTABLE(element,
+                    disableSelect === false);
+        
+        return getModule();
+    }
