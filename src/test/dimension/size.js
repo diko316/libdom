@@ -3,8 +3,9 @@
 describe(`Set or get the document element's size (width|height) using
         size(element:DOM, width:Number|String, height:Number|String) method.`,
     () => {
-        var size = global.libdom.size,
-            libcore = global.libcore;
+        var libcore = global.libcore,
+            libdom = global.libdom,
+            size = libdom.size;
 
         var mockElement,
             width = 300,
@@ -39,37 +40,52 @@ describe(`Set or get the document element's size (width|height) using
                 expect(() => size(mockElement)).not.toThrow();
             });
 
-        it(`3. Should not set non Number or String as second or third
-            parameter.`,
+        it(`3. Should not accept non Number or String for second
+            parameter [x] and throws error instead.`,
             () => {
-                expect(() => size(mockElement,
-                                { width: 100 }, { height: 200 })).
-                                not.toThrow();
-
-                expect(size(mockElement)[0]).toBe(width);
-                expect(size(mockElement)[1]).toBe(height);
+                expect(() => size(mockElement, { x: 400 })).toThrow();
             });
 
-        it(`4. Should return an Object type if second or third parameter
-            is set.`,
+        it(`4. Should throw an error if second parameter [width] is supplied
+            but the third parameter [height] is not.`,
             () => {
-                expect(libcore.object(
-                    size(mockElement, 600, 600))).
-                    toBe(true);
-                expect(libcore.object(
-                    size(mockElement, "400", "450"))).
-                    toBe(true);
-                expect(libcore.object(
-                    size(mockElement, "350px", "200px"))).
-                    toBe(true);
+                expect(() => size(mockElement, 200)).toThrow();
+                expect(() => size(mockElement, "300px")).toThrow();
             });
 
-        it(`5. Should get the width and height of an element and return as an
-            Array type if second or third parameter is not set.`,
+        it(`5. Should not accept non Number or String for third
+            parameter [height] and throws error instead.`,
+            () => {
+                expect(() => size(mockElement, 600, { y: 400 })).toThrow();
+            });
+
+        it(`6. Should throw an error if third parameter [height] is supplied
+            but the second parameter [width] is not a valid parameter.`,
+            () => {
+                expect(() => size(mockElement, undefined, 300)).
+                                toThrow();
+                expect(() => size(mockElement, new Date(), "600px")).
+                                toThrow();
+                expect(() => size(mockElement, { x: 300 }, 400)).
+                                toThrow();
+            });
+
+        it(`7. Should return an object type if both second and third is a
+            valid parameter.`,
+            () => {
+                expect(libcore.object(size(mockElement, 500, 400)))
+                    .toBe(true);
+                expect(libcore.object(size(mockElement, "300px", "700px")))
+                    .toBe(true);
+                expect(libcore.object(size(mockElement, "300px", 600)))
+                    .toBe(true);
+            });
+
+        it(`8. Should return an array of offset [x, y] if both second and third
+            parameter are not provided.`,
             () => {
                 expect(libcore.array(size(mockElement))).toBe(true);
                 expect(size(mockElement)[0]).toBe(width);
                 expect(size(mockElement)[1]).toBe(height);
             });
-
     });

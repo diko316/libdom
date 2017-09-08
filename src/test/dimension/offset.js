@@ -3,8 +3,9 @@
 describe(`Set or get the document element's offset (x|y) using
         offset(element:DOM, x:Number|String, y:Number|String) method.`,
     () => {
-        var offset = global.libdom.offset,
-            libcore = global.libcore;
+        var libcore = global.libcore,
+            libdom = global.libdom,
+            offset = libdom.offset;
 
         var mockElement,
             top = 100,
@@ -40,37 +41,52 @@ describe(`Set or get the document element's offset (x|y) using
                 expect(() => offset(mockElement)).not.toThrow();
             });
 
-        it(`3. Should not set non Number or String as second or third
-            parameter.`,
+        it(`3. Should not accept non Number or String for second
+            parameter [x] and throws error instead.`,
             () => {
-                expect(() => offset(mockElement,
-                                { x: 10 }, { y: 10 })).
-                                not.toThrow();
-
-                expect(offset(mockElement)[0]).toBe(top);
-                expect(offset(mockElement)[1]).toBe(left);
+                expect(() => offset(mockElement, { x: 100 })).toThrow();
             });
 
-        it(`4. Should return an Object type if second or third parameter
-            is set.`,
+        it(`4. Should throw an error if second parameter [x] is supplied
+            but the third parameter [y] is not.`,
             () => {
-                expect(libcore.object(
-                    offset(mockElement, 10, 10))).
-                    toBe(true);
-                expect(libcore.object(
-                    offset(mockElement, "30px", "50px"))).
-                    toBe(true);
-                expect(libcore.object(
-                    offset(mockElement, "100", "120"))).
-                    toBe(true);
+                expect(() => offset(mockElement, 10)).toThrow();
+                expect(() => offset(mockElement, "30px")).toThrow();
             });
 
-        it(`5. Should get the x and y offset of an element and return as an
-            Array type if second or third parameter is not set.`,
+        it(`5. Should not accept non Number or String for third
+            parameter [y] and throws error instead.`,
+            () => {
+                expect(() => offset(mockElement, 100, { y: 100 })).toThrow();
+            });
+
+        it(`6. Should throw an error if third parameter [y] is supplied
+            but the second parameter [x] is not a valid parameter.`,
+            () => {
+                expect(() => offset(mockElement, undefined, 10)).
+                                toThrow();
+                expect(() => offset(mockElement, new Date(), "60px")).
+                                toThrow();
+                expect(() => offset(mockElement, { x: 100 }, 100)).
+                                toThrow();
+            });
+
+        it(`7. Should return an object type if both second and third is a
+            valid parameter.`,
+            () => {
+                expect(libcore.object(offset(mockElement, 10, 10)))
+                    .toBe(true);
+                expect(libcore.object(offset(mockElement, "30px", "70px")))
+                    .toBe(true);
+                expect(libcore.object(offset(mockElement, "30px", 100)))
+                    .toBe(true);
+            });
+
+        it(`8. Should return an array of offset [x, y] if both second and third
+            parameter are not provided.`,
             () => {
                 expect(libcore.array(offset(mockElement))).toBe(true);
                 expect(offset(mockElement)[0]).toBe(top);
                 expect(offset(mockElement)[1]).toBe(left);
             });
-
     });

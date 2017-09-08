@@ -3,8 +3,8 @@
 describe(`Returns Array containing x, y scroll offsets and width and height
         of the dom viewport using screen(element:DOM).`,
     () => {
-        var screenInfo = global.libdom.screen,
-            libcore = global.libcore;
+        var libcore = global.libcore,
+            screenInfo = global.libdom.screen;
 
         var mockElement;
 

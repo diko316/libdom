@@ -3,8 +3,8 @@
 describe(`Set or get the document element's scroll offset using
         scroll(element:DOM, x:Number|String, y:Number|String).`,
     () => {
-        var scroll = global.libdom.scroll,
-            libcore = global.libcore;
+        var libcore = global.libcore,
+            scroll = global.libdom.scroll;
 
         var mockElement;
 

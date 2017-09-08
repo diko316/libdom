@@ -4,8 +4,9 @@ describe(`Set or get the document element's offset (x|y) or size (width|height) 
         box(element:DOM, x:Number|String, y:Number|String, width:Number|String,
         height:Number|String) method.`,
     () => {
-        var box = global.libdom.box,
-            libcore = global.libcore;
+        var libcore = global.libcore,
+            libdom = global.libdom,
+            box = libdom.box;
 
         var mockElement,
             top = 100,
@@ -45,34 +46,26 @@ describe(`Set or get the document element's offset (x|y) or size (width|height) 
                 expect(() => box(mockElement)).not.toThrow();
             });
 
-        it(`3. Should not set non Number or String as second up to the
-            fifth parameter.`,
+        it(`3. Should not accept non Number or String for the second up to
+            fifth parameter and throws an error instead.`,
             () => {
                 expect(() => box(mockElement,
-                                { x: 10 }, { y: 10 },
-                                { width: 100 }, { height: 200 })).
-                                not.toThrow();
-
-                expect(box(mockElement)[0]).toBe(top);
-                expect(box(mockElement)[1]).toBe(left);
-                expect(box(mockElement)[4]).toBe(width);
-                expect(box(mockElement)[5]).toBe(height);
+                                undefined,
+                                new Date(),
+                                { width: 400 },
+                                { height: 300 })).toThrow();
             });
 
-        it(`4. Should return an Object type if at least a second up to fifth
-            parameter is set.`,
+        it(`4. Should throw an error if second to fifth parameter is not
+            provided completely.`,
             () => {
-                expect(libcore.object(
-                    box(mockElement, "30px", "50px"))).
-                    toBe(true);
-                expect(libcore.object(
-                    box(mockElement, "30px", "50px", 600, 600))).
-                    toBe(true);
+                expect(() => box(mockElement, undefined)).toThrow();
+                expect(() => box(mockElement, 100, { y: 100 })).toThrow();
+                expect(() => box(mockElement, 100, "100px", 300)).toThrow();
             });
 
-        it(`5. Should get offset (x and y) and size (width and height) of an
-            element and return as an Array type if at least a second up to fifth
-            parameter is not set.`,
+        it(`5. Should return an array of the element's offset (x, y) and size
+            (width, height) if only the first parameter is provided.`,
             () => {
                 expect(libcore.array(box(mockElement))).toBe(true);
                 expect(box(mockElement)[0]).toBe(top);
@@ -80,5 +73,4 @@ describe(`Set or get the document element's offset (x|y) or size (width|height) 
                 expect(box(mockElement)[4]).toBe(width);
                 expect(box(mockElement)[5]).toBe(height);
             });
-
     });

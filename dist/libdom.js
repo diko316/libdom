@@ -281,6 +281,14 @@ var ERROR = {
         1153: "Invalid Animation [type] parameter.",
         1154: "Invalid Animation [duration] parameter.",
         
+        1210: "Invalid Dimension [x] parameter.",
+        1211: "Invalid Dimension [y] parameter.",
+        1212: "Invalid Dimension [right] parameter.",
+        1213: "Invalid Dimension [bottom] parameter.",
+        1214: "Invalid Dimension [width] parameter.",
+        1215: "Invalid Dimension [height] parameter.",
+        1216: "Invalid Dimension parameters.",
+        
         2001: "Style Attribute manipulation is not supported",
         2002: "Computed style is not supported by this browser.",
         2003: "CSS Selector query form DOM is not supported.",
@@ -2544,10 +2552,36 @@ function stylify(element) {
         return parseCSSText(element.style.cssText);
     }
     
-    
+function validUnitValue(value) {
+        // direct value test
+        switch (value) {
+        case null:
+        case false:
+        case 'auto':
+        case 'inherit':
+            return true;
+        }
+        // test type
+        switch (typeof value) {
+        case 'number':
+            return isFinite(value);
+        case 'string':
+            return CSS_MEASUREMENT_RE.test(value);
+        }
+        return false;
+    }
 function unitValue(value) {
         var isFiniteNumber = isFinite;
         var len;
+        
+        // direct value test
+        switch (value) {
+        case null:
+        case false:
+        case 'auto':
+        case 'inherit':
+            return value;
+        }
     
         switch (typeof value) {
         case 'number':
@@ -2561,17 +2595,10 @@ function unitValue(value) {
                 value.substring(len - 2, len) !== 'px') {
                 return value;
             }
-            else if (value === 'auto' || value === 'inherit') {
-                return value;
-            }
             value = parseFloat(value);
             if (isFiniteNumber(value)) {
                 return value;
             }
-        }
-    
-        if (value === null) {
-            return value;
         }
     
         return false;
@@ -2580,6 +2607,13 @@ function unitValue(value) {
 
 var ERROR_INVALID_ELEMENT = ERROR[1101];
 var ERROR_INVALID_DOM$2 = ERROR[1102];
+var ERROR_INVALID_X = ERROR[1210];
+var ERROR_INVALID_Y = ERROR[1211];
+var ERROR_INVALID_RIGHT = ERROR[1212];
+var ERROR_INVALID_BOTTOM = ERROR[1213];
+var ERROR_INVALID_WIDTH = ERROR[1214];
+var ERROR_INVALID_HEIGHT = ERROR[1215];
+var ERROR_INVALID_PARAMETERS = ERROR[1216];
 var OFFSET_TOP$1 = 'offsetTop';
 var OFFSET_LEFT$1 = 'offsetLeft';
 var OFFSET_WIDTH$1 = 'offsetWidth';
@@ -2808,87 +2842,7 @@ function isViewable(dom) {
     return isView(dom) ? PAGE_VIEW : false;
 }
 
-
-/**
- * Accessors
- */
-function offset(element, x, y) {
-        
-        // setter
-        if (arguments.length > 1) {
-            return box(element, x, y);
-        }
-        
-        // getter
-        switch (isViewable(element)) {
-        case PAGE_VIEW:
-            return pageBox(element).slice(0, 2);
-        case ELEMENT_VIEW:
-            return getOffset(element).slice(0, 2);
-        }
-        
-        throw new Error(ERROR_INVALID_ELEMENT);
-        
-    }
-
-function size(element, width, height) {
-        
-        // setter
-        if (arguments.length > 1) {
-            return box(element, false, false, width, height);
-        }
-        
-        // getter
-        return isViewable(element) === PAGE_VIEW ?
-                    pageBox(element).slice(2, 4) : getSize(element);
-    }
-
-function box(element, x, y, width, height) {
-        var applyStyle, viewmode, dimension;
-        
-        // setter
-        if (arguments.length > 1) {
-            
-            applyStyle = translate(element, x, y, false, false, width, height);
-            
-            if (applyStyle) {
-                stylize$1(element, applyStyle);
-            }
-            return get();
-        }
-        
-        // getter
-        viewmode = isViewable(element);
-        if (viewmode === PAGE_VIEW) {
-            dimension = pageBox(element);
-            x = dimension[0];
-            y = dimension[1];
-            width = dimension[2];
-            height = dimension[3];
-            dimension = screen(element);
-            return [
-                x,
-                y,
-                width - x - dimension[2],
-                height - y - dimension[3],
-                width,
-                height];
-        }
-        
-        if (viewmode !== ELEMENT_VIEW) {
-            throw new Error(ERROR_INVALID_ELEMENT);
-        }
-        dimension = getSize(element);
-        width = dimension[0];
-        height = dimension[1];
-        dimension = getOffset(element);
-        dimension[4] = width;
-        dimension[5] = height;
-        
-        return dimension;
-    }
-
-function translate(element, x, y, right, bottom, width, height, target) {
+function getTranslation(element, x, y, right, bottom, width, height, target) {
         var cssValue = unitValue,
             parse = parseFloat,
             NUMBER = 'number',
@@ -2898,33 +2852,6 @@ function translate(element, x, y, right, bottom, width, height, target) {
             hasBottom = hasLeft;
             
         var hasWidth, hasHeight, diff, currentDimension;
-            
-        if (isViewable(element) !== ELEMENT_VIEW) {
-            throw new Error(ERROR_INVALID_ELEMENT);
-        }
-        
-        // resolve parameters
-        if (libcore.array(x)) {
-            target = y;
-            if (x.length > 4) {
-                height = 5 in x ? x[5] : null;
-                width = 4 in x ? x[4] : null;
-                bottom = 3 in x ? x[3] : null;
-                right = 2 in x ? x[2] : null;
-            }
-            else {
-                height = 3 in x ? x[3] : null;
-                width = 2 in x ? x[2] : null;
-                bottom = null;
-                right = null;
-            }
-            y = 1 in y ? x[1] : null;
-            x = x[0];
-        }
-        
-        if (!libcore.object(target)) {
-            target = {};
-        }
         
         currentDimension = exports.computedStyle(element,
                                         'position',
@@ -2934,6 +2861,10 @@ function translate(element, x, y, right, bottom, width, height, target) {
                                         'bottom',
                                         'width',
                                         'height');
+        
+        if (!libcore.object(target)) {
+            target = {};
+        }
         
         // resolve position
         switch (currentDimension.position) {
@@ -3016,6 +2947,250 @@ function translate(element, x, y, right, bottom, width, height, target) {
     
         return hasLeft || hasRight || hasTop || hasBottom ||
                 hasWidth || hasHeight ? target : null;
+    }
+
+
+/**
+ * Accessors
+ */
+function offset(element, x, y) {
+        
+        var valid = validUnitValue;
+        
+        // setter
+        if (arguments.length > 1) {
+            if (isViewable(element) !== ELEMENT_VIEW) {
+                throw new Error(ERROR_INVALID_ELEMENT);
+            }
+            
+            if (libcore.array(x)) {
+                if (x.length > 1) {
+                    y = x[1];
+                    x = x[0];
+                }
+                else {
+                    throw new Error(ERROR_INVALID_PARAMETERS);
+                }
+            }
+            
+            if (!valid(x)) {
+                throw new Error(ERROR_INVALID_X);
+            }
+            if (!valid(y)) {
+                throw new Error(ERROR_INVALID_Y);
+            }
+            
+            x = getTranslation(element,
+                        x,
+                        y,
+                        false,
+                        false,
+                        false,
+                        false);
+            if (x) {
+                stylize$1(element, x);
+            }
+            return get();
+
+        }
+        
+        // getter
+        switch (isViewable(element)) {
+        case PAGE_VIEW:
+            return pageBox(element).slice(0, 2);
+        case ELEMENT_VIEW:
+            return getOffset(element).slice(0, 2);
+        }
+        
+        throw new Error(ERROR_INVALID_ELEMENT);
+        
+    }
+
+function size(element, width, height) {
+        var valid = validUnitValue;
+        
+        // setter
+        if (arguments.length > 1) {
+
+            if (isViewable(element) !== ELEMENT_VIEW) {
+                throw new Error(ERROR_INVALID_ELEMENT);
+            }
+            
+            if (libcore.array(width)) {
+                if (width.length > 1) {
+                    height = width[1];
+                    width = width[0];
+                }
+                else {
+                    throw new Error(ERROR_INVALID_PARAMETERS);
+                }
+            }
+                
+            if (!valid(width)) {
+                throw new Error(ERROR_INVALID_WIDTH);
+            }
+            if (!valid(height)) {
+                throw new Error(ERROR_INVALID_HEIGHT);
+            }
+            
+            width = getTranslation(element,
+                                false,
+                                false,
+                                false,
+                                false,
+                                width,
+                                height);
+            if (width) {
+                stylize$1(element, width);
+            }
+            
+            return get();
+        }
+        
+        // getter
+        return isViewable(element) === PAGE_VIEW ?
+                    pageBox(element).slice(2, 4) : getSize(element);
+    }
+
+function box(element, x, y, width, height) {
+        var valid = validUnitValue;
+        var viewmode, dimension;
+        
+        // setter
+        if (arguments.length > 1) {
+            
+            if (isViewable(element) !== ELEMENT_VIEW) {
+                throw new Error(ERROR_INVALID_ELEMENT);
+            }
+            
+            if (libcore.array(x)) {
+                if (x.length > 3) {
+                    height = x[3];
+                    width = x[2];
+                    y = x[1];
+                    x = x[0];
+                    
+                }
+                else {
+                    throw new Error(ERROR_INVALID_PARAMETERS);
+                }
+            }
+            
+            if (!valid(x)) {
+                throw new Error(ERROR_INVALID_X);
+            }
+            if (!valid(y)) {
+                throw new Error(ERROR_INVALID_Y);
+            }
+            
+            if (!valid(width)) {
+                throw new Error(ERROR_INVALID_WIDTH);
+            }
+            if (!valid(height)) {
+                throw new Error(ERROR_INVALID_HEIGHT);
+            }
+            
+            x = getTranslation(element,
+                            x,
+                            y,
+                            false,
+                            false,
+                            width,
+                            height);
+            if (x) {
+                stylize$1(element, x);
+            }
+            
+            return get();
+        }
+        
+        // getter
+        viewmode = isViewable(element);
+        if (viewmode === PAGE_VIEW) {
+            dimension = pageBox(element);
+            x = dimension[0];
+            y = dimension[1];
+            width = dimension[2];
+            height = dimension[3];
+            dimension = screen(element);
+            return [
+                x,
+                y,
+                width - x - dimension[2],
+                height - y - dimension[3],
+                width,
+                height];
+        }
+        
+        if (viewmode !== ELEMENT_VIEW) {
+            throw new Error(ERROR_INVALID_ELEMENT);
+        }
+        dimension = getSize(element);
+        width = dimension[0];
+        height = dimension[1];
+        dimension = getOffset(element);
+        dimension[4] = width;
+        dimension[5] = height;
+        
+        return dimension;
+    }
+
+function translate(element, x, y, right, bottom, width, height, target) {
+        var valid = validUnitValue;
+        
+        
+        if (isViewable(element) !== ELEMENT_VIEW) {
+            throw new Error(ERROR_INVALID_ELEMENT);
+        }
+        
+        // resolve parameters
+        if (libcore.array(x)) {
+            target = y;
+            if (x.length > 4) {
+                height = 5 in x ? x[5] : false;
+                width = 4 in x ? x[4] : false;
+                bottom = 3 in x ? x[3] : false;
+                right = 2 in x ? x[2] : false;
+            }
+            else {
+                height = 3 in x ? x[3] : false;
+                width = 2 in x ? x[2] : false;
+                bottom = false;
+                right = false;
+            }
+            y = 1 in y ? x[1] : false;
+            x = x[0];
+        }
+        
+        if (!valid(x)) {
+            throw new Error(ERROR_INVALID_X);
+        }
+        if (!valid(y)) {
+            throw new Error(ERROR_INVALID_Y);
+        }
+        
+        if (!valid(right)) {
+            throw new Error(ERROR_INVALID_RIGHT);
+        }
+        if (!valid(bottom)) {
+            throw new Error(ERROR_INVALID_BOTTOM);
+        }
+        
+        if (!valid(width)) {
+            throw new Error(ERROR_INVALID_WIDTH);
+        }
+        if (!valid(height)) {
+            throw new Error(ERROR_INVALID_HEIGHT);
+        }
+        
+        return getTranslation(element,
+                                x,
+                                y,
+                                right,
+                                bottom,
+                                width,
+                                height,
+                                target);
     }
 
 function scroll(dom, x, y) {
