@@ -251,6 +251,7 @@ initialize();
 var ERROR = {
         
         1001: "Invalid String [name] parameter.",
+        1002: "Invalid Boolean [destroy] parameter.",
         1011: "Invalid Function [handler] parameter.",
         1021: "Invalid String [subject] parameter.",
         
@@ -1479,8 +1480,14 @@ function remove(node, destroy) {
         }
 
         // unset child events by default
-        if (node.nodeType === 1 && destroy !== false) {
-            eachNodePostorder(node, purgeEventsFrom);
+        if (arguments.length > 1) {
+            if (typeof destroy !== 'boolean') {
+                throw new Error(ERROR[1002]);
+            }
+
+            if (node.nodeType === 1 && destroy) {
+                eachNodePostorder(node, purgeEventsFrom);
+            }
         }
 
         parentNode = node.parentNode;
@@ -1491,42 +1498,41 @@ function remove(node, destroy) {
         return node;
     }
 
-function move(nodes, element) {
+function move(nodes, element, before) {
         var isDom = is,
-            created = false;
-        var c, l, fragment, newChild;
+            insert = add,
+            fragment = null;
+        var c, l, newChild, inserted;
 
-        if (!isDom(element, 1)) {
-            throw new Error(ERROR_INVALID_DOM);
+        // if (isDom(nodes, 1, 3, 4, 7, 8, 11)) {
+        //     fragment = nodes;
+        // }
+        // else if (!array(nodes)) {
+            
+        // }
+
+        if (array(nodes)) {
+            fragment = element.ownerDocument.createDocumentFragment();
+            for (c = -1, l = nodes.length; l--;) {
+                newChild = nodes[++c];
+                if (!isDom(newChild, 1, 3, 4, 7, 8)) {
+                    throw new Error(ERROR_INVALID_DOM_NODES);
+                }
+                fragment.appendChild(newChild);
+            }
+            nodes = fragment;
         }
-
-        if (isDom(nodes, 1, 3, 4, 7, 8)) {
-            nodes = [nodes];
-            created = true;
-        }
-
-        if (!array(nodes)) {
+        else if (!isDom(nodes, 1, 3, 4, 7, 8, 11)) {
             throw new Error(ERROR_INVALID_DOM_NODES);
         }
 
-        fragment = element.ownerDocument.createDocumentFragment();
-        for (c = -1, l = nodes.length; l--;) {
-            newChild = nodes[++c];
-            if (isDom(newChild, 1, 3, 4, 7, 8)) {
-                fragment.appendChild(newChild);
-            }
-        }
-        element.appendChild(fragment);
+        inserted = arguments.length > 2 ?
+                    insert(element, nodes, before) :
+                    insert(element, nodes);
 
-        newChild = null;
+        fragment = newChild = null;
 
-        if (created) {
-            nodes.splice(0, nodes.length);
-        }
-
-        fragment = null;
-
-        return element;
+        return inserted;
     }
 
 function replace(node, config, destroy) {

@@ -56,6 +56,7 @@ export let
     ERROR = {
         
         1001: "Invalid String [name] parameter.",
+        1002: "Invalid Boolean [destroy] parameter.",
         1011: "Invalid Function [handler] parameter.",
         1021: "Invalid String [subject] parameter.",
         

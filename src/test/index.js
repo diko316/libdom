@@ -11,6 +11,8 @@ import "./dom/is-view.js";
 import "./dom/contains.js";
 import "./dom/select.js";
 import "./dom/add.js";
+import "./dom/remove.js";
+import "./dom/move.js";
 
 import "./color/parse-color.js";
 import "./color/parse-color-type.js";

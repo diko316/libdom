@@ -7,7 +7,6 @@ describe('Inserts [config] DOM Element or Object Element configuration into ' +
     () => {
 
         var add = global.libdom.add,
-            libcore = global.libcore,
             doc = global.document;
         var fragment;
         

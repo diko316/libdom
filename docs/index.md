@@ -313,7 +313,7 @@ Value | Type  | Description
 --    |--     |--
 Object([ruleName]:[value], ... ) | Object | The computed style extracted limited to the given `ruleNames`.
 
---
+---
 
 ### `stylize(element, rules[, value])`
 
@@ -336,26 +336,6 @@ Value | Type  | Description
 Object(libdom) | Object | libdom module.
 
 ---
-
-### `stylize(element, rules[, value])`
-
-* Applies CSS `rules` Object to `element` style attribute.
-* If `rules` is String then `element` style is set individually using `value` parameter. Or when `value` parameter is omitted, `rules` will be applied as cssText to `element` style attribute.
-* If `value` or property value of `rules` is `null` or `undefined`, then CSS rule(s) will be removed from `element` style attribute.
-
-Parameter
-
-Name      | Type  | Description
---        |--     |--
-element | Node | Element Node.
-rules | String or Object | CSS rules Object to apply. When `rules` is String, it will individually set CSS rule String with `value` parameter. Or when `value` is omitted, `rules` parameter is treated as cssText and applied to element style attribute.
-[value] | Mixed | (optional) only applicable if `rules` parameter is String
-
-Returns
-
-Value | Type  | Description
---    |--     |--
-Object(libdom) | Object | libdom module.
 
 ### `stylify(element)`
 
@@ -399,6 +379,7 @@ null  | Null | `subject` is contains invalid color format, malformed or not reco
 
 * Extracts String `subject` color format information.
 * Array Color information contains the following items:
+
 `[type:String, isHexFormat:Boolean, items:String|Array]`
 > Examples:
 >
