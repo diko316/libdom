@@ -68,6 +68,7 @@ export let
 
         1106: "Invalid DOM [from] parameter.",
         1107: "Invalid DOM [to] parameter.",
+        1108: "Invalid DOM [before] parameter.",
         
         1111: "Invalid CSS [selector] parameter.",
         1112: "Invalid tree traverse [callback] parameter.",
@@ -127,11 +128,11 @@ export
             l = items.length;
         var cl, name;
         
-        if (!string(subject)) {
+        if (!string(subject, true)) {
             throw new Error(ERROR[1021]);
         }
 
-        subject = subject.split(SEPARATE_RE);
+        subject = subject ? subject.split(SEPARATE_RE) : [];
         cl = subject.length;
         for (; l--;) {
             name = items[++c];
@@ -149,11 +150,11 @@ export
             l = items.length;
         var cl, total, name;
 
-        if (!string(subject)) {
+        if (!string(subject, true)) {
             throw new Error(ERROR[1021]);
         }
         
-        subject = subject.split(SEPARATE_RE);
+        subject = subject ? [] : subject.split(SEPARATE_RE);
         total = subject.length;
         
         for (; l--;) {
@@ -166,7 +167,7 @@ export
             }
         }
         
-        return str.join(' ');    
+        return subject.join(' ');    
     }
 
 export

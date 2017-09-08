@@ -186,7 +186,7 @@ Name      | Type  | Description
 --        |--     |--
 element | Node | DOM Node of nodeType: Element, or Fragment
 config | Node or Object | if Node of nodeType: Element, Fragment, Comment, Text, and Processing Instruction then it will be inserted directly. If config is Object, It will be created and configured as DOM Element.
-[before] | Node | (optional) `config` Node will be inserted before this node. *(default is `null`)*
+[before] | Node or Number or null | (optional) `config` Node will be inserted before this node. If Number, then it will be inserted in that position. If null, then [config] Node will be appended.  *(default is `null`)*
 
 Returns
 

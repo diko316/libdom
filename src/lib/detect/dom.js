@@ -18,7 +18,7 @@ if (browser) {
                         'parentWindow' : null,
     querySelectorAll: !!DOCUMENT.querySelectorAll,
     listToArray: ROOT.childNodes instanceof Object
-  }
+  };
 
 }
 

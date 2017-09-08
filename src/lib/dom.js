@@ -303,8 +303,11 @@ function findChild(element, node, nodeType) {
     var isNumber = number;
     var index, counter, any;
 
-    if (is(node, 1, 3, 4, 7, 8) && node.parentNode === element) {
+    if (node === null ||
+        (is(node, 1, 3, 4, 7, 8) && node.parentNode === element)) {
+
         return node;
+
     }
     else if (isNumber(node) && node > -1) {
         index = node;
@@ -319,8 +322,11 @@ function findChild(element, node, nodeType) {
                 return node;
             }
         }
+        return null;
     }
-    return null;
+    
+    
+    return false;
 }
 
 function hasParent(child, parent) {
@@ -330,6 +336,22 @@ function hasParent(child, parent) {
         }
     }
     return false;
+}
+
+function resolveCreatedNode(node) {
+    var item, result, len;
+
+    if (node.nodeType === 11) {
+        item = node.firstChild;
+        result = [];
+        len = 0;
+        for (; item; item = item.nextSibling) {
+            result[len++] = item;
+        }
+        item = null;
+        return result;
+    }
+    return node;
 }
 
 /**
@@ -587,13 +609,13 @@ export
         var toInsert = null,
             invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
             isDom = is;
-        var tagName;
+        var tagName, inserted;
 
         if (!isDom(element, 1, 11)) {
             throw new Error(ERROR_INVALID_DOM);
         }
 
-        if (isDom(config)) {
+        if (isDom(config, 1, 3, 4, 7, 8, 11)) {
             toInsert = config;
         }
         else if (object(config)) {
@@ -604,14 +626,22 @@ export
             toInsert = element.ownerDocument.createElement(tagName);
             applyConfigToElement(toInsert, config);
         }
-
-        if (!isDom(toInsert, 1, 3, 4, 7, 8, 11)) {
+        else {
             throw new Error(invalidConfig);
         }
 
-        element.insertBefore(toInsert, findChild(element, before));
+        // validate [before]
+        if (arguments.length > 2) {
+            before = findChild(element, before);
+            if (before === false) {
+                throw new Error(ERROR[1108]);
+            }
+        }
 
-        return toInsert;
+        inserted = resolveCreatedNode(toInsert);
+        element.insertBefore(toInsert, before || null);
+        toInsert = null;
+        return inserted;
 
     }
 
@@ -679,7 +709,7 @@ export
         var toInsert = null,
             invalidConfig = ERROR_INVALID_ELEMENT_CONFIG,
             isDom = is;
-        var tagName;
+        var tagName, inserted;
 
         if (!isDom(node, 1, 3, 4, 7, 8) || !node.parentNode) {
             throw new Error(ERROR_INVALID_DOM_NODE);
