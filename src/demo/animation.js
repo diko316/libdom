@@ -22,46 +22,47 @@ main.stylize(subject, {
             });
 console.log("subject ", subject);
 main.animateStyle(subject, {
-            left: 0,
-            top: 0,
+            left: 200,
+            top: 200,
             backgroundColor: '#00f'
         },
-        50);
+        'easeIn',
+        1);
 
 
-//main.on(DOC, 'click',
-//    function (event) {
-//        var screen = main.screen();
-//            //current = main.offset(subject);
-//            //updates = {
-//            //            x: screen[0] + event.clientX,
-//            //            y: screen[1] + event.clientY
-//            //        };
-//                    
-//        main.animateStyle(subject, {
-//                            left: screen[0] + event.clientX,
-//                            top: screen[1] + event.clientY
-//                        });
-//        
-//        //if (animating) {
-//        //    animating.update(updates);
-//        //    return;
-//        //}
-//        
-//        
-//        
-//        //animating = main.eachDisplacement(
-//        //                function (o, last) {
-//        //                    main.offset(subject, o.x, o.y);
-//        //                    if (last) {
-//        //                        animating = false;
-//        //                    }
-//        //                },
-//        //                {
-//        //                    x: current[0],
-//        //                    y: current[1]
-//        //                },
-//        //                updates,
-//        //                'easeOut');
-//
-//    });
+main.on(DOC, 'click',
+    function (event) {
+        var screen = main.screen();
+            //current = main.offset(subject);
+            //updates = {
+            //            x: screen[0] + event.clientX,
+            //            y: screen[1] + event.clientY
+            //        };
+                    
+        main.animateStyle(subject, {
+                            left: screen[0] + event.clientX,
+                            top: screen[1] + event.clientY
+                        });
+        
+        //if (animating) {
+        //    animating.update(updates);
+        //    return;
+        //}
+        
+        
+        
+        //animating = main.eachDisplacement(
+        //                function (o, last) {
+        //                    main.offset(subject, o.x, o.y);
+        //                    if (last) {
+        //                        animating = false;
+        //                    }
+        //                },
+        //                {
+        //                    x: current[0],
+        //                    y: current[1]
+        //                },
+        //                updates,
+        //                'easeOut');
+
+    });

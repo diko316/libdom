@@ -82,6 +82,14 @@ export let
         1153: "Invalid Animation [type] parameter.",
         1154: "Invalid Animation [duration] parameter.",
         
+        1210: "Invalid Dimension [x] parameter.",
+        1211: "Invalid Dimension [y] parameter.",
+        1212: "Invalid Dimension [right] parameter.",
+        1213: "Invalid Dimension [bottom] parameter.",
+        1214: "Invalid Dimension [width] parameter.",
+        1215: "Invalid Dimension [height] parameter.",
+        1216: "Invalid Dimension parameters.",
+        
         2001: "Style Attribute manipulation is not supported",
         2002: "Computed style is not supported by this browser.",
         2003: "CSS Selector query form DOM is not supported.",

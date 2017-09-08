@@ -93,4 +93,32 @@ describe('Inspect if DOM Node [ancestor] contains DOM Node [descendant] ' +
                 
             });
         
+        it('3. Should not accept non-DOM Node [ancestor] parameter and ' +
+           'throws an exception.',
+           () => {
+                var descendant = global.document.getElementById('item2');
+                
+                expect(() => contains(1, descendant)).toThrow();
+                expect(() => contains(/test/, descendant)).toThrow();
+                expect(() => contains(new Date(), descendant)).toThrow();
+                expect(() => contains([], descendant)).toThrow();
+                expect(() => contains({}, descendant)).toThrow();
+                expect(() => contains('test', descendant)).toThrow();
+                expect(() => contains(global.window, descendant)).toThrow();
+           });
+        
+        
+        it('4. Should not accept non-DOM Node [descendant] parameter and ' +
+           'throws an exception.',
+           () => {
+                var ancestor = global.document.getElementById('item2');
+                
+                expect(() => contains(ancestor, 1)).toThrow();
+                expect(() => contains(ancestor, /test/)).toThrow();
+                expect(() => contains(ancestor, new Date())).toThrow();
+                expect(() => contains(ancestor, [])).toThrow();
+                expect(() => contains(ancestor, {})).toThrow();
+                expect(() => contains(ancestor, 'test')).toThrow();
+                expect(() => contains(ancestor, global.window)).toThrow();
+           });
     });
