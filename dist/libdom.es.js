@@ -346,7 +346,7 @@ function removeWord(subject, items) {
             throw new Error(ERROR[1021]);
         }
         
-        subject = subject ? [] : subject.split(SEPARATE_RE);
+        subject = subject ? subject.split(SEPARATE_RE) : [];
         total = subject.length;
         
         for (; l--;) {
@@ -2563,7 +2563,6 @@ function addClass(element, classNames) {
             throw new Error(ERROR_INVALID_CLASSNAMES);
         }
     
-        console.log("class names: ", classNames);
         element.className = addWord(element.className || '', classNames);
         return get();
     }
