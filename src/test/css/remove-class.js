@@ -48,17 +48,17 @@ describe(`Removes classNames (or Array of classNames) attached to element.
                         toThrow();
                 });
 
-            // it(`4. Should remove class(s) name(s) to an element if second parameter
-            //         passed is a valid String or Array of class names.`,
-            //     () => {
-            //         addClass(mockElement, 'blue red black gray');
-            //
-            //         removeClass(mockElement, 'blue');
-            //         expect(mockElement.getAttribute('class')).toEqual('red black');
-            //
-            //         removeClass(mockElement, ['red', 'gray']);
-            //         expect(mockElement.getAttribute('class')).toEqual('black');
-            //     });
+            it(`4. Should remove class(s) name(s) to an element if second parameter
+                    passed is a valid String or Array of class names.`,
+                () => {
+                    addClass(mockElement, 'blue red black gray');
+
+                    removeClass(mockElement, 'blue');
+                    expect(mockElement.getAttribute('class')).toEqual('red black gray');
+
+                    removeClass(mockElement, ['red', 'gray']);
+                    expect(mockElement.getAttribute('class')).toEqual('black');
+                });
 
             it(`5. Should return an object type if the call to addClass method
                     is successful.`,
