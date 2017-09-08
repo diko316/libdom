@@ -2835,7 +2835,7 @@ function size(element, width, height) {
         
         // setter
         if (arguments.length > 1) {
-            return box(element, null, null, width, height);
+            return box(element, false, false, width, height);
         }
         
         // getter
@@ -2849,7 +2849,7 @@ function box(element, x, y, width, height) {
         // setter
         if (arguments.length > 1) {
             
-            applyStyle = translate(element, x, y, null, null, width, height);
+            applyStyle = translate(element, x, y, false, false, width, height);
             
             if (applyStyle) {
                 stylize$1(element, applyStyle);

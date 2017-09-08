@@ -609,11 +609,38 @@ export
         return parseCSSText(element.style.cssText);
     }
     
-    
+export
+    function validUnitValue(value) {
+        // direct value test
+        switch (value) {
+        case null:
+        case false:
+        case 'auto':
+        case 'inherit':
+            return true;
+        }
+        // test type
+        switch (typeof value) {
+        case 'number':
+            return isFinite(value);
+        case 'string':
+            return CSS_MEASUREMENT_RE.test(value);
+        }
+        return false;
+    }
 export
     function unitValue(value) {
         var isFiniteNumber = isFinite;
         var len;
+        
+        // direct value test
+        switch (value) {
+        case null:
+        case false:
+        case 'auto':
+        case 'inherit':
+            return value;
+        }
     
         switch (typeof value) {
         case 'number':
@@ -627,17 +654,10 @@ export
                 value.substring(len - 2, len) !== 'px') {
                 return value;
             }
-            else if (value === 'auto' || value === 'inherit') {
-                return value;
-            }
             value = parseFloat(value);
             if (isFiniteNumber(value)) {
                 return value;
             }
-        }
-    
-        if (value === null) {
-            return value;
         }
     
         return false;
