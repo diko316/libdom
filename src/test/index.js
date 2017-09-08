@@ -21,3 +21,18 @@ import "./color/format-color.js";
 
 import "./animation/transition.js";
 import "./animation/animate-style.js";
+
+import "./dimension/offset.js";
+import "./dimension/size.js";
+import "./dimension/box.js";
+import "./dimension/scroll.js";
+import "./dimension/screen.js";
+
+import "./string/xml-encode.js";
+import "./string/xml-decode.js";
+
+import "./css/add-class.js";
+import "./css/remove-class.js";
+import "./css/computed-style.js";
+import "./css/stylize.js";
+import "./css/stylify.js";
