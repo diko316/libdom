@@ -34,10 +34,11 @@ var ORDER_TYPE_PREORDER = 1,
 
     ERROR_INVALID_DOM = ERROR[1101],
     ERROR_INVALID_DOM_NODE = ERROR[1103],
+    ERROR_INVALID_DOM_NODES = ERROR[1105],
     ERROR_INVALID_CSS_SELECTOR = ERROR[1111],
     ERROR_INVALID_CALLBACK = ERROR[1112],
     ERROR_INVALID_ELEMENT_CONFIG = ERROR[1121],
-    //INVALID_DESCENDANT_NODE_TYPES = { 9:1, 11:1 },
+    
     ALLOW_DESCENDANT_NODE_TYPES = {
         // CDATA_SECTION_NODE
         4: {
@@ -377,14 +378,6 @@ function orderTraverse(element, callback, context, orderType, includeRoot) {
         isPostOrder = 0;
     var queue, last, node, current;
 
-    if (!is(element, 1)) {
-        throw new Error(ERROR_INVALID_DOM);
-    }
-
-    if (!method(callback)) {
-        throw new Error(ERROR_INVALID_CALLBACK);
-    }
-
     if (typeof context === 'undefined') {
         context = null;
     }
@@ -645,7 +638,6 @@ export
 export
     function move(nodes, element) {
         var isDom = is,
-            invalidDom = ERROR_INVALID_DOM_NODE,
             created = false;
         var c, l, fragment, newChild;
 
@@ -659,7 +651,7 @@ export
         }
 
         if (!array(nodes)) {
-            throw new Error(invalidDom);
+            throw new Error(ERROR_INVALID_DOM_NODES);
         }
 
         fragment = element.ownerDocument.createDocumentFragment();
@@ -732,6 +724,13 @@ export
  */
 export
     function eachNodePreorder(element, callback, context, includeRoot) {
+        if (!is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+
+        if (!method(callback)) {
+            throw new Error(ERROR_INVALID_CALLBACK);
+        }
 
         return orderTraverse(element,
                             callback,
@@ -743,6 +742,14 @@ export
 export
     function eachNodePostorder(element, callback, context, includeRoot) {
 
+        if (!is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+
+        if (!method(callback)) {
+            throw new Error(ERROR_INVALID_CALLBACK);
+        }
+
         return orderTraverse(element,
                             callback,
                             context,
@@ -753,6 +760,14 @@ export
 export
     function eachNodeLevelorder(element, callback, context, includeRoot) {
 
+        if (!is(element, 1)) {
+            throw new Error(ERROR_INVALID_DOM);
+        }
+
+        if (!method(callback)) {
+            throw new Error(ERROR_INVALID_CALLBACK);
+        }
+        
         return orderTraverse(element,
                             callback,
                             context,

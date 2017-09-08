@@ -482,8 +482,11 @@ export
     
 export
     function destructor(handler) {
-        if (method(handler)) {
-            MIDDLEWARE.register('global-destroy', handler);
+        if (!method(handler)) {
+            throw new Error(ERROR_INVALID_HANDLER);
         }
+
+        MIDDLEWARE.register('global-destroy', handler);
+
         return getModule();
     }
