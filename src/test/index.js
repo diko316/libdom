@@ -17,3 +17,9 @@ import "./color/format-color.js";
 
 import "./animation/transition.js";
 import "./animation/animate-style.js";
+
+import "./dimension/offset.js";
+import "./dimension/size.js";
+import "./dimension/box.js";
+import "./dimension/scroll.js";
+import "./dimension/screen.js";
