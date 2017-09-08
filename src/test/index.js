@@ -28,3 +28,9 @@ import "./dimension/screen.js";
 
 import "./string/xml-encode.js";
 import "./string/xml-decode.js";
+
+import "./css/add-class.js";
+import "./css/remove-class.js";
+import "./css/computed-style.js";
+import "./css/stylize.js";
+import "./css/stylify.js";
