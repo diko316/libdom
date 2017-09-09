@@ -1,14 +1,14 @@
 'use strict';
 
-
-var MAIN = null;
+let MODULE = null;
 
 export 
     function use(chain) {
-        MAIN = chain;
+        MODULE = chain;
+        return get();
     }
     
 export
     function get() {
-        return MAIN;
+        return MODULE;
     }

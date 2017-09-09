@@ -4,20 +4,10 @@ var global$1 = typeof global !== "undefined" ? global :
             typeof self !== "undefined" ? self :
             typeof window !== "undefined" ? window : {};
 
-var MAIN = null;
-
-function use(chain) {
-        MAIN = chain;
-    }
-    
-function get() {
-        return MAIN;
-    }
-
 var ROOT = global$1;
 var browser = env.browser;
 var ieVersion = 0;
-var exported$3 = false;
+var exported$2 = false;
 
 var match;
 var ieVersion;
@@ -25,7 +15,7 @@ var ieVersion;
 if (browser) {
   match = env.userAgent.match(/msie ([0-9]+\.[0-9]+)/i);
 
-  exported$3 = {
+  exported$2 = {
     strict: ROOT.document.compatMode === 'CSS1Compat',
     ieVersion: match && parseInt(match[1], 10) || 0,
     ie8: ieVersion === 8
@@ -35,13 +25,13 @@ if (browser) {
 
 ROOT = null;
 
-var browser$1 = exported$3;
+var browser$1 = exported$2;
 
 var WINDOW = global$1;
-var exported$4 = false;
+var exported$3 = false;
 
 if (browser$1) {
-  exported$4 = {
+  exported$3 = {
     w3c: !!WINDOW.addEventListener,
     ie: !!WINDOW.attachEvent,
     customEvent: !!WINDOW.CustomEvent
@@ -50,17 +40,17 @@ if (browser$1) {
 
 WINDOW = null;
 
-var domEvent = exported$4;
+var domEvent = exported$3;
 
 var WINDOW$1 = global$1;
-var exported$5 = false;
+var exported$4 = false;
 var DOCUMENT;
 var ROOT$1;
 
 if (browser$1) {
   DOCUMENT = WINDOW$1.document;
   ROOT$1 = DOCUMENT.documentElement;
-  exported$5 = {
+  exported$4 = {
     compare: !!ROOT$1.compareDocumentPosition,
     contains: !!ROOT$1.contains,
     defaultView: DOCUMENT.defaultView ?
@@ -75,10 +65,10 @@ if (browser$1) {
 
 DOCUMENT = ROOT$1 = null;
 
-var dom = exported$5;
+var dom = exported$4;
 
 var WINDOW$2 = global$1;
-var exported$6 = false;
+var exported$5 = false;
 var DOC;
 var DIV;
 var STYLE;
@@ -127,7 +117,7 @@ if (browser$1) {
   DIV = DOC.createElement('div');
   STYLE = DIV.style;
 
-  exported$6 = {
+  exported$5 = {
     w3cStyle: !!WINDOW$2.getComputedStyle,
     ieStyle: !!DOC.documentElement.currentStyle,
     setattribute: !!STYLE.setAttribute,
@@ -142,15 +132,15 @@ if (browser$1) {
 
 WINDOW$2 = DOC = DIV = STYLE = null;
 
-var css = exported$6;
+var css = exported$5;
 
 var WINDOW$3 = global$1;
-var exported$7 = false;
+var exported$6 = false;
 var ieVersion$1;
 
 if (browser$1) {
   ieVersion$1 = browser$1.ieVersion;
-  exported$7 = {
+  exported$6 = {
     screensize: typeof WINDOW$3.innerWidth !== 'undefined',
     pagescroll: typeof WINDOW$3.pageXOffset !== 'undefined',
     rectmethod: !!WINDOW$3.document.documentElement.getBoundingClientRect,
@@ -162,9 +152,9 @@ if (browser$1) {
 
 WINDOW$3 = null;
 
-var dimension = exported$7;
+var dimension = exported$6;
 
-var exported$8 = false;
+var exported$7 = false;
 var DOCUMENT$1;
 var ROOTSTYLE;
 var UNDEFINED;
@@ -174,7 +164,7 @@ if (browser$1) {
   ROOTSTYLE = DOCUMENT$1.documentElement.style;
   UNDEFINED = 'undefined';
 
-  exported$8 = {
+  exported$7 = {
     range: !!DOCUMENT$1.createRange,
     textrange: !!DOCUMENT$1.createElement('input').createTextRange,
     cssUnselectable: typeof ROOTSTYLE.MozUserSelect !== UNDEFINED ?
@@ -187,12 +177,12 @@ if (browser$1) {
 
 DOCUMENT$1 = ROOTSTYLE = null;
 
-var selection = exported$8;
+var selection = exported$7;
 
-var exported$2 = false;
+var exported$1 = false;
 
 if (browser$1) {
-    exported$2 = {
+    exported$1 = {
       browser: browser$1,
       event: domEvent,
       dom: dom,
@@ -202,7 +192,7 @@ if (browser$1) {
     };
 }
 
-var DETECTED = exported$2;
+var DETECTED = exported$1;
 
 var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/;
 var STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/;
@@ -276,6 +266,7 @@ var ERROR = {
         1131: "Invalid [observable] parameter.",
         1132: "Invalid Event [type] parameter.",
         1133: "Invalid Event [handler] parameter.",
+        1134: "Invalid Event [properties] parameter.",
         
         
         1141: "Invalid Style [rule] parameter.",
@@ -407,6 +398,17 @@ function xmlEncode(subject) {
         }
 
         return subject.replace(HTML_ESCAPE_CHARS_RE, htmlescapeCallback);
+    }
+
+var MODULE = null;
+
+function use(chain) {
+        MODULE = chain;
+        return get();
+    }
+    
+function get() {
+        return MODULE;
     }
 
 var EVENTS = null;
@@ -846,11 +848,11 @@ function un(observable, type, handler, context) {
         for (len = found.length; len--;) {
             found[len].unlisten();
         }
-    
+   
         return get();
     }
 
-function dispatch(observable, type, defaults) {
+function dispatch(observable, type, properties) {
     
         if (!string(type)) {
             throw new Error(ERROR_INVALID_TYPE);
@@ -861,8 +863,12 @@ function dispatch(observable, type, defaults) {
         if (!observable) {
             throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
         }
+
+        if (arguments.length > 2 && !object(properties)) {
+            throw new Error(ERROR[1134]);
+        }
     
-        return DISPATCH(observable, type, defaults);
+        return DISPATCH(observable, type, properties || {});
     
     }
 
@@ -4275,7 +4281,7 @@ function animateStyle(element, styles, type, duration) {
 
 
 
-var exported$1 = Object.freeze({
+var exported = Object.freeze({
 	env: env,
 	info: DETECTED,
 	xmlEncode: xmlEncode,
@@ -4316,11 +4322,11 @@ var exported$1 = Object.freeze({
 	animateStyle: animateStyle
 });
 
-global$1.libdom = exported$1;
+var mainModule = use(exported);
 
-use(exported$1);
+global$1.libdom = mainModule;
 
 export { DETECTED as info, xmlEncode, xmlDecode, is, isView, contains$1 as contains, CSS_SELECT as select, add, move, replace, remove, eachNodePreorder, eachNodePostorder, eachNodeLevelorder, addClass, removeClass, COMPUTED_STYLE as computedStyle, stylize$1 as stylize, stylify, on, un, purge, dispatch, destructor, offset, size, box, scroll, screen, highlight, unhighlightable, clearHighlight, parseColor, parseColorType, formatColor, transition, animateStyle };
-export default exported$1;
+export default mainModule;
 export { env } from 'libcore';
 //# sourceMappingURL=libdom.es.js.map

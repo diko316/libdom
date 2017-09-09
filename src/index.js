@@ -1,15 +1,15 @@
 'use strict';
 
-import { use as registerModule } from "./lib/chain.js";
-
 import * as exported from "./all.js";
 
-global.libdom = exported;
+import { use as registerModule } from "./lib/chain.js";
 
-registerModule(exported);
+const mainModule = registerModule(exported);
+
+global.libdom = mainModule;
 
 export * from "./all.js";
 
-export default exported;
+export default mainModule;
 
 

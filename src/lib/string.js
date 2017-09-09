@@ -86,6 +86,7 @@ export let
         1131: "Invalid [observable] parameter.",
         1132: "Invalid Event [type] parameter.",
         1133: "Invalid Event [handler] parameter.",
+        1134: "Invalid Event [properties] parameter.",
         
         
         1141: "Invalid Style [rule] parameter.",

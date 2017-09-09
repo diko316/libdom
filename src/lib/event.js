@@ -4,6 +4,7 @@ import {
             string,
             method,
             contains,
+            object,
             middleware
         } from "libcore";
 
@@ -447,12 +448,12 @@ export
         for (len = found.length; len--;) {
             found[len].unlisten();
         }
-    
+   
         return getModule();
     }
 
 export
-    function dispatch(observable, type, defaults) {
+    function dispatch(observable, type, properties) {
     
         if (!string(type)) {
             throw new Error(ERROR_INVALID_TYPE);
@@ -463,8 +464,12 @@ export
         if (!observable) {
             throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
         }
+
+        if (arguments.length > 2 && !object(properties)) {
+            throw new Error(ERROR[1134]);
+        }
     
-        return DISPATCH(observable, type, defaults);
+        return DISPATCH(observable, type, properties || {});
     
     }
 

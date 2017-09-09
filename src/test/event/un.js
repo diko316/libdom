@@ -1,13 +1,14 @@
 'use strict';
 
 
-describe(`Attaches event handler on supported browser [observable] using
-        on(observable:Observable,
+describe(`Detaches event handler on supported browser [observable] using
+        un(observable:Observable,
             type:String,
             handler:Function
             [, context:Mixed]) method.`,
     () => {
         var on = global.libdom.on,
+            un = global.libdom.un,
             method = global.libcore.method,
             doc = global.document,
             deregisters = [];
@@ -38,32 +39,43 @@ describe(`Attaches event handler on supported browser [observable] using
         });
 
         it(`1. Should accept DOM Element [observable] object, event [type], and
-            event [handler] callback Function parameters and returns
-            an event handler deregistration Function.`,
+            event [handler] callback Function parameters then deregisters
+            all matching event handlers and returns the libdom
+            "default" module Object.`,
             (done) => {
                 
                 var observable = doc.getElementById('observable'),
                     q = deregisters,
                     ql = q.length,
-                    counter = 0;
+                    counter = 0,
+                    focusFn = () => {
+                        counter++;
+                    },
+                    blurFn = () => {
+                        counter++;
+                    };
+                var result;
 
                 observable.blur();
 
                 // focus
                 expect(() => q[ql++] = on(observable,
                                         'focus',
-                                        () => {
-                                            counter++;
-                                        })).
+                                        focusFn)).
                     not.toThrow();
 
                 expect(() => q[ql++] = on(observable,
                                         'blur',
-                                        () => {
-                                            counter++;
-                                        })).
+                                        blurFn)).
                     not.toThrow();
-                
+
+                expect(() => result = un(observable,
+                                        'focus',
+                                        focusFn)).
+                    not.toThrow();
+
+                expect(result).toBe(global.libdom);
+
                 expect(() => {
                         observable.focus();
                         observable.blur();
@@ -74,71 +86,93 @@ describe(`Attaches event handler on supported browser [observable] using
                     expect(method(q[0])).toBe(true);
                     expect(method(q[1])).toBe(true);
 
-                    expect(counter).toBe(2);
+                    expect(counter).toBe(1);
                     done();
                 }, 500);
 
             });
 
-
         it(`2. Should accept Window [observable] object, event [type], and
-            event [handler] callback Function parameters and returns
-            an event handler deregistration Function.`,
+            event [handler] callback Function parameters then deregisters
+            all matching event handlers and
+            returns the libdom "default" module Object.`,
             () => {
                 
                 var observable = global.window,
-                    q = deregisters,
-                    ql = q.length,
                     counter = 0;
+                var result;
 
                 // load
-                expect(() => q[ql++] = on(observable,
+                expect(() => result = un(observable,
                                         'load',
                                         () => {
                                             counter++;
                                         })).
                     not.toThrow();
-
-                expect(method(q[0])).toBe(true);
-
+                expect(result).toBe(global.libdom);
             });
 
         it(`3. Should accept DOM Element [observable] object, event [type],
             event [handler] callback Function, and optional [scope] Object
-            parameters where [scope] becomes "this" object inside 
-            the [handler] Function parameters and returns
-            an event handler deregistration Function.`,
+            parameters then deregisters the complete matching parameters of
+            registered events and returns the libdom "default" module Object.`,
             (done) => {
                 
                 var observable = doc.getElementById('observable'),
                     q = deregisters,
                     ql = q.length,
+                    
                     scope = {
                         name: 'phony',
                         counter: 0
                     },
+                    anotherScope = {
+                        name: 'another-phony',
+                        counter: 0
+                    },
                     counter = 0;
+                var result;
+
+                function focusFn() {
+                    this.counter++;
+                    counter++;
+                }
+
+                function blurFn() {
+                    this.counter++;
+                    counter++;
+                }
 
                 observable.blur();
 
                 // focus
                 expect(() => q[ql++] = on(observable,
                                         'focus',
-                                        function () {
-                                            this.counter++;
-                                            counter++;
-                                        },
+                                        focusFn,
                                         scope)).
                     not.toThrow();
 
                 expect(() => q[ql++] = on(observable,
+                        'focus',
+                        focusFn,
+                        anotherScope)).
+                    not.toThrow();
+
+                expect(() => q[ql++] = on(observable,
                                         'blur',
-                                        function () {
-                                            this.counter++;
-                                            counter++;
-                                        },
+                                        blurFn,
                                         scope)).
                     not.toThrow();
+
+
+                // remove first focus handler
+                expect(() => result = un(observable,
+                                        'focus',
+                                        focusFn,
+                                        scope)).
+                    not.toThrow();
+
+                expect(result).toBe(global.libdom);
                 
                 expect(() => {
                         observable.focus();
@@ -149,9 +183,14 @@ describe(`Attaches event handler on supported browser [observable] using
                 setTimeout(() => {
                     expect(method(q[0])).toBe(true);
                     expect(method(q[1])).toBe(true);
+                    expect(method(q[2])).toBe(true);
 
                     expect(counter).toBe(2);
-                    expect(scope.counter).toBe(2);
+                    
+                    // cannot be 2 since it was removed
+                    expect(scope.counter).toBe(1); 
+
+                    expect(anotherScope.counter).toBe(1);
                     done();
                 }, 500);
 
@@ -160,105 +199,80 @@ describe(`Attaches event handler on supported browser [observable] using
         it(`4. Should not accept non-Observable [observable] object and
             throws an exception.`,
             () => {
-                var q = deregisters,
-                    ql = q.length;
+                function focusFn() {
+                }
 
-                expect(() => q[ql++] = on(null,
-                                        'focus',
-                                        function () {
-                                            this.counter++;
-                                            counter++;
-                                        })).
+                expect(() => un(null,
+                                'focus',
+                                focusFn)).
                     toThrow();
 
-                expect(() => q[ql++] = on(1,
+                expect(() => un(1,
                         'focus',
-                        function () {
-                            this.counter++;
-                            counter++;
-                        })).
+                        focusFn)).
                     toThrow();
 
-                expect(() => q[ql++] = on([],
+                expect(() => un([],
                         'focus',
-                        function () {
-                            this.counter++;
-                            counter++;
-                        })).
+                        focusFn)).
                     toThrow();
 
-                expect(() => q[ql++] = on(/test/,
+                expect(() => un(/test/,
                         'focus',
-                        function () {
-                            this.counter++;
-                            counter++;
-                        })).
+                        focusFn)).
                     toThrow();
             });
 
         it(`5. Should not accept empty String or non-String event [type] and
             throws an exception.`,
             () => {
-                var observable = doc.getElementById('observable'),
-                    q = deregisters,
-                    ql = q.length;
+                var observable = doc.getElementById('observable');
+                
+                function focusFn() {
+                }
 
-                expect(() => q[ql++] = on(observable,
-                                        null,
-                                        function () {
-                                            this.counter++;
-                                            counter++;
-                                        })).
+                expect(() => un(observable,
+                                null,
+                                focusFn)).
                     toThrow();
 
-                expect(() => q[ql++] = on(observable,
+                expect(() => un(observable,
                         1,
-                        function () {
-                            this.counter++;
-                            counter++;
-                        })).
+                        focusFn)).
                     toThrow();
 
-                expect(() => q[ql++] = on(observable,
+                expect(() => un(observable,
                         [],
-                        function () {
-                            this.counter++;
-                            counter++;
-                        })).
+                        focusFn)).
                     toThrow();
 
-                expect(() => q[ql++] = on(observable,
+                expect(() => un(observable,
                         /test/,
-                        function () {
-                            this.counter++;
-                            counter++;
-                        })).
+                        focusFn)).
                     toThrow();
             });
 
         it(`6. Should not accept non-Function [handler] event callback and
             throws an exception.`,
             () => {
-                var observable = doc.getElementById('observable'),
-                    q = deregisters,
-                    ql = q.length;
+                var observable = doc.getElementById('observable');
 
-                expect(() => q[ql++] = on(observable,
+                expect(() => un(observable,
                                         'focus',
                                         null)).
                     toThrow();
 
-                expect(() => q[ql++] = on(observable,
+                expect(() => un(observable,
                         'focus',
                         1)).
                     toThrow();
 
-                expect(() => q[ql++] = on(observable,
+                expect(() => un(observable,
                         'focus',
                         [])).
                     toThrow();
 
-                expect(() => q[ql++] = on(observable,
+                expect(() => un(observable,
                         'focus',
                         /test/)).
                     toThrow();

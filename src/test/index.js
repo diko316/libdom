@@ -19,6 +19,8 @@ import "./color/parse-color.js";
 import "./color/parse-color-type.js";
 import "./color/format-color.js";
 
+import "./event/on.js";
+import "./event/un.js";
 
 import "./animation/transition.js";
 import "./animation/animate-style.js";
