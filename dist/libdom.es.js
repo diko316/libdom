@@ -1472,6 +1472,9 @@ function add(element, config, before) {
 
         if (isDom(config, 1, 3, 4, 7, 8, 11)) {
             toInsert = config;
+            if (config.nodeType !== 11 && contains$1(config, element)) {
+                throw new Error(invalidConfig);
+            }
         }
         else if (object(config)) {
             tagName = getTagNameFromConfig(config);
@@ -1542,7 +1545,7 @@ function move(nodes, element, before) {
             fragment = element.ownerDocument.createDocumentFragment();
             for (c = -1, l = nodes.length; l--;) {
                 newChild = nodes[++c];
-                if (!isDom(newChild, 1, 3, 4, 7, 8)) {
+                if (!isDom(newChild, 1, 3, 4, 7, 8) || newChild === element) {
                     throw new Error(ERROR_INVALID_DOM_NODES);
                 }
                 fragment.appendChild(newChild);
