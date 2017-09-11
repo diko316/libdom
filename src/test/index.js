@@ -21,6 +21,7 @@ import "./color/format-color.js";
 
 import "./event/on.js";
 import "./event/un.js";
+import "./event/dispatch.js";
 
 import "./animation/transition.js";
 import "./animation/animate-style.js";
