@@ -471,11 +471,10 @@ function createUnlistener(event) {
 }
 
 
-function filter(observable, type, handler, context) {
+function filter(argLen, observable, type, handler, context) {
     var last = EVENTS,
         found = [],
         len = 0,
-        argLen = arguments.length,
         HAS_OBSERVABLE = 0,
         HAS_TYPE = 0,
         HAS_HANDLER = 0,
@@ -847,7 +846,11 @@ function un(observable, type, handler, context) {
         args.splice(0, 4);
         args = null;
     
-        found = filter(observable, type, handler, context);
+        found = filter(4,
+                        observable,
+                        type,
+                        handler,
+                        context);
     
         for (len = found.length; len--;) {
             found[len].unlisten();
@@ -876,9 +879,33 @@ function dispatch(observable, type, properties) {
     
     }
 
-function purge() {
-        var found = filter.apply(null, arguments),
-            len = found.length;
+function purge(observable, type, handler, context) {
+        var alen = arguments.length;
+        var found, len;
+
+        switch (true) {
+        case alen > 2:
+            if (!libcore.method(handler)) {
+                throw new Error(ERROR_INVALID_HANDLER);
+            }
+        /* falls through */
+        case alen > 1:
+            if (!libcore.string(type)) {
+                throw new Error(ERROR_INVALID_TYPE);
+            }
+        /* falls through */
+        case alen > 0:
+            if (!RESOLVE(observable)) {
+                throw new Error(ERROR_OBSERVABLE_NO_SUPPORT);
+            }
+        }
+
+        if (typeof context === 'undefined') {
+            context = null;
+        }
+
+        found = filter(alen, observable, type, handler, context);
+        len = found.length;
     
         for (; len--;) {
             found[len].unlisten();
