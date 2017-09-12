@@ -1,6 +1,6 @@
 {
   "name": "libdom",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "description": "Lean Browser Library for typical DOM operations",
   "main": "dist/libdom.js",
   "module": "dist/libdom.es.js",
@@ -47,6 +47,6 @@
     "rollup-plugin-uglify": "^2.0.1"
   },
   "optionalDependencies": {
-    "libcore": "https://api.github.com/repos/diko316/libcore/tarball/master"
+    "libcore": "0.3.7"
   }
 }

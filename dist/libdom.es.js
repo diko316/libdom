@@ -1,4 +1,4 @@
-import { array, camelize, contains, createRegistry, each, env, method, middleware, number, object, register, string, unionList } from 'libcore';
+import { array, camelize, contains, createRegistry, each, env, method, middleware, number, object, register, string, trim, unionList } from 'libcore';
 
 var global$1 = typeof global !== "undefined" ? global :
             typeof self !== "undefined" ? self :
@@ -198,7 +198,6 @@ var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/;
 var STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/;
 var HTML_ESCAPE_CHARS_RE = /[^\u0021-\u007e]|[\u003e\u003c\&\"\']/g;
 var TEXTAREA = null;
-var TRIM_RE = /^\s+|\s+$/g;
 
 
     
@@ -310,7 +309,7 @@ function stylize(subject) {
 
 function addWord(subject, items) {
         var isString = string,
-            trimRe = TRIM_RE;
+            trimString = trim;
         var c, l, item, cl, combined;
 
         if (!isString(subject, true)) {
@@ -319,7 +318,7 @@ function addWord(subject, items) {
 
         cl = 0;
         combined = [];
-        subject = subject.replace(trimRe, '');
+        subject = trimString(subject);
 
         for (c = -1, l = items.length; l--;) {
             item = items[++c];
@@ -328,7 +327,7 @@ function addWord(subject, items) {
                 continue;
             }
 
-            item = item.replace(trimRe, '');
+            item = trimString(item);
 
             if (item) {
                 combined[cl++] = item;
@@ -345,14 +344,14 @@ function addWord(subject, items) {
 
 function removeWord(subject, items) {
         var isString = string,
-            trimRe = TRIM_RE;
+            trimString = trim;
         var c, l, item, index;
 
         if (!isString(subject, true)) {
             throw new Error(ERROR[1021]);
         }
 
-        subject = subject.replace(trimRe, '');
+        subject = trimString(subject);
 
         if (!subject) {
             return '';
@@ -364,7 +363,7 @@ function removeWord(subject, items) {
             if (!isString(item = items[++c])) {
                 continue;
             }
-            index = subject.indexOf(item.replace(trimRe, ''));
+            index = subject.indexOf(trimString(item));
             if (index !== -1) {
                 subject.splice(index, 1);
             }
@@ -2248,7 +2247,7 @@ function onStyleElement(value, name) {
 
 function parseCSSText(str) {
     
-    var trimRe = TRIM_RE,
+    var trimString = trim,
         pairs = str.split(';'),
         c = -1,
         l = pairs.length,
@@ -2257,8 +2256,8 @@ function parseCSSText(str) {
         
     for (; l--;) {
         pair = pairs[++c].split(':');
-        name = pair[0].replace(trimRe, '');
-        value = pair.slice(1).join(':').replace(trimRe, '');
+        name = trimString(pair[0]);
+        value = trimString(pair.slice(1).join(':'));
         
         if (name && value) {
             result[name] = value;

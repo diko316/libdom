@@ -5,7 +5,8 @@ import {
             number,
             array,
             object,
-            each
+            each,
+            trim
         } from "libcore";
 
 import { get as getModule } from "./chain.js";
@@ -16,8 +17,7 @@ import {
             ERROR,
             stylize as stringStylize,
             addWord,
-            removeWord,
-            TRIM_RE
+            removeWord
         } from "./string.js";
 
 import {
@@ -139,7 +139,7 @@ function onStyleElement(value, name) {
 
 function parseCSSText(str) {
     
-    var trimRe = TRIM_RE,
+    var trimString = trim,
         pairs = str.split(';'),
         c = -1,
         l = pairs.length,
@@ -148,8 +148,8 @@ function parseCSSText(str) {
         
     for (; l--;) {
         pair = pairs[++c].split(':');
-        name = pair[0].replace(trimRe, '');
-        value = pair.slice(1).join(':').replace(trimRe, '');
+        name = trimString(pair[0]);
+        value = trimString(pair.slice(1).join(':'));
         
         if (name && value) {
             result[name] = value;

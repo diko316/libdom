@@ -4,7 +4,8 @@ import {
             string,
             camelize,
             register,
-            unionList
+            unionList,
+            trim
         } from "libcore";
         
 import detect from "./detect.js";
@@ -12,8 +13,7 @@ import detect from "./detect.js";
 var SEPARATE_RE = /[ \r\n\t]*[ \r\n\t]+[ \r\n\t]*/,
     STYLIZE_RE = /^([Mm]oz|[Ww]ebkit|[Mm]s|[oO])[A-Z]/,
     HTML_ESCAPE_CHARS_RE = /[^\u0021-\u007e]|[\u003e\u003c\&\"\']/g,
-    TEXTAREA = null,
-    TRIM_RE = /^\s+|\s+$/g;
+    TEXTAREA = null;
 
 
     
@@ -53,10 +53,6 @@ function onDestroy() {
 }
 
 initialize();
-
-export {
-        TRIM_RE
-    };
 
 export let
     ERROR = {
@@ -132,7 +128,7 @@ export
 export
     function addWord(subject, items) {
         var isString = string,
-            trimRe = TRIM_RE;
+            trimString = trim;
         var c, l, item, cl, combined;
 
         if (!isString(subject, true)) {
@@ -141,7 +137,7 @@ export
 
         cl = 0;
         combined = [];
-        subject = subject.replace(trimRe, '');
+        subject = trimString(subject);
 
         for (c = -1, l = items.length; l--;) {
             item = items[++c];
@@ -150,7 +146,7 @@ export
                 continue;
             }
 
-            item = item.replace(trimRe, '');
+            item = trimString(item);
 
             if (item) {
                 combined[cl++] = item;
@@ -168,14 +164,14 @@ export
 export
     function removeWord(subject, items) {
         var isString = string,
-            trimRe = TRIM_RE;
+            trimString = trim;
         var c, l, item, index;
 
         if (!isString(subject, true)) {
             throw new Error(ERROR[1021]);
         }
 
-        subject = subject.replace(trimRe, '');
+        subject = trimString(subject);
 
         if (!subject) {
             return '';
@@ -187,7 +183,7 @@ export
             if (!isString(item = items[++c])) {
                 continue;
             }
-            index = subject.indexOf(item.replace(trimRe, ''));
+            index = subject.indexOf(trimString(item));
             if (index !== -1) {
                 subject.splice(index, 1);
             }
